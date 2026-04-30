@@ -163,7 +163,7 @@ function AdminPanel() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <Th>Name</Th><Th>Program</Th><Th>Specialization</Th><Th>University</Th><Th>Batch</Th><Th>Location</Th><Th>Status</Th><Th></Th>
+                <Th>Name</Th><Th>Program</Th><Th>Specialization</Th><Th>University</Th><Th>Batch</Th><Th>Location</Th><Th>Status</Th><Th>{" "}</Th>
               </tr>
             </thead>
             <tbody>
