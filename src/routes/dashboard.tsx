@@ -327,7 +327,45 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
             </Field>
           </TabsContent>
 
-          {/* PERSONAL */}
+          {/* ENROLLMENT */}
+          <TabsContent value="enrollment" className="grid gap-4 sm:grid-cols-2 pt-4">
+            <Field label="Enrollment number">
+              <Input value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
+            </Field>
+            <Field label="Admission session">
+              <Select value={form.admission_session ?? ""} onValueChange={(v) => set("admission_session", v)}>
+                <SelectTrigger><SelectValue placeholder="January / July" /></SelectTrigger>
+                <SelectContent>{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Study mode">
+              <Select value={form.study_mode ?? ""} onValueChange={(v) => set("study_mode", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{STUDY_MODES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Medium of instruction">
+              <Select value={form.medium_of_instruction ?? ""} onValueChange={(v) => set("medium_of_instruction", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{MEDIUMS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Course name"><Input value={form.course_name ?? ""} onChange={(e) => set("course_name", e.target.value)} maxLength={120} placeholder="Master of Business Administration" /></Field>
+            <Field label="Course code"><Input value={form.course_code ?? ""} onChange={(e) => set("course_code", e.target.value)} maxLength={30} placeholder="MBA-FIN" /></Field>
+            <Field label="Duration (years)"><Input type="number" step="0.5" min={0} max={10} value={form.duration_years ?? ""} onChange={(e) => set("duration_years", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Total semesters"><Input type="number" min={1} max={12} value={form.total_semesters ?? ""} onChange={(e) => set("total_semesters", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Current semester"><Input type="number" min={1} max={12} value={form.current_semester ?? ""} onChange={(e) => set("current_semester", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Counsellor"><Input value={form.counsellor_name ?? ""} onChange={(e) => set("counsellor_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Lead source">
+              <Select value={form.lead_source ?? ""} onValueChange={(v) => set("lead_source", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Referral name"><Input value={form.referral_name ?? ""} onChange={(e) => set("referral_name", e.target.value)} maxLength={120} /></Field>
+          </TabsContent>
+
+
           <TabsContent value="personal" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Full name (as per SSLC)" required><Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} maxLength={120} required /></Field>
             <Field label="Father name"><Input value={form.father_name ?? ""} onChange={(e) => set("father_name", e.target.value)} maxLength={120} /></Field>
