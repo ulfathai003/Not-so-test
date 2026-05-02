@@ -31,6 +31,12 @@ const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
 const EMPLOYMENT = ["Employed", "Unemployed", "Self-employed", "Student"];
 const MARITAL = ["Single", "Married", "Divorced", "Widowed"];
 const RESULTS = ["Pass", "Fail", "Distinction", "First Class", "Second Class"];
+const SESSIONS = ["January", "July"];
+const STUDY_MODES = ["Online", "Distance", "Hybrid"];
+const MEDIUMS = ["English", "Hindi", "Bilingual"];
+const PAYMENT_STATUSES = ["Paid", "Partial", "Pending", "Overdue"];
+const PAYMENT_MODES = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
+const LEAD_SOURCES = ["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair"];
 
 function DashboardPage() {
   const { user, role, loading, signOut } = useAuth();
