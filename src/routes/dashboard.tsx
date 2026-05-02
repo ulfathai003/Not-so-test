@@ -631,6 +631,40 @@ function StudentPanel({ email }: { email: string }) {
             ["Percentage", record.edu_degree_percentage],
             ["Result", record.edu_degree_result],
           ]} />
+
+          <DetailSection title="Enrollment" rows={[
+            ["Enrollment number", record.enrollment_number],
+            ["Admission session", record.admission_session],
+            ["Study mode", record.study_mode],
+            ["Medium", record.medium_of_instruction],
+            ["Course name", record.course_name],
+            ["Course code", record.course_code],
+            ["Duration (years)", record.duration_years],
+            ["Current semester", record.current_semester],
+            ["Total semesters", record.total_semesters],
+            ["Counsellor", record.counsellor_name],
+            ["Lead source", record.lead_source],
+            ["Referral", record.referral_name],
+          ]} />
+
+          <DetailSection title="Fees" rows={[
+            ["Total fee", record.total_fee != null ? `₹ ${record.total_fee}` : null],
+            ["Fee paid", record.fee_paid != null ? `₹ ${record.fee_paid}` : null],
+            ["Fee pending", record.fee_pending != null ? `₹ ${record.fee_pending}` : null],
+            ["Payment status", record.payment_status],
+            ["Payment mode", record.payment_mode],
+            ["Last payment", record.last_payment_date],
+            ["Next due", record.next_due_date],
+          ]} />
+
+          <DetailSection title="Documents submitted" rows={[
+            ["Photo", record.doc_photo ? "✓ Received" : "Pending"],
+            ["Signature", record.doc_signature ? "✓ Received" : "Pending"],
+            ["ID proof", record.doc_id_proof ? "✓ Received" : "Pending"],
+            ["10th marksheet", record.doc_marksheet_10 ? "✓ Received" : "Pending"],
+            ["12th marksheet", record.doc_marksheet_12 ? "✓ Received" : "Pending"],
+            ["Degree marksheet", record.doc_marksheet_degree ? "✓ Received" : "Pending"],
+          ]} />
         </div>
       )}
     </div>
