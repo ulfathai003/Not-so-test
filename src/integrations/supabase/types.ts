@@ -40,13 +40,25 @@ export type Database = {
           aadhar_number: string | null
           abc_id: string | null
           address: string | null
+          admission_session: string | null
           batch_year: number
           category: string | null
           city: string | null
+          counsellor_name: string | null
+          course_code: string | null
+          course_name: string | null
           created_at: string
+          current_semester: number | null
           deb_id: string | null
           district: string | null
           dob: string | null
+          doc_id_proof: boolean | null
+          doc_marksheet_10: boolean | null
+          doc_marksheet_12: boolean | null
+          doc_marksheet_degree: boolean | null
+          doc_photo: boolean | null
+          doc_signature: boolean | null
+          duration_years: number | null
           edu_10_board: string | null
           edu_10_marks: string | null
           edu_10_percentage: number | null
@@ -65,21 +77,34 @@ export type Database = {
           email: string
           employment_status: string | null
           enrollment_date: string
+          enrollment_number: string | null
           father_name: string | null
+          fee_paid: number | null
+          fee_pending: number | null
           full_name: string
           gender: string | null
           id: string
+          last_payment_date: string | null
+          lead_source: string | null
           location: string
           marital_status: string | null
+          medium_of_instruction: string | null
           mother_name: string | null
+          next_due_date: string | null
           notes: string | null
+          payment_mode: string | null
+          payment_status: string | null
           phone: string | null
           pincode: string | null
           program: Database["public"]["Enums"]["program_type"]
+          referral_name: string | null
           religion: string | null
           specialization: string
           state: string | null
           status: Database["public"]["Enums"]["student_status"]
+          study_mode: string | null
+          total_fee: number | null
+          total_semesters: number | null
           university: string
           updated_at: string
         }
@@ -87,13 +112,25 @@ export type Database = {
           aadhar_number?: string | null
           abc_id?: string | null
           address?: string | null
+          admission_session?: string | null
           batch_year: number
           category?: string | null
           city?: string | null
+          counsellor_name?: string | null
+          course_code?: string | null
+          course_name?: string | null
           created_at?: string
+          current_semester?: number | null
           deb_id?: string | null
           district?: string | null
           dob?: string | null
+          doc_id_proof?: boolean | null
+          doc_marksheet_10?: boolean | null
+          doc_marksheet_12?: boolean | null
+          doc_marksheet_degree?: boolean | null
+          doc_photo?: boolean | null
+          doc_signature?: boolean | null
+          duration_years?: number | null
           edu_10_board?: string | null
           edu_10_marks?: string | null
           edu_10_percentage?: number | null
@@ -112,21 +149,34 @@ export type Database = {
           email: string
           employment_status?: string | null
           enrollment_date?: string
+          enrollment_number?: string | null
           father_name?: string | null
+          fee_paid?: number | null
+          fee_pending?: number | null
           full_name: string
           gender?: string | null
           id?: string
+          last_payment_date?: string | null
+          lead_source?: string | null
           location: string
           marital_status?: string | null
+          medium_of_instruction?: string | null
           mother_name?: string | null
+          next_due_date?: string | null
           notes?: string | null
+          payment_mode?: string | null
+          payment_status?: string | null
           phone?: string | null
           pincode?: string | null
           program: Database["public"]["Enums"]["program_type"]
+          referral_name?: string | null
           religion?: string | null
           specialization: string
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          study_mode?: string | null
+          total_fee?: number | null
+          total_semesters?: number | null
           university: string
           updated_at?: string
         }
@@ -134,13 +184,25 @@ export type Database = {
           aadhar_number?: string | null
           abc_id?: string | null
           address?: string | null
+          admission_session?: string | null
           batch_year?: number
           category?: string | null
           city?: string | null
+          counsellor_name?: string | null
+          course_code?: string | null
+          course_name?: string | null
           created_at?: string
+          current_semester?: number | null
           deb_id?: string | null
           district?: string | null
           dob?: string | null
+          doc_id_proof?: boolean | null
+          doc_marksheet_10?: boolean | null
+          doc_marksheet_12?: boolean | null
+          doc_marksheet_degree?: boolean | null
+          doc_photo?: boolean | null
+          doc_signature?: boolean | null
+          duration_years?: number | null
           edu_10_board?: string | null
           edu_10_marks?: string | null
           edu_10_percentage?: number | null
@@ -159,21 +221,34 @@ export type Database = {
           email?: string
           employment_status?: string | null
           enrollment_date?: string
+          enrollment_number?: string | null
           father_name?: string | null
+          fee_paid?: number | null
+          fee_pending?: number | null
           full_name?: string
           gender?: string | null
           id?: string
+          last_payment_date?: string | null
+          lead_source?: string | null
           location?: string
           marital_status?: string | null
+          medium_of_instruction?: string | null
           mother_name?: string | null
+          next_due_date?: string | null
           notes?: string | null
+          payment_mode?: string | null
+          payment_status?: string | null
           phone?: string | null
           pincode?: string | null
           program?: Database["public"]["Enums"]["program_type"]
+          referral_name?: string | null
           religion?: string | null
           specialization?: string
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          study_mode?: string | null
+          total_fee?: number | null
+          total_semesters?: number | null
           university?: string
           updated_at?: string
         }
