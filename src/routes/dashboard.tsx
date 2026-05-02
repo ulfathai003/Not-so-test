@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, User, Home, FileText } from "lucide-react";
+import { GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, User, Home, FileText, Wallet, FolderCheck, ClipboardList } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
