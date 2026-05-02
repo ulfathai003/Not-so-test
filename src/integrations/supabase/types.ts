@@ -37,49 +37,142 @@ export type Database = {
       }
       students: {
         Row: {
+          aadhar_number: string | null
+          abc_id: string | null
+          address: string | null
           batch_year: number
+          category: string | null
+          city: string | null
           created_at: string
+          deb_id: string | null
+          district: string | null
+          dob: string | null
+          edu_10_board: string | null
+          edu_10_marks: string | null
+          edu_10_percentage: number | null
+          edu_10_result: string | null
+          edu_10_year: number | null
+          edu_12_board: string | null
+          edu_12_marks: string | null
+          edu_12_percentage: number | null
+          edu_12_result: string | null
+          edu_12_year: number | null
+          edu_degree_marks: string | null
+          edu_degree_percentage: number | null
+          edu_degree_result: string | null
+          edu_degree_university: string | null
+          edu_degree_year: number | null
           email: string
+          employment_status: string | null
           enrollment_date: string
+          father_name: string | null
           full_name: string
+          gender: string | null
           id: string
           location: string
+          marital_status: string | null
+          mother_name: string | null
           notes: string | null
           phone: string | null
+          pincode: string | null
           program: Database["public"]["Enums"]["program_type"]
+          religion: string | null
           specialization: string
+          state: string | null
           status: Database["public"]["Enums"]["student_status"]
           university: string
           updated_at: string
         }
         Insert: {
+          aadhar_number?: string | null
+          abc_id?: string | null
+          address?: string | null
           batch_year: number
+          category?: string | null
+          city?: string | null
           created_at?: string
+          deb_id?: string | null
+          district?: string | null
+          dob?: string | null
+          edu_10_board?: string | null
+          edu_10_marks?: string | null
+          edu_10_percentage?: number | null
+          edu_10_result?: string | null
+          edu_10_year?: number | null
+          edu_12_board?: string | null
+          edu_12_marks?: string | null
+          edu_12_percentage?: number | null
+          edu_12_result?: string | null
+          edu_12_year?: number | null
+          edu_degree_marks?: string | null
+          edu_degree_percentage?: number | null
+          edu_degree_result?: string | null
+          edu_degree_university?: string | null
+          edu_degree_year?: number | null
           email: string
+          employment_status?: string | null
           enrollment_date?: string
+          father_name?: string | null
           full_name: string
+          gender?: string | null
           id?: string
           location: string
+          marital_status?: string | null
+          mother_name?: string | null
           notes?: string | null
           phone?: string | null
+          pincode?: string | null
           program: Database["public"]["Enums"]["program_type"]
+          religion?: string | null
           specialization: string
+          state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           university: string
           updated_at?: string
         }
         Update: {
+          aadhar_number?: string | null
+          abc_id?: string | null
+          address?: string | null
           batch_year?: number
+          category?: string | null
+          city?: string | null
           created_at?: string
+          deb_id?: string | null
+          district?: string | null
+          dob?: string | null
+          edu_10_board?: string | null
+          edu_10_marks?: string | null
+          edu_10_percentage?: number | null
+          edu_10_result?: string | null
+          edu_10_year?: number | null
+          edu_12_board?: string | null
+          edu_12_marks?: string | null
+          edu_12_percentage?: number | null
+          edu_12_result?: string | null
+          edu_12_year?: number | null
+          edu_degree_marks?: string | null
+          edu_degree_percentage?: number | null
+          edu_degree_result?: string | null
+          edu_degree_university?: string | null
+          edu_degree_year?: number | null
           email?: string
+          employment_status?: string | null
           enrollment_date?: string
+          father_name?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
           location?: string
+          marital_status?: string | null
+          mother_name?: string | null
           notes?: string | null
           phone?: string | null
+          pincode?: string | null
           program?: Database["public"]["Enums"]["program_type"]
+          religion?: string | null
           specialization?: string
+          state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           university?: string
           updated_at?: string
@@ -123,7 +216,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "student"
-      program_type: "BBA" | "MBA"
+      program_type:
+        | "BBA"
+        | "MBA"
+        | "10th"
+        | "12th Arts"
+        | "12th Commerce"
+        | "12th Science"
       student_status: "active" | "inactive" | "graduated" | "suspended"
     }
     CompositeTypes: {
@@ -253,7 +352,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "student"],
-      program_type: ["BBA", "MBA"],
+      program_type: [
+        "BBA",
+        "MBA",
+        "10th",
+        "12th Arts",
+        "12th Commerce",
+        "12th Science",
+      ],
       student_status: ["active", "inactive", "graduated", "suspended"],
     },
   },
