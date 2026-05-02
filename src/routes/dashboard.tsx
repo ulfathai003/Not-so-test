@@ -434,6 +434,50 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
               }}
             />
           </TabsContent>
+
+          {/* FEES */}
+          <TabsContent value="fees" className="grid gap-4 sm:grid-cols-2 pt-4">
+            <Field label="Total fee (₹)"><Input type="number" min={0} step="0.01" value={form.total_fee ?? ""} onChange={(e) => set("total_fee", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee paid (₹)"><Input type="number" min={0} step="0.01" value={form.fee_paid ?? ""} onChange={(e) => set("fee_paid", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee pending (₹)"><Input type="number" min={0} step="0.01" value={form.fee_pending ?? ""} onChange={(e) => set("fee_pending", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Payment status">
+              <Select value={form.payment_status ?? ""} onValueChange={(v) => set("payment_status", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Payment mode">
+              <Select value={form.payment_mode ?? ""} onValueChange={(v) => set("payment_mode", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Last payment date"><Input type="date" value={form.last_payment_date ?? ""} onChange={(e) => set("last_payment_date", e.target.value || null)} /></Field>
+            <Field label="Next due date"><Input type="date" value={form.next_due_date ?? ""} onChange={(e) => set("next_due_date", e.target.value || null)} /></Field>
+          </TabsContent>
+
+          {/* DOCS */}
+          <TabsContent value="docs" className="pt-4">
+            <p className="text-sm text-muted-foreground mb-4">Tick each document once it has been received and verified.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["doc_photo", "Passport-size photo"],
+                ["doc_signature", "Signature"],
+                ["doc_id_proof", "ID proof (Aadhar / PAN)"],
+                ["doc_marksheet_10", "10th marksheet"],
+                ["doc_marksheet_12", "12th / Diploma marksheet"],
+                ["doc_marksheet_degree", "Degree marksheet"],
+              ].map(([key, label]) => (
+                <label key={key} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/30">
+                  <Checkbox
+                    checked={Boolean(form[key as keyof TablesInsert<"students">])}
+                    onCheckedChange={(v) => set(key as keyof TablesInsert<"students">, Boolean(v) as never)}
+                  />
+                  <span className="text-sm font-medium">{label}</span>
+                </label>
+              ))}
+            </div>
+          </TabsContent>
         </Tabs>
 
         <DialogFooter>
