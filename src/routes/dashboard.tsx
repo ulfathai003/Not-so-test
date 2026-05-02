@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, User, Home, FileText } from "lucide-react";
+import { GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, User, Home, FileText, Wallet, FolderCheck, ClipboardList } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,12 @@ const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
 const EMPLOYMENT = ["Employed", "Unemployed", "Self-employed", "Student"];
 const MARITAL = ["Single", "Married", "Divorced", "Widowed"];
 const RESULTS = ["Pass", "Fail", "Distinction", "First Class", "Second Class"];
+const SESSIONS = ["January", "July"];
+const STUDY_MODES = ["Online", "Distance", "Hybrid"];
+const MEDIUMS = ["English", "Hindi", "Bilingual"];
+const PAYMENT_STATUSES = ["Paid", "Partial", "Pending", "Overdue"];
+const PAYMENT_MODES = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
+const LEAD_SOURCES = ["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair"];
 
 function DashboardPage() {
   const { user, role, loading, signOut } = useAuth();
@@ -282,11 +289,14 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Tabs defaultValue="course" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full h-auto">
             <TabsTrigger value="course"><BookOpen className="w-4 h-4 mr-1.5" /> Course</TabsTrigger>
+            <TabsTrigger value="enrollment"><ClipboardList className="w-4 h-4 mr-1.5" /> Enrollment</TabsTrigger>
             <TabsTrigger value="personal"><User className="w-4 h-4 mr-1.5" /> Personal</TabsTrigger>
             <TabsTrigger value="address"><Home className="w-4 h-4 mr-1.5" /> Address</TabsTrigger>
             <TabsTrigger value="education"><FileText className="w-4 h-4 mr-1.5" /> Education</TabsTrigger>
+            <TabsTrigger value="fees"><Wallet className="w-4 h-4 mr-1.5" /> Fees</TabsTrigger>
+            <TabsTrigger value="docs"><FolderCheck className="w-4 h-4 mr-1.5" /> Docs</TabsTrigger>
           </TabsList>
 
           {/* COURSE */}
@@ -317,7 +327,45 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
             </Field>
           </TabsContent>
 
-          {/* PERSONAL */}
+          {/* ENROLLMENT */}
+          <TabsContent value="enrollment" className="grid gap-4 sm:grid-cols-2 pt-4">
+            <Field label="Enrollment number">
+              <Input value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
+            </Field>
+            <Field label="Admission session">
+              <Select value={form.admission_session ?? ""} onValueChange={(v) => set("admission_session", v)}>
+                <SelectTrigger><SelectValue placeholder="January / July" /></SelectTrigger>
+                <SelectContent>{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Study mode">
+              <Select value={form.study_mode ?? ""} onValueChange={(v) => set("study_mode", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{STUDY_MODES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Medium of instruction">
+              <Select value={form.medium_of_instruction ?? ""} onValueChange={(v) => set("medium_of_instruction", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{MEDIUMS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Course name"><Input value={form.course_name ?? ""} onChange={(e) => set("course_name", e.target.value)} maxLength={120} placeholder="Master of Business Administration" /></Field>
+            <Field label="Course code"><Input value={form.course_code ?? ""} onChange={(e) => set("course_code", e.target.value)} maxLength={30} placeholder="MBA-FIN" /></Field>
+            <Field label="Duration (years)"><Input type="number" step="0.5" min={0} max={10} value={form.duration_years ?? ""} onChange={(e) => set("duration_years", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Total semesters"><Input type="number" min={1} max={12} value={form.total_semesters ?? ""} onChange={(e) => set("total_semesters", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Current semester"><Input type="number" min={1} max={12} value={form.current_semester ?? ""} onChange={(e) => set("current_semester", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Counsellor"><Input value={form.counsellor_name ?? ""} onChange={(e) => set("counsellor_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Lead source">
+              <Select value={form.lead_source ?? ""} onValueChange={(v) => set("lead_source", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Referral name"><Input value={form.referral_name ?? ""} onChange={(e) => set("referral_name", e.target.value)} maxLength={120} /></Field>
+          </TabsContent>
+
+
           <TabsContent value="personal" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Full name (as per SSLC)" required><Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} maxLength={120} required /></Field>
             <Field label="Father name"><Input value={form.father_name ?? ""} onChange={(e) => set("father_name", e.target.value)} maxLength={120} /></Field>
@@ -385,6 +433,50 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
                 set(`edu_degree_${map[field]}` as keyof TablesInsert<"students">, val as never);
               }}
             />
+          </TabsContent>
+
+          {/* FEES */}
+          <TabsContent value="fees" className="grid gap-4 sm:grid-cols-2 pt-4">
+            <Field label="Total fee (₹)"><Input type="number" min={0} step="0.01" value={form.total_fee ?? ""} onChange={(e) => set("total_fee", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee paid (₹)"><Input type="number" min={0} step="0.01" value={form.fee_paid ?? ""} onChange={(e) => set("fee_paid", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee pending (₹)"><Input type="number" min={0} step="0.01" value={form.fee_pending ?? ""} onChange={(e) => set("fee_pending", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Payment status">
+              <Select value={form.payment_status ?? ""} onValueChange={(v) => set("payment_status", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Payment mode">
+              <Select value={form.payment_mode ?? ""} onValueChange={(v) => set("payment_mode", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Last payment date"><Input type="date" value={form.last_payment_date ?? ""} onChange={(e) => set("last_payment_date", e.target.value || null)} /></Field>
+            <Field label="Next due date"><Input type="date" value={form.next_due_date ?? ""} onChange={(e) => set("next_due_date", e.target.value || null)} /></Field>
+          </TabsContent>
+
+          {/* DOCS */}
+          <TabsContent value="docs" className="pt-4">
+            <p className="text-sm text-muted-foreground mb-4">Tick each document once it has been received and verified.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["doc_photo", "Passport-size photo"],
+                ["doc_signature", "Signature"],
+                ["doc_id_proof", "ID proof (Aadhar / PAN)"],
+                ["doc_marksheet_10", "10th marksheet"],
+                ["doc_marksheet_12", "12th / Diploma marksheet"],
+                ["doc_marksheet_degree", "Degree marksheet"],
+              ].map(([key, label]) => (
+                <label key={key} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/30">
+                  <Checkbox
+                    checked={Boolean(form[key as keyof TablesInsert<"students">])}
+                    onCheckedChange={(v) => set(key as keyof TablesInsert<"students">, Boolean(v) as never)}
+                  />
+                  <span className="text-sm font-medium">{label}</span>
+                </label>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
 
@@ -538,6 +630,40 @@ function StudentPanel({ email }: { email: string }) {
             ["Marks", record.edu_degree_marks],
             ["Percentage", record.edu_degree_percentage],
             ["Result", record.edu_degree_result],
+          ]} />
+
+          <DetailSection title="Enrollment" rows={[
+            ["Enrollment number", record.enrollment_number],
+            ["Admission session", record.admission_session],
+            ["Study mode", record.study_mode],
+            ["Medium", record.medium_of_instruction],
+            ["Course name", record.course_name],
+            ["Course code", record.course_code],
+            ["Duration (years)", record.duration_years],
+            ["Current semester", record.current_semester],
+            ["Total semesters", record.total_semesters],
+            ["Counsellor", record.counsellor_name],
+            ["Lead source", record.lead_source],
+            ["Referral", record.referral_name],
+          ]} />
+
+          <DetailSection title="Fees" rows={[
+            ["Total fee", record.total_fee != null ? `₹ ${record.total_fee}` : null],
+            ["Fee paid", record.fee_paid != null ? `₹ ${record.fee_paid}` : null],
+            ["Fee pending", record.fee_pending != null ? `₹ ${record.fee_pending}` : null],
+            ["Payment status", record.payment_status],
+            ["Payment mode", record.payment_mode],
+            ["Last payment", record.last_payment_date],
+            ["Next due", record.next_due_date],
+          ]} />
+
+          <DetailSection title="Documents submitted" rows={[
+            ["Photo", record.doc_photo ? "✓ Received" : "Pending"],
+            ["Signature", record.doc_signature ? "✓ Received" : "Pending"],
+            ["ID proof", record.doc_id_proof ? "✓ Received" : "Pending"],
+            ["10th marksheet", record.doc_marksheet_10 ? "✓ Received" : "Pending"],
+            ["12th marksheet", record.doc_marksheet_12 ? "✓ Received" : "Pending"],
+            ["Degree marksheet", record.doc_marksheet_degree ? "✓ Received" : "Pending"],
           ]} />
         </div>
       )}
