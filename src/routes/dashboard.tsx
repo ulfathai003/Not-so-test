@@ -289,11 +289,14 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Tabs defaultValue="course" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full h-auto">
             <TabsTrigger value="course"><BookOpen className="w-4 h-4 mr-1.5" /> Course</TabsTrigger>
+            <TabsTrigger value="enrollment"><ClipboardList className="w-4 h-4 mr-1.5" /> Enrollment</TabsTrigger>
             <TabsTrigger value="personal"><User className="w-4 h-4 mr-1.5" /> Personal</TabsTrigger>
             <TabsTrigger value="address"><Home className="w-4 h-4 mr-1.5" /> Address</TabsTrigger>
             <TabsTrigger value="education"><FileText className="w-4 h-4 mr-1.5" /> Education</TabsTrigger>
+            <TabsTrigger value="fees"><Wallet className="w-4 h-4 mr-1.5" /> Fees</TabsTrigger>
+            <TabsTrigger value="docs"><FolderCheck className="w-4 h-4 mr-1.5" /> Docs</TabsTrigger>
           </TabsList>
 
           {/* COURSE */}
