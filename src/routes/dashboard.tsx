@@ -65,6 +65,9 @@ function DashboardPage() {
             EduConnect
           </Link>
           <div className="flex items-center gap-3">
+            {role === "admin" && (
+              <Link to="/manager"><Button size="sm" variant="outline"><Wallet className="w-4 h-4 mr-1" /> Manager console</Button></Link>
+            )}
             <Badge variant="outline" className="capitalize border-primary/30 text-primary">
               {role === "admin" ? <><ShieldCheck className="w-3 h-3 mr-1" /> Admin</> : "Student"}
             </Badge>

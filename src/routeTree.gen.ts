@@ -13,6 +13,7 @@ import { Route as UniversitiesRouteImport } from './routes/universities'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProgramsRouteImport } from './routes/programs'
+import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -37,6 +38,11 @@ const SetupRoute = SetupRouteImport.update({
 const ProgramsRoute = ProgramsRouteImport.update({
   id: '/programs',
   path: '/programs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagerRoute = ManagerRouteImport.update({
+  id: '/manager',
+  path: '/manager',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/manager': typeof ManagerRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/manager': typeof ManagerRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/manager': typeof ManagerRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/login'
+    | '/manager'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/login'
+    | '/manager'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/login'
+    | '/manager'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  ManagerRoute: typeof ManagerRoute
   ProgramsRoute: typeof ProgramsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/programs'
       fullPath: '/programs'
       preLoaderRoute: typeof ProgramsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manager': {
+      id: '/manager'
+      path: '/manager'
+      fullPath: '/manager'
+      preLoaderRoute: typeof ManagerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  ManagerRoute: ManagerRoute,
   ProgramsRoute: ProgramsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
