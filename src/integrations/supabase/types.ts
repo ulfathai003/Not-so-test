@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          payment_mode: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          payment_mode?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          payment_mode?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_mode: string | null
+          receipt_number: string | null
+          student_id: string
+          transaction_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+          receipt_number?: string | null
+          student_id: string
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+          receipt_number?: string | null
+          student_id?: string
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_ups: {
+        Row: {
+          contact_method: string | null
+          created_at: string
+          created_by: string | null
+          follow_up_date: string
+          id: string
+          next_follow_up: string | null
+          notes: string | null
+          outcome: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_method?: string | null
+          created_at?: string
+          created_by?: string | null
+          follow_up_date?: string
+          id?: string
+          next_follow_up?: string | null
+          notes?: string | null
+          outcome?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_method?: string | null
+          created_at?: string
+          created_by?: string | null
+          follow_up_date?: string
+          id?: string
+          next_follow_up?: string | null
+          notes?: string | null
+          outcome?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
