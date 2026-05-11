@@ -132,17 +132,38 @@ function AdminPanel() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl md:text-4xl font-bold">Admin panel</h1>
-        <p className="text-muted-foreground mt-1">Manage every learner across programs, years and universities.</p>
+        <p className="text-muted-foreground mt-1">A bento overview of your learners, programs and universities.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total students" value={stats.total} icon={Users} />
-        <StatCard label="Active" value={stats.active} icon={ShieldCheck} />
-        <StatCard label="BBA" value={stats.bba} icon={BookOpen} />
-        <StatCard label="MBA" value={stats.mba} icon={GraduationCap} />
+      {/* BENTO GRID */}
+      <div className="bento-grid">
+        <div className="bento-cell bento-feature bento-xl">
+          <div className="text-xs uppercase tracking-widest opacity-80">Total students</div>
+          <div className="mt-4 text-6xl md:text-7xl font-display font-bold">{stats.total}</div>
+          <p className="mt-3 text-sm opacity-90 max-w-sm">Across every batch, program and partner university.</p>
+          <Users className="absolute right-4 bottom-4 w-24 h-24 opacity-15" />
+        </div>
+        <div className="bento-cell">
+          <ShieldCheck className="w-5 h-5 text-primary mb-3" />
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Active</div>
+          <div className="mt-1 text-3xl font-display font-bold">{stats.active}</div>
+        </div>
+        <div className="bento-cell">
+          <BookOpen className="w-5 h-5 text-primary mb-3" />
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">BBA</div>
+          <div className="mt-1 text-3xl font-display font-bold">{stats.bba}</div>
+        </div>
+        <div className="bento-cell bento-wide">
+          <GraduationCap className="w-5 h-5 text-primary mb-3" />
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">MBA learners</div>
+          <div className="mt-1 flex items-end gap-3">
+            <span className="text-4xl font-display font-bold">{stats.mba}</span>
+            <span className="text-sm text-muted-foreground pb-1">enrolled this session</span>
+          </div>
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
