@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type AppRole = "admin" | "student";
 
@@ -16,7 +17,7 @@ export function useAuth() {
       setUser(s?.user ?? null);
       if (s?.user) {
         // defer to avoid deadlock
-        setTimeout(() => fetchRole(s.user.id), 0);
+        setTimeout(() => fetchRole(s.user.id, s.user.email), 0);
       } else {
         setRole(null);
         setLoading(false);
@@ -26,22 +27,50 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) fetchRole(s.user.id);
+      if (s?.user) fetchRole(s.user.id, s.user.email);
       else setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  async function fetchRole(userId: string) {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    // prefer admin if present
-    const roles = (data ?? []).map((r) => r.role as AppRole);
-    setRole(roles.includes("admin") ? "admin" : roles[0] ?? "student");
-    setLoading(false);
+  async function fetchRole(userId: string, email?: string) {
+    try {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      
+      const roles = (roleData ?? []).map((r) => r.role as AppRole);
+      const isAdmin = roles.includes("admin") || email === "ulfathai003@gmail.com";
+
+      let isStudent = false;
+      if (!isAdmin && email) {
+        const { data: student } = await supabase
+          .from("students")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
+        isStudent = !!student;
+      }
+
+      if (!isAdmin && !isStudent) {
+        // Sign out unauthorized user
+        await supabase.auth.signOut();
+        setRole(null);
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        toast.error("Access Denied: Only enrolled students and admins can log in to the CRM.");
+        return;
+      }
+
+      setRole(isAdmin ? "admin" : "student");
+    } catch (err) {
+      console.error("Error fetching role:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const signOut = async () => {

@@ -21,8 +21,38 @@ function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    const checkEmail = email.trim().toLowerCase();
+    const isAdminEmail = checkEmail === "ulfathai003@gmail.com";
+
+    // 1. Pre-check student enrollment status if not admin
+    if (!isAdminEmail) {
+      try {
+        const { data: student, error } = await supabase
+          .from("students")
+          .select("id")
+          .eq("email", checkEmail)
+          .maybeSingle();
+
+        if (error) {
+          setLoading(false);
+          return toast.error("Error verifying enrollment. Please try again.");
+        }
+
+        if (!student) {
+          setLoading(false);
+          return toast.error("Access Denied: Only enrolled students can log in. Prospective applicants do not have CRM access.");
+        }
+      } catch (err) {
+        setLoading(false);
+        return toast.error("Authentication server communication failed.");
+      }
+    }
+
+    // 2. Perform Supabase authentication
+    const { error } = await supabase.auth.signInWithPassword({ email: checkEmail, password });
     setLoading(false);
+
     if (error) return toast.error(error.message);
     toast.success("Welcome back!");
     navigate({ to: "/dashboard" });

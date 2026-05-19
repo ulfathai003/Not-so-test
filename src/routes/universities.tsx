@@ -1,13 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/universities")({
   head: () => ({
     meta: [
-      { title: "Partner Universities | EduConnect" },
+      { title: "Partner Universities | EduConnect Times" },
       { name: "description", content: "EduConnect partners with Jain, Manipal, Amity, NMIMS, IGNOU and LPU for online degree programs." },
     ],
   }),
@@ -25,34 +23,57 @@ const universities = [
 
 function UniversitiesPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col news-paper">
       <SiteHeader />
-      <main className="pt-28 pb-24 flex-1">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight max-w-3xl">
-            Trusted partners. <span className="text-gradient">Recognised degrees.</span>
-          </h1>
-          <p className="mt-4 text-muted-foreground text-lg max-w-2xl">
-            Every degree on EduConnect is delivered directly by the partner university and is UGC-DEB recognised.
+      <main className="container mx-auto px-4 py-10 flex-1">
+        {/* Headline */}
+        <section className="text-center max-w-4xl mx-auto">
+          <p className="news-kicker">Universities · Accreditation & Ranking</p>
+          <h2 className="mt-3 font-headline text-5xl md:text-7xl">
+            Trusted Partners. UGC-DEB Recognised Degrees.
+          </h2>
+          <p className="mt-4 news-byline">
+            A Certified Audit of Our Partnering Institutions
           </p>
+          <div className="news-divider-double mt-6" />
+        </section>
 
-          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {universities.map((u) => (
-              <div key={u.name} className="bg-gradient-card border border-border rounded-2xl p-6 shadow-card hover:shadow-glow transition-shadow">
-                <span className="inline-grid place-items-center w-11 h-11 rounded-xl bg-primary/10 text-primary mb-4">
-                  <Building2 className="w-5 h-5" />
-                </span>
-                <h3 className="font-display font-semibold text-lg">{u.name}</h3>
-                <div className="text-xs text-muted-foreground mt-1">{u.city}</div>
-                <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{u.note}</p>
+        {/* Intro */}
+        <section className="mt-8 max-w-3xl mx-auto font-serif-news text-[15px] leading-relaxed text-center">
+          <p className="mb-4">
+            Every degree delivered through the EduConnect platform is awarded directly by the respective
+            partner university. All programs comply fully with the regulations of the University Grants
+            Commission (UGC) and the Distance Education Bureau (DEB).
+          </p>
+        </section>
+
+        {/* Directory - styled as newspaper columns / advertisements */}
+        <section className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 news-rule py-8">
+          {universities.map((u) => (
+            <div key={u.name} className="news-card border border-foreground p-5 flex flex-col justify-between">
+              <div>
+                <p className="news-kicker text-xs">{u.city}</p>
+                <h3 className="font-headline text-2xl mt-1.5 leading-tight">{u.name}</h3>
+                <div className="news-divider my-3" />
+                <p className="font-serif-news text-sm leading-relaxed text-foreground/90">
+                  {u.note}
+                </p>
               </div>
-            ))}
-          </div>
+              <div className="mt-5 text-right">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-foreground/60">
+                  UGC-DEB APPROVED
+                </span>
+              </div>
+            </div>
+          ))}
+        </section>
 
-          <div className="mt-16 text-center">
-            <Button asChild size="lg" className="bg-gradient-hero shadow-glow"><Link to="/signup">Apply now</Link></Button>
-          </div>
-        </div>
+        {/* Bottom CTA */}
+        <section className="mt-12 text-center">
+          <Link to="/signup" className="inline-block bg-foreground text-background px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest">
+            Apply Now to Partner Universities →
+          </Link>
+        </section>
       </main>
       <SiteFooter />
     </div>

@@ -1,6 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 const links = [
   { to: "/", label: "Front Page" },
@@ -19,6 +21,24 @@ const today = new Date().toLocaleDateString("en-IN", {
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  }
+
   return (
     <header className="news-paper border-b border-foreground/80">
       {/* Top dateline */}
@@ -38,7 +58,7 @@ export function SiteHeader() {
           </h1>
         </Link>
         <p className="news-byline mt-2">
-          “Distance Learning, Faithfully Reported Since 2016”
+          "Distance Learning, Faithfully Reported Since 2016"
         </p>
       </div>
 
@@ -58,12 +78,39 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
+
+          {/* Auth buttons — desktop */}
           <div className="hidden md:flex items-center gap-4 text-sm font-serif-news">
-            <Link to="/login" className="uppercase tracking-wider news-link">Sign in</Link>
-            <Link to="/signup" className="uppercase tracking-wider bg-foreground text-background px-3 py-1">
-              Apply now
-            </Link>
+            {user ? (
+              <>
+                <span className="text-xs uppercase tracking-wider text-foreground/60 max-w-[160px] truncate">
+                  {user.email}
+                </span>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1 uppercase tracking-wider news-link"
+                >
+                  <LayoutDashboard className="w-3 h-3" />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-1 uppercase tracking-wider bg-foreground text-background px-3 py-1 hover:opacity-80"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="uppercase tracking-wider news-link">Sign in</Link>
+                <Link to="/signup" className="uppercase tracking-wider bg-foreground text-background px-3 py-1">
+                  Apply now
+                </Link>
+              </>
+            )}
           </div>
+
           <button
             className="md:hidden p-2 -mr-2"
             onClick={() => setOpen((o) => !o)}
@@ -74,6 +121,7 @@ export function SiteHeader() {
         </div>
       </div>
 
+      {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-foreground/40">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2 font-serif-news">
@@ -83,8 +131,21 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="flex gap-2 pt-2">
-              <Link to="/login" className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider">Sign in</Link>
-              <Link to="/signup" className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider">Apply now</Link>
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </Link>
+                  <button onClick={() => { handleSignOut(); setOpen(false); }} className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider">
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>Sign in</Link>
+                  <Link to="/signup" className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>Apply now</Link>
+                </>
+              )}
             </div>
           </div>
         </div>
