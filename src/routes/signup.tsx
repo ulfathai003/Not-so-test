@@ -24,80 +24,108 @@ function SignupPage() {
     setLoading(true);
 
     const checkEmail = email.trim().toLowerCase();
-    const isAdminEmail = checkEmail === "ulfathai003@gmail.com";
 
-    // 1. Pre-check student enrollment status if not admin
-    if (!isAdminEmail) {
-      try {
-        const { data: student, error } = await supabase
-          .from("students")
-          .select("id")
-          .eq("email", checkEmail)
-          .maybeSingle();
+    try {
+      // Perform Supabase authentication
+      const { error } = await supabase.auth.signUp({
+        email: checkEmail,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: { full_name: fullName },
+        },
+      });
+      setLoading(false);
 
-        if (error) {
-          setLoading(false);
-          return toast.error("Error verifying enrollment. Please try again.");
-        }
-
-        if (!student) {
-          setLoading(false);
-          return toast.error("Access Denied: Only enrolled students can sign up. Prospective applicants cannot register a CRM account.");
-        }
-      } catch (err) {
-        setLoading(false);
-        return toast.error("Authentication server communication failed.");
-      }
+      if (error) return toast.error(error.message);
+      toast.success("Account created! Welcome!");
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      setLoading(false);
+      return toast.error("Account creation failed. Please check your network connection.");
     }
-
-    // 2. Perform Supabase authentication
-    const { error } = await supabase.auth.signUp({
-      email: checkEmail,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: fullName },
-      },
-    });
-    setLoading(false);
-
-    if (error) return toast.error(error.message);
-    toast.success("Account created! Signing you in...");
-    navigate({ to: "/dashboard" });
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      <div className="hidden lg:block relative bg-gradient-hero">
-        <div className="absolute inset-0 grid place-items-center text-primary-foreground p-12">
-          <div className="max-w-md">
-            <Link to="/" className="inline-flex items-center gap-2 font-display font-bold mb-10">
-              <span className="grid place-items-center w-9 h-9 rounded-lg bg-white/20 backdrop-blur"><GraduationCap className="w-5 h-5" /></span>
-              EduConnect
-            </Link>
-            <h1 className="text-4xl font-bold leading-tight">Start your application in minutes.</h1>
-            <p className="mt-4 opacity-90">One account, six universities, twenty-plus specializations.</p>
-          </div>
+    <div className="min-h-screen news-paper flex flex-col items-center justify-center p-4 sm:p-8">
+      {/* Editorial Masthead */}
+      <div className="text-center max-w-md mb-8 w-full">
+        <Link to="/" className="font-headline text-4xl sm:text-5xl hover:opacity-80 uppercase tracking-tight block">
+          EduConnect Times
+        </Link>
+        <div className="news-divider mt-3 py-1.5 text-center text-[10px] sm:text-xs uppercase tracking-widest font-sans font-bold">
+          Vol. CXIV · Special Admissions Issue · Bengaluru
         </div>
       </div>
 
-      <div className="flex items-center justify-center p-6 sm:p-12">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
-          <div>
-            <h2 className="text-3xl font-bold">Create account</h2>
-            <p className="text-sm text-muted-foreground mt-1">Get instant access to your learning dashboard.</p>
+      {/* Signup Card - Brutalist Mondrian Outline */}
+      <div className="w-full max-w-md bg-[#fbf6e7] border-4 border-foreground p-6 sm:p-10 shadow-[8px_8px_0px_0px_#1a1410] transition-transform hover:-translate-y-1">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="text-center pb-4 border-b border-foreground/30">
+            <h2 className="font-headline text-3xl uppercase tracking-tight">Create Account</h2>
+            <p className="font-serif-news text-xs italic mt-1 text-[#6b3e1a]">Register for the 2026 academic intake desk</p>
           </div>
-          <div><Label htmlFor="n">Full name</Label><Input id="n" required maxLength={100} value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div><Label htmlFor="pw">Password</Label><Input id="pw" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-          <Button disabled={loading} className="w-full bg-gradient-hero shadow-glow">{loading ? "Creating..." : "Create account"}</Button>
-          <div className="text-sm text-muted-foreground text-center">
-            Already have an account? <Link to="/login" className="text-primary font-medium">Sign in</Link>
+
+          <div className="space-y-2">
+            <Label htmlFor="n" className="font-sans font-bold uppercase tracking-wider text-xs block">Full Name</Label>
+            <Input 
+              id="n" 
+              required 
+              maxLength={100}
+              value={fullName} 
+              onChange={(e) => setFullName(e.target.value)} 
+              className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+              placeholder="e.g. Jane Doe"
+            />
           </div>
-          <div className="text-xs text-muted-foreground text-center pt-4 border-t border-border">
-            <Link to="/" className="hover:text-foreground">← Back to website</Link>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="font-sans font-bold uppercase tracking-wider text-xs block">Email Address</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              required 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+              placeholder="e.g. jane.doe@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pw" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>
+            <Input 
+              id="pw" 
+              type="password" 
+              minLength={8}
+              required 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+              placeholder="Min. 8 characters"
+            />
+          </div>
+
+          <Button 
+            disabled={loading} 
+            className="w-full rounded-none bg-foreground text-background font-sans font-bold uppercase tracking-wider py-3 border-2 border-foreground hover:bg-transparent hover:text-foreground transition-all shadow-[4px_4px_0px_0px_#6b3e1a]"
+          >
+            {loading ? "Registering Account..." : "Create Applicant Account"}
+          </Button>
+
+          <div className="text-xs sm:text-sm text-center pt-4 border-t border-foreground/30 font-serif-news">
+            Already registered? <Link to="/login" className="news-link font-bold">Sign in here</Link>
+          </div>
+          
+          <div className="text-center pt-2 font-serif-news">
+            <Link to="/" className="text-xs uppercase tracking-wider font-sans font-bold text-[#6b3e1a] hover:opacity-80">← Return to Main Page</Link>
           </div>
         </form>
+      </div>
+
+      {/* Fine Print Footer */}
+      <div className="mt-8 text-center max-w-xs text-[10px] text-[#4a3520] font-serif-news leading-relaxed">
+        All applicant submissions are verified against official records. Security protocol backed by active encryption.
       </div>
     </div>
   );

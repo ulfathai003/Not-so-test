@@ -1,6 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, User, Home, FileText, Wallet, FolderCheck, ClipboardList } from "lucide-react";
+import { 
+  GraduationCap, LogOut, Plus, Search, ShieldCheck, Users, 
+  Pencil, Trash2, Filter, BookOpen, MapPin, Mail, Phone, 
+  User, Home, FileText, Wallet, FolderCheck, ClipboardList,
+  Send, MessageSquare, Calendar, ChevronRight, Download, CheckCircle2, Save, FileSpreadsheet
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +21,7 @@ import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard | EduConnect" }] }),
+  head: () => ({ meta: [{ title: "Dashboard | EduConnect Times" }] }),
   component: DashboardPage,
 });
 
@@ -39,7 +44,7 @@ const PAYMENT_MODES = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
 const LEAD_SOURCES = ["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair"];
 
 function DashboardPage() {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, role, studentStatus, studentData, loading, signOut, refetchStudent } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,43 +53,442 @@ function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background">
-        <div className="text-muted-foreground text-sm">Loading your dashboard…</div>
+      <div className="min-h-screen grid place-items-center bg-[#f4ecd8]">
+        <div className="text-[#1a1410] font-serif-news text-sm italic">Loading admissions desk…</div>
       </div>
     );
   }
 
+  const isProspect = role === "student" && studentStatus !== "active" && studentStatus !== "graduated";
+
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="container mx-auto h-16 px-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-display font-bold">
-            <span className="grid place-items-center w-9 h-9 rounded-lg bg-gradient-hero shadow-glow">
-              <GraduationCap className="w-5 h-5 text-primary-foreground" />
-            </span>
-            EduConnect
-          </Link>
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen news-paper flex flex-col">
+      {/* Editorial Header */}
+      <header className="border-b-4 border-foreground py-4 px-4 bg-[#fbf6e7]">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <Link to="/" className="font-headline text-3xl uppercase tracking-tight block hover:opacity-85">
+              EduConnect Times
+            </Link>
+            <div className="text-[10px] uppercase tracking-widest font-sans font-bold text-[#6b3e1a] mt-0.5">
+              Vol. CXIV · Official Admissions Desk · Bengaluru
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {role === "admin" && (
-              <Link to="/manager"><Button size="sm" variant="outline"><Wallet className="w-4 h-4 mr-1" /> Manager console</Button></Link>
+              <Link to="/manager">
+                <Button size="sm" className="rounded-none border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/5 font-sans font-bold uppercase tracking-wider text-xs">
+                  Manager Console
+                </Button>
+              </Link>
             )}
-            <Badge variant="outline" className="capitalize border-primary/30 text-primary">
-              {role === "admin" ? <><ShieldCheck className="w-3 h-3 mr-1" /> Admin</> : "Student"}
-            </Badge>
-            <span className="hidden sm:inline text-sm text-muted-foreground">{user.email}</span>
-            <Button size="sm" variant="ghost" onClick={signOut}><LogOut className="w-4 h-4 mr-1" /> Sign out</Button>
+            
+            <span className="font-serif-news text-xs italic bg-foreground/5 px-3 py-1.5 border border-foreground/30 text-[#1a1410]">
+              User: <span className="font-sans font-bold uppercase tracking-wider">{role}</span>
+              {studentStatus && (
+                <> · Status: <span className="font-sans font-bold uppercase tracking-wider text-[#6b3e1a]">{studentStatus}</span></>
+              )}
+            </span>
+            
+            <span className="hidden md:inline text-xs font-sans font-bold text-foreground">{user.email}</span>
+            
+            <Button 
+              size="sm" 
+              className="rounded-none bg-foreground text-background border-2 border-foreground hover:bg-transparent hover:text-foreground font-sans font-bold uppercase tracking-wider text-xs px-3 py-1.5"
+              onClick={signOut}
+            >
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-10">
-        {role === "admin" ? <AdminPanel /> : <StudentPanel email={user.email!} />}
+      <main className="container mx-auto px-4 py-8 flex-1">
+        {role === "admin" ? (
+          <AdminPanel />
+        ) : isProspect ? (
+          <ProspectDashboard studentStatus={studentStatus} studentData={studentData} refetchStudent={refetchStudent} email={user.email!} />
+        ) : (
+          <StudentPanel email={user.email!} />
+        )}
       </main>
+      
+      {/* Floating Counselor Chat Widget */}
+      {isProspect && (
+        <CounselorChatWidget 
+          fullName={studentData?.full_name || "Applicant"} 
+          email={user.email!} 
+        />
+      )}
     </div>
   );
 }
 
-/* -------------------------- ADMIN -------------------------- */
+/* -------------------------- PROSPECT CUSTOM DASHBOARD -------------------------- */
+
+function ProspectDashboard({
+  studentStatus,
+  studentData,
+  refetchStudent,
+  email
+}: {
+  studentStatus: string | null;
+  studentData: any;
+  refetchStudent: () => Promise<void>;
+  email: string;
+}) {
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftData, setDraftData] = useState<any>(null);
+
+  useEffect(() => {
+    const draft = localStorage.getItem("educonnect_admissions_draft");
+    if (draft) {
+      setHasDraft(true);
+      try {
+        setDraftData(JSON.parse(draft));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Determine active step
+  // 1: Draft, 2: Submitted, 3: Counselor Review, 4: Enrolled
+  let currentTimelineStep = 1;
+  if (studentStatus === "inactive") {
+    currentTimelineStep = 2; // Submitted & In Review
+  } else if (studentStatus === "active") {
+    currentTimelineStep = 4; // Enrolled
+  }
+
+  const printVoucher = () => {
+    const data = studentData || draftData;
+    if (!data) {
+      return toast.error("No application data found to generate a voucher receipt!");
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>EduConnect Times - Official Desk Voucher</title>
+          <style>
+            body { font-family: 'Georgia', serif; background-color: #fbf6e7; color: #1a1410; padding: 40px; }
+            .receipt { border: 4px double #1a1410; padding: 30px; max-width: 650px; margin: 0 auto; background: #fff; }
+            .header { text-align: center; border-bottom: 2px solid #1a1410; padding-bottom: 20px; }
+            .title { font-size: 28px; font-weight: bold; text-transform: uppercase; margin: 0; }
+            .subtitle { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin: 5px 0 0; }
+            .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+            .field { border-bottom: 1px solid #1a1410; padding-bottom: 5px; }
+            .label { font-size: 10px; text-transform: uppercase; font-family: sans-serif; font-weight: bold; color: #6b3e1a; }
+            .val { font-size: 15px; margin-top: 3px; }
+            .status-box { background-color: #f4ecd8; border: 2px solid #1a1410; text-align: center; padding: 12px; margin: 20px 0; font-weight: bold; text-transform: uppercase; }
+            .fineprint { font-size: 10px; text-align: center; border-top: 1px solid #1a1410; padding-top: 15px; margin-top: 25px; line-height: 1.5; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="header">
+              <div class="title">EduConnect Times</div>
+              <div class="subtitle">Official Admissions Desk Voucher · Batch of 2026</div>
+            </div>
+            
+            <div class="status-box">
+              Application Status: ${studentStatus === "inactive" ? "PENDING COUNSELLOR REVIEW" : "DRAFT MODE"}
+            </div>
+
+            <div class="field-grid">
+              <div class="field">
+                <div class="label">Applicant Name</div>
+                <div class="val">${data.full_name || "Applicant Draft"}</div>
+              </div>
+              <div class="field">
+                <div class="label">Registered Email</div>
+                <div class="val">${email}</div>
+              </div>
+              <div class="field">
+                <div class="label">Program</div>
+                <div class="val">${data.program || "Not Selected"}</div>
+              </div>
+              <div class="field">
+                <div class="label">University</div>
+                <div class="val">${data.university || "Not Selected"}</div>
+              </div>
+              <div class="field">
+                <div class="label">Aadhar Number</div>
+                <div class="val">${data.aadhar_number || "Not Provided"}</div>
+              </div>
+              <div class="field">
+                <div class="label">Phone Number</div>
+                <div class="val">${data.phone || "Not Provided"}</div>
+              </div>
+            </div>
+            <div class="fineprint">
+              This document certifies a temporary slot reservation. Please submit documents for counsellor review. Support line: ulfathai003@gmail.com.
+            </div>
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  return (
+    <div className="space-y-8 max-w-4xl mx-auto">
+      {/* Editorial Welcome banner */}
+      <section className="bg-[#fbf6e7] border-4 border-foreground p-6 sm:p-10 shadow-[6px_6px_0px_0px_#1a1410]">
+        <p className="news-kicker">Admission desk update · Special Edition</p>
+        <h2 className="font-headline text-3xl sm:text-4xl uppercase tracking-tight mt-1">
+          Welcome to your Admissions Portal
+        </h2>
+        <p className="font-serif-news text-sm italic mt-2 text-[#6b3e1a]">
+          Track your course enrollment, schedule a callback, and manage academic documents.
+        </p>
+      </section>
+
+      {/* Progress Timeline */}
+      <section className="bg-[#fbf6e7] border-4 border-foreground p-6 sm:p-10 shadow-[6px_6px_0px_0px_#1a1410] space-y-6">
+        <h3 className="font-headline text-2xl uppercase border-b border-foreground/30 pb-3">Admissions Intake Progress Timeline</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+          {[
+            { step: 1, label: "Draft Saved", desc: "Local draft or slot reservation.", active: currentTimelineStep >= 1 },
+            { step: 2, label: "Submitted", desc: "Sent to admissions office.", active: currentTimelineStep >= 2 },
+            { step: 3, label: "Counselor Review", desc: "Reviewing eligibility.", active: currentTimelineStep >= 2 }, // In review once submitted
+            { step: 4, label: "Enrolled", desc: "Official seat confirmation.", active: currentTimelineStep >= 4 }
+          ].map((t, idx) => (
+            <div key={t.step} className="flex flex-col items-start space-y-2 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-none border-2 border-foreground flex items-center justify-center font-sans font-bold text-sm transition-all ${
+                  t.active 
+                    ? "bg-[#6b3e1a] text-white shadow-[2px_2px_0px_0px_#1a1410]" 
+                    : "bg-transparent text-foreground/40"
+                }`}>
+                  {t.step}
+                </div>
+                <span className={`font-sans font-bold uppercase text-xs tracking-wider ${t.active ? "text-foreground" : "text-foreground/40"}`}>
+                  {t.label}
+                </span>
+              </div>
+              <p className="font-serif-news text-xs italic text-foreground/70 pl-1">
+                {t.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Status Details & Actions */}
+      <section className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-[#fbf6e7] border-4 border-foreground p-6 sm:p-8 shadow-[6px_6px_0px_0px_#1a1410] flex flex-col justify-between">
+          <div>
+            <h3 className="font-headline text-2xl uppercase border-b border-foreground/30 pb-2">Intake Status Report</h3>
+            
+            {studentStatus === "inactive" ? (
+              <div className="mt-4 space-y-4">
+                <div className="bg-[#f4ecd8] border-2 border-foreground p-4 font-serif-news text-sm italic border-l-8 border-l-[#6b3e1a]">
+                  Your admissions credentials have been received and are currently under senior counselor review. We will contact you at <strong>{email}</strong> shortly.
+                </div>
+                <div className="grid grid-cols-2 gap-4 font-serif-news text-xs pt-2">
+                  <div><strong>Selected Program:</strong> {studentData?.program}</div>
+                  <div><strong>University:</strong> {studentData?.university}</div>
+                  <div><strong>Specialization:</strong> {studentData?.specialization || "General"}</div>
+                  <div><strong>Session:</strong> {studentData?.admission_session} 2026</div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-4">
+                <div className="bg-[#f4ecd8] border-2 border-foreground p-4 font-serif-news text-sm italic border-l-8 border-l-foreground/40">
+                  {hasDraft 
+                    ? `You have an active draft saved for a ${draftData?.program} at ${draftData?.university}. Complete your submission below.` 
+                    : "No active application draft found. Kickstart your admissions request."
+                  }
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3 pt-4 border-t border-foreground/20">
+            <Link to="/admission-desk" className="inline-block">
+              <Button className="rounded-none bg-foreground text-background border-2 border-foreground font-sans font-bold uppercase tracking-wider text-xs py-2 shadow-[3px_3px_0px_0px_#6b3e1a] hover:bg-transparent hover:text-foreground">
+                {studentStatus === "inactive" ? "Update Details" : hasDraft ? "Resume Application" : "Start Application"}
+              </Button>
+            </Link>
+            {(studentData || draftData) && (
+              <Button 
+                onClick={printVoucher}
+                variant="outline" 
+                className="rounded-none border-2 border-foreground bg-transparent font-sans font-bold uppercase tracking-wider text-xs py-2 hover:bg-foreground/5"
+              >
+                <Download className="w-4 h-4 mr-2" /> Print Summary Voucher
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Informative Side panel */}
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410] font-serif-news space-y-4">
+          <h4 className="font-headline text-lg uppercase border-b border-foreground/20 pb-2 text-[#6b3e1a]">Admissions FAQ</h4>
+          <div className="space-y-3 text-xs leading-relaxed">
+            <div>
+              <strong className="block text-foreground">Is my seat reserved?</strong>
+              Yes, printing a voucher locks in your temporary eligibility bracket for 7 days.
+            </div>
+            <div>
+              <strong className="block text-foreground">Where do I upload files?</strong>
+              You can toggle verified readiness checklist in Step 5 of the intake desk.
+            </div>
+            <div>
+              <strong className="block text-foreground">Direct Desk Helpline:</strong>
+              Email our Lead admissions director at <a href="mailto:ulfathai003@gmail.com" className="underline font-bold text-foreground">ulfathai003@gmail.com</a>.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* -------------------------- RETRO COUNSELOR CHAT WIDGET -------------------------- */
+
+function CounselorChatWidget({ fullName, email }: { fullName: string; email: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Array<{ sender: "bot" | "user"; text: string }>>([
+    { sender: "bot", text: "EduConnect Helpline · Lead Counselor Online. How can I assist you with your degree selection today?" }
+  ]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const triggerFAQ = (q: string, a: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: q },
+      { sender: "bot", text: a }
+    ]);
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || sending) return;
+
+    const userMessage = input.trim();
+    setInput("");
+    setMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
+    setSending(true);
+
+    try {
+      // Send directly to ulfathai003@gmail.com using FormSubmit AJAX
+      await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          _subject: `Intake Helpdesk Query from ${fullName || "Applicant"}`,
+          applicant_name: fullName,
+          email: email,
+          message: userMessage
+        })
+      });
+
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Your message has been sent directly to my desk inbox (ulfathai003@gmail.com). I will get back to you shortly!" }
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Connection error. Please email me directly at ulfathai003@gmail.com." }
+      ]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 font-sans">
+      {/* Toggle button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="bg-foreground text-background border-4 border-foreground px-4 py-3 shadow-[4px_4px_0px_0px_#6b3e1a] font-bold uppercase tracking-wider text-xs flex items-center gap-2 hover:-translate-y-0.5 transition-transform"
+        >
+          <MessageSquare className="w-4 h-4 text-background" /> Talk with Counselor
+        </button>
+      )}
+
+      {/* Telegram Card */}
+      {isOpen && (
+        <div className="w-80 bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] flex flex-col h-96">
+          {/* Card Header */}
+          <div className="bg-foreground text-background p-3 flex items-center justify-between border-b-2 border-foreground">
+            <span className="font-sans font-bold uppercase tracking-wider text-xs">Admissions Hotline</span>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="text-xs uppercase font-bold tracking-widest text-[#fbf6e7] hover:opacity-75"
+            >
+              [Close]
+            </button>
+          </div>
+
+          {/* Messages box */}
+          <div className="flex-1 p-3 overflow-y-auto space-y-3 font-serif-news text-xs leading-relaxed">
+            {messages.map((m, idx) => (
+              <div 
+                key={idx} 
+                className={`p-2 border-2 ${
+                  m.sender === "bot" 
+                    ? "bg-[#f4ecd8] border-foreground/30 text-foreground" 
+                    : "bg-foreground text-background border-foreground align-right self-end"
+                }`}
+              >
+                <div className="font-sans font-bold text-[9px] uppercase tracking-wider opacity-60 mb-0.5">
+                  {m.sender === "bot" ? "Counselor Direct" : "You"}
+                </div>
+                {m.text}
+              </div>
+            ))}
+          </div>
+
+          {/* FAQ Quick suggestions */}
+          <div className="p-2 border-t border-foreground/30 flex flex-wrap gap-1 bg-[#f4ecd8]/40">
+            <button 
+              onClick={() => triggerFAQ("Required Documents?", "Please attach clear scans of your 10th and 12th certificates, passport photo, signature scan, and Aadhar card.")}
+              className="text-[9px] font-sans font-bold border border-foreground/40 px-1 py-0.5 uppercase hover:bg-foreground/5 text-[#6b3e1a]"
+            >
+              Docs Required?
+            </button>
+            <button 
+              onClick={() => triggerFAQ("How to pay fees?", "Fees are paid directly online. A counselor will email you the official university instalment checkout links.")}
+              className="text-[9px] font-sans font-bold border border-foreground/40 px-1 py-0.5 uppercase hover:bg-foreground/5 text-[#6b3e1a]"
+            >
+              Fee Payment?
+            </button>
+          </div>
+
+          {/* Chat Form */}
+          <form onSubmit={handleSend} className="p-2 border-t-2 border-foreground flex gap-1 bg-[#fbf6e7]">
+            <Input 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask counselor a question..."
+              className="rounded-none border border-foreground bg-transparent text-xs font-serif-news focus:ring-0"
+            />
+            <Button 
+              type="submit" 
+              disabled={sending}
+              className="rounded-none bg-foreground text-background border border-foreground p-2 h-auto"
+            >
+              <Send className="w-3 h-3 text-background" />
+            </Button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------- ADMIN PANEL -------------------------- */
 
 function AdminPanel() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -133,98 +537,122 @@ function AdminPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold">Admin panel</h1>
-        <p className="text-muted-foreground mt-1">A bento overview of your learners, programs and universities.</p>
+      <div className="border-b-4 border-foreground pb-4">
+        <h1 className="font-headline text-4xl uppercase tracking-tight">Admin admissions command</h1>
+        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">A bento overview of your learners, programs and universities.</p>
       </div>
 
-      {/* BENTO GRID */}
-      <div className="bento-grid">
-        <div className="bento-cell bento-feature bento-xl">
-          <div className="text-xs uppercase tracking-widest opacity-80">Total students</div>
-          <div className="mt-4 text-6xl md:text-7xl font-display font-bold">{stats.total}</div>
-          <p className="mt-3 text-sm opacity-90 max-w-sm">Across every batch, program and partner university.</p>
-          <Users className="absolute right-4 bottom-4 w-24 h-24 opacity-15" />
-        </div>
-        <div className="bento-cell">
-          <ShieldCheck className="w-5 h-5 text-primary mb-3" />
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">Active</div>
-          <div className="mt-1 text-3xl font-display font-bold">{stats.active}</div>
-        </div>
-        <div className="bento-cell">
-          <BookOpen className="w-5 h-5 text-primary mb-3" />
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">BBA</div>
-          <div className="mt-1 text-3xl font-display font-bold">{stats.bba}</div>
-        </div>
-        <div className="bento-cell bento-wide">
-          <GraduationCap className="w-5 h-5 text-primary mb-3" />
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">MBA learners</div>
-          <div className="mt-1 flex items-end gap-3">
-            <span className="text-4xl font-display font-bold">{stats.mba}</span>
-            <span className="text-sm text-muted-foreground pb-1">enrolled this session</span>
+      {/* BENTO GRID - Brutalist News Style */}
+      <div className="grid md:grid-cols-4 gap-6">
+        <div className="md:col-span-2 bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410] relative flex flex-col justify-between min-h-[160px]">
+          <div>
+            <div className="font-sans font-bold uppercase tracking-wider text-xs text-[#6b3e1a]">Total Intake Registry</div>
+            <div className="mt-2 font-headline text-5xl sm:text-6xl">{stats.total}</div>
           </div>
+          <p className="font-serif-news text-xs italic mt-2 opacity-80">Across every batch, program and partner university.</p>
+        </div>
+        
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410] flex flex-col justify-between">
+          <div className="font-sans font-bold uppercase tracking-wider text-xs text-[#6b3e1a]">Active Seats</div>
+          <div className="font-headline text-4xl mt-1">{stats.active}</div>
+          <div className="text-[10px] uppercase font-bold text-emerald-700 mt-2">Verified Admissions</div>
+        </div>
+
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410] flex flex-col justify-between">
+          <div className="font-sans font-bold uppercase tracking-wider text-xs text-[#6b3e1a]">Online BBA</div>
+          <div className="font-headline text-4xl mt-1">{stats.bba}</div>
+          <div className="text-[10px] uppercase font-bold text-[#6b3e1a] mt-2">Undergraduates</div>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
-        <div className="p-5 border-b border-border flex flex-wrap items-center gap-3">
+      <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410]">
+        <div className="pb-4 border-b border-foreground/30 flex flex-wrap items-center justify-between gap-4">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Search name, email, specialization…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-[#6b3e1a]" />
+            <Input 
+              className="pl-9 rounded-none border border-foreground bg-transparent font-serif-news text-sm focus:ring-0" 
+              placeholder="Search name, email, university…" 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="w-4 h-4 text-foreground/75" />
             <Select value={program} onValueChange={setProgram}>
-              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All programs</SelectItem>
+              <SelectTrigger className="w-[140px] rounded-none border border-foreground bg-transparent font-sans text-xs uppercase font-bold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">
+                <SelectItem value="all">All Programs</SelectItem>
                 {PROGRAMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
+            
             <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All years</SelectItem>
+              <SelectTrigger className="w-[110px] rounded-none border border-foreground bg-transparent font-sans text-xs uppercase font-bold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">
+                <SelectItem value="all">All Years</SelectItem>
                 {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
+
+            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}>
+              <DialogTrigger asChild>
+                <Button className="rounded-none bg-foreground text-background border-2 border-foreground py-2 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
+                  <Plus className="w-4 h-4 mr-1 text-background" /> Add Student
+                </Button>
+              </DialogTrigger>
+              <StudentDialog editing={editing} onSaved={() => { setDialogOpen(false); setEditing(null); load(); }} />
+            </Dialog>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-hero shadow-glow"><Plus className="w-4 h-4 mr-1" /> Add student</Button>
-            </DialogTrigger>
-            <StudentDialog editing={editing} onSaved={() => { setDialogOpen(false); setEditing(null); load(); }} />
-          </Dialog>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
+        <div className="overflow-x-auto mt-4 border border-foreground/30">
+          <table className="w-full text-sm font-serif-news">
+            <thead className="bg-[#f4ecd8] text-left border-b border-foreground/30">
               <tr>
-                <Th>Name</Th><Th>Program</Th><Th>Specialization</Th><Th>University</Th><Th>Batch</Th><Th>Location</Th><Th>Status</Th><Th>{" "}</Th>
+                <Th>Name & Details</Th>
+                <Th>Program</Th>
+                <Th>Specialization</Th>
+                <Th>University</Th>
+                <Th>Batch</Th>
+                <Th>Location</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Action</Th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={8} className="p-10 text-center italic text-[#6b3e1a]">Loading active intake roster…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">No students match your filters.</td></tr>
+                <tr><td colSpan={8} className="p-10 text-center italic text-[#6b3e1a]">No applicant records matched your filters.</td></tr>
               ) : filtered.map((s) => (
-                <tr key={s.id} className="border-t border-border hover:bg-muted/30">
+                <tr key={s.id} className="border-t border-foreground/10 hover:bg-[#f4ecd8]/40">
                   <td className="p-4">
-                    <div className="font-medium">{s.full_name}</div>
-                    <div className="text-xs text-muted-foreground">{s.email}</div>
+                    <div className="font-bold text-foreground flex items-center gap-1.5">
+                      {s.full_name}
+                      {s.notes && s.notes.includes("[INVOICE_URL]:") && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-600" title="Invoice Uploaded" />
+                      )}
+                      {s.notes && s.notes.replace(/\[INVOICE_URL\]:\s*[^\n]+\n?/, "").trim() && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-amber-500" title="Has Counselor Notes" />
+                      )}
+                    </div>
+                    <div className="text-xs text-[#6b3e1a]">{s.email}</div>
                   </td>
-                  <td className="p-4"><Badge variant="outline">{s.program}</Badge></td>
+                  <td className="p-4"><span className="font-sans font-bold uppercase text-xs border border-foreground/40 px-1 py-0.5">{s.program}</span></td>
                   <td className="p-4">{s.specialization}</td>
-                  <td className="p-4 text-muted-foreground">{s.university}</td>
+                  <td className="p-4 text-foreground/80">{s.university}</td>
                   <td className="p-4">{s.batch_year}</td>
-                  <td className="p-4 text-muted-foreground">{s.location}</td>
+                  <td className="p-4 text-foreground/80">{s.location}</td>
                   <td className="p-4"><StatusBadge status={s.status} /></td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(s); setDialogOpen(true); }}><Pencil className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => { setEditing(s); setDialogOpen(true); }} className="hover:bg-foreground/5" title="Edit Record"><Pencil className="w-4 h-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDelete(s.id)} className="hover:bg-destructive/10" title="Delete Record"><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                   </td>
                 </tr>
@@ -237,32 +665,18 @@ function AdminPanel() {
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="p-4 font-medium text-xs uppercase tracking-wider text-muted-foreground">{children}</th>;
-}
-
-function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Users }) {
-  return (
-    <div className="bg-gradient-card border border-border rounded-2xl p-5 shadow-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="mt-1 text-3xl font-display font-bold text-gradient">{value}</div>
-        </div>
-        <span className="grid place-items-center w-10 h-10 rounded-xl bg-primary/10 text-primary"><Icon className="w-5 h-5" /></span>
-      </div>
-    </div>
-  );
+function Th({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <th className={`p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a] ${className}`}>{children}</th>;
 }
 
 function StatusBadge({ status }: { status: Student["status"] }) {
   const map: Record<string, string> = {
-    active: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    inactive: "bg-muted text-muted-foreground border-border",
-    graduated: "bg-primary/10 text-primary border-primary/30",
-    suspended: "bg-destructive/10 text-destructive border-destructive/30",
+    active: "bg-emerald-100 text-emerald-800 border-emerald-500/30",
+    inactive: "bg-amber-100 text-amber-800 border-amber-500/30",
+    graduated: "bg-[#6b3e1a]/10 text-[#6b3e1a] border-[#6b3e1a]/30",
+    suspended: "bg-red-100 text-red-800 border-red-500/30",
   };
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${map[status]}`}>{status}</span>;
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-sans font-bold border uppercase tracking-wider ${map[status]}`}>{status}</span>;
 }
 
 /* -------------------------- DIALOG -------------------------- */
@@ -279,8 +693,18 @@ function blankForm(): TablesInsert<"students"> {
 function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved: () => void }) {
   const [form, setForm] = useState<TablesInsert<"students">>(() => editing ?? blankForm());
   const [saving, setSaving] = useState(false);
+  const [invoiceUrlInput, setInvoiceUrlInput] = useState("");
+  const [generalNotesInput, setGeneralNotesInput] = useState("");
 
-  useEffect(() => { setForm(editing ?? blankForm()); }, [editing]);
+  useEffect(() => {
+    const notesText = (editing?.notes) || "";
+    const match = notesText.match(/\[INVOICE_URL\]:\s*([^\n]+)/);
+    const inv = match ? match[1].trim() : "";
+    const gen = notesText.replace(/\[INVOICE_URL\]:\s*[^\n]+\n?/, "").trim();
+    setInvoiceUrlInput(inv);
+    setGeneralNotesInput(gen);
+    setForm(editing ?? blankForm());
+  }, [editing]);
 
   function set<K extends keyof TablesInsert<"students">>(key: K, value: TablesInsert<"students">[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -289,11 +713,12 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    const combinedNotes = (invoiceUrlInput.trim() ? `[INVOICE_URL]: ${invoiceUrlInput.trim()}\n` : "") + generalNotesInput.trim();
     const payload = {
       ...form,
+      notes: combinedNotes || null,
       batch_year: Number(form.batch_year),
       phone: form.phone || null,
-      // Mirror location from city if location empty
       location: form.location || form.city || "—",
     };
     const { error } = editing
@@ -305,48 +730,76 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
     onSaved();
   }
 
+  async function handleUploadInvoice(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${form.id || 'new'}_invoice_${Date.now()}.${fileExt}`;
+      const filePath = `invoices/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, file);
+
+      if (error) {
+        toast.error(`Upload failed: ${error.message}. Please enter URL manually.`);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+         .from('invoices')
+         .getPublicUrl(filePath);
+
+      setInvoiceUrlInput(publicUrl);
+      toast.success("Invoice uploaded to Supabase Storage!");
+    } catch (err: any) {
+      toast.error("Upload error. Please specify link manually.");
+    }
+  }
+
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground rounded-none">
       <DialogHeader>
-        <DialogTitle>{editing ? "Edit student" : "Add a new student"}</DialogTitle>
-        <DialogDescription>Complete enrollment record — personal details, address and education.</DialogDescription>
+        <DialogTitle className="font-headline text-2xl uppercase">Complete Enrollment Record</DialogTitle>
+        <DialogDescription className="font-serif-news text-xs italic text-[#6b3e1a]">Personal details, address and academic history verification.</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
         <Tabs defaultValue="course" className="w-full">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full h-auto">
-            <TabsTrigger value="course"><BookOpen className="w-4 h-4 mr-1.5" /> Course</TabsTrigger>
-            <TabsTrigger value="enrollment"><ClipboardList className="w-4 h-4 mr-1.5" /> Enrollment</TabsTrigger>
-            <TabsTrigger value="personal"><User className="w-4 h-4 mr-1.5" /> Personal</TabsTrigger>
-            <TabsTrigger value="address"><Home className="w-4 h-4 mr-1.5" /> Address</TabsTrigger>
-            <TabsTrigger value="education"><FileText className="w-4 h-4 mr-1.5" /> Education</TabsTrigger>
-            <TabsTrigger value="fees"><Wallet className="w-4 h-4 mr-1.5" /> Fees</TabsTrigger>
-            <TabsTrigger value="docs"><FolderCheck className="w-4 h-4 mr-1.5" /> Docs</TabsTrigger>
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full h-auto bg-[#f4ecd8] border border-foreground/30 p-1 gap-1">
+            <TabsTrigger value="course" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><BookOpen className="w-3.5 h-3.5 mr-1" /> Course</TabsTrigger>
+            <TabsTrigger value="enrollment" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><ClipboardList className="w-3.5 h-3.5 mr-1" /> Enrol</TabsTrigger>
+            <TabsTrigger value="personal" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><User className="w-3.5 h-3.5 mr-1" /> Personal</TabsTrigger>
+            <TabsTrigger value="address" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><Home className="w-3.5 h-3.5 mr-1" /> Address</TabsTrigger>
+            <TabsTrigger value="education" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><FileText className="w-3.5 h-3.5 mr-1" /> School</TabsTrigger>
+            <TabsTrigger value="fees" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><Wallet className="w-3.5 h-3.5 mr-1" /> Fees</TabsTrigger>
+            <TabsTrigger value="docs" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><FolderCheck className="w-3.5 h-3.5 mr-1" /> Docs</TabsTrigger>
           </TabsList>
 
           {/* COURSE */}
           <TabsContent value="course" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Course / Program" required>
               <Select value={form.program} onValueChange={(v) => set("program", v as ProgramType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PROGRAMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PROGRAMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Specialization" required>
-              <Input value={form.specialization} onChange={(e) => set("specialization", e.target.value)} maxLength={100} placeholder="e.g. Finance and Management" required />
+              <Input className="rounded-none border border-foreground bg-transparent" value={form.specialization} onChange={(e) => set("specialization", e.target.value)} maxLength={100} placeholder="e.g. Finance and Management" required />
             </Field>
             <Field label="University" required>
               <Select value={form.university} onValueChange={(v) => set("university", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{UNIVERSITIES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{UNIVERSITIES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Batch year" required>
-              <Input type="number" min={2020} max={2040} value={form.batch_year} onChange={(e) => set("batch_year", Number(e.target.value))} required />
+              <Input className="rounded-none border border-foreground bg-transparent" type="number" min={2020} max={2040} value={form.batch_year} onChange={(e) => set("batch_year", Number(e.target.value))} required />
             </Field>
             <Field label="Status" required>
               <Select value={form.status ?? "active"} onValueChange={(v) => set("status", v as Student["status"])}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
           </TabsContent>
@@ -354,87 +807,87 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
           {/* ENROLLMENT */}
           <TabsContent value="enrollment" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Enrollment number">
-              <Input value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
+              <Input className="rounded-none border border-foreground bg-transparent" value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
             </Field>
             <Field label="Admission session">
               <Select value={form.admission_session ?? ""} onValueChange={(v) => set("admission_session", v)}>
-                <SelectTrigger><SelectValue placeholder="January / July" /></SelectTrigger>
-                <SelectContent>{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="January / July" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Study mode">
               <Select value={form.study_mode ?? ""} onValueChange={(v) => set("study_mode", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{STUDY_MODES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{STUDY_MODES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Medium of instruction">
               <Select value={form.medium_of_instruction ?? ""} onValueChange={(v) => set("medium_of_instruction", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{MEDIUMS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{MEDIUMS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Course name"><Input value={form.course_name ?? ""} onChange={(e) => set("course_name", e.target.value)} maxLength={120} placeholder="Master of Business Administration" /></Field>
-            <Field label="Course code"><Input value={form.course_code ?? ""} onChange={(e) => set("course_code", e.target.value)} maxLength={30} placeholder="MBA-FIN" /></Field>
-            <Field label="Duration (years)"><Input type="number" step="0.5" min={0} max={10} value={form.duration_years ?? ""} onChange={(e) => set("duration_years", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Total semesters"><Input type="number" min={1} max={12} value={form.total_semesters ?? ""} onChange={(e) => set("total_semesters", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Current semester"><Input type="number" min={1} max={12} value={form.current_semester ?? ""} onChange={(e) => set("current_semester", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Counsellor"><Input value={form.counsellor_name ?? ""} onChange={(e) => set("counsellor_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Course name"><Input className="rounded-none border border-foreground bg-transparent" value={form.course_name ?? ""} onChange={(e) => set("course_name", e.target.value)} maxLength={120} placeholder="Master of Business Administration" /></Field>
+            <Field label="Course code"><Input className="rounded-none border border-foreground bg-transparent" value={form.course_code ?? ""} onChange={(e) => set("course_code", e.target.value)} maxLength={30} placeholder="MBA-FIN" /></Field>
+            <Field label="Duration (years)"><Input className="rounded-none border border-foreground bg-transparent" type="number" step="0.5" min={0} max={10} value={form.duration_years ?? ""} onChange={(e) => set("duration_years", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Total semesters"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={1} max={12} value={form.total_semesters ?? ""} onChange={(e) => set("total_semesters", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Current semester"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={1} max={12} value={form.current_semester ?? ""} onChange={(e) => set("current_semester", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Counsellor"><Input className="rounded-none border border-foreground bg-transparent" value={form.counsellor_name ?? ""} onChange={(e) => set("counsellor_name", e.target.value)} maxLength={120} /></Field>
             <Field label="Lead source">
               <Select value={form.lead_source ?? ""} onValueChange={(v) => set("lead_source", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Referral name"><Input value={form.referral_name ?? ""} onChange={(e) => set("referral_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Referral name"><Input className="rounded-none border border-foreground bg-transparent" value={form.referral_name ?? ""} onChange={(e) => set("referral_name", e.target.value)} maxLength={120} /></Field>
           </TabsContent>
 
-
+          {/* PERSONAL */}
           <TabsContent value="personal" className="grid gap-4 sm:grid-cols-2 pt-4">
-            <Field label="Full name (as per SSLC)" required><Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} maxLength={120} required /></Field>
-            <Field label="Father name"><Input value={form.father_name ?? ""} onChange={(e) => set("father_name", e.target.value)} maxLength={120} /></Field>
-            <Field label="Mother name"><Input value={form.mother_name ?? ""} onChange={(e) => set("mother_name", e.target.value)} maxLength={120} /></Field>
-            <Field label="Date of birth"><Input type="date" value={form.dob ?? ""} onChange={(e) => set("dob", e.target.value || null)} /></Field>
+            <Field label="Full name (as per SSLC)" required><Input className="rounded-none border border-foreground bg-transparent" value={form.full_name} onChange={(e) => set("full_name", e.target.value)} maxLength={120} required /></Field>
+            <Field label="Father name"><Input className="rounded-none border border-foreground bg-transparent" value={form.father_name ?? ""} onChange={(e) => set("father_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Mother name"><Input className="rounded-none border border-foreground bg-transparent" value={form.mother_name ?? ""} onChange={(e) => set("mother_name", e.target.value)} maxLength={120} /></Field>
+            <Field label="Date of birth"><Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.dob ?? ""} onChange={(e) => set("dob", e.target.value || null)} /></Field>
             <Field label="Gender">
               <Select value={form.gender ?? ""} onValueChange={(v) => set("gender", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Category">
               <Select value={form.category ?? ""} onValueChange={(v) => set("category", v)}>
-                <SelectTrigger><SelectValue placeholder="Gen / OBC / SC / ST / Other" /></SelectTrigger>
-                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Gen / OBC / SC / ST / Other" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Employment status">
               <Select value={form.employment_status ?? ""} onValueChange={(v) => set("employment_status", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{EMPLOYMENT.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{EMPLOYMENT.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Marital status">
               <Select value={form.marital_status ?? ""} onValueChange={(v) => set("marital_status", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{MARITAL.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{MARITAL.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Religion"><Input value={form.religion ?? ""} onChange={(e) => set("religion", e.target.value)} maxLength={50} /></Field>
-            <Field label="Aadhar number"><Input value={form.aadhar_number ?? ""} onChange={(e) => set("aadhar_number", e.target.value)} maxLength={20} /></Field>
-            <Field label="ABC ID"><Input value={form.abc_id ?? ""} onChange={(e) => set("abc_id", e.target.value)} maxLength={30} /></Field>
-            <Field label="DEB ID"><Input value={form.deb_id ?? ""} onChange={(e) => set("deb_id", e.target.value)} maxLength={30} /></Field>
-            <Field label="Email" required><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={255} required /></Field>
-            <Field label="Mobile"><Input value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value)} maxLength={20} /></Field>
+            <Field label="Religion"><Input className="rounded-none border border-foreground bg-transparent" value={form.religion ?? ""} onChange={(e) => set("religion", e.target.value)} maxLength={50} /></Field>
+            <Field label="Aadhar number"><Input className="rounded-none border border-foreground bg-transparent" value={form.aadhar_number ?? ""} onChange={(e) => set("aadhar_number", e.target.value)} maxLength={20} /></Field>
+            <Field label="ABC ID"><Input className="rounded-none border border-foreground bg-transparent" value={form.abc_id ?? ""} onChange={(e) => set("abc_id", e.target.value)} maxLength={30} /></Field>
+            <Field label="DEB ID"><Input className="rounded-none border border-foreground bg-transparent" value={form.deb_id ?? ""} onChange={(e) => set("deb_id", e.target.value)} maxLength={30} /></Field>
+            <Field label="Email" required><Input className="rounded-none border border-foreground bg-transparent" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={255} required /></Field>
+            <Field label="Mobile"><Input className="rounded-none border border-foreground bg-transparent" value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value)} maxLength={20} /></Field>
           </TabsContent>
 
           {/* ADDRESS */}
           <TabsContent value="address" className="grid gap-4 sm:grid-cols-2 pt-4">
-            <div className="sm:col-span-2"><Field label="Address"><Textarea value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} maxLength={500} rows={3} /></Field></div>
-            <Field label="Pincode"><Input value={form.pincode ?? ""} onChange={(e) => set("pincode", e.target.value)} maxLength={10} /></Field>
-            <Field label="City"><Input value={form.city ?? ""} onChange={(e) => set("city", e.target.value)} maxLength={80} /></Field>
-            <Field label="District"><Input value={form.district ?? ""} onChange={(e) => set("district", e.target.value)} maxLength={80} /></Field>
-            <Field label="State"><Input value={form.state ?? ""} onChange={(e) => set("state", e.target.value)} maxLength={80} /></Field>
-            <div className="sm:col-span-2"><Field label="Location (display)" required><Input value={form.location} onChange={(e) => set("location", e.target.value)} maxLength={120} placeholder="City, State" required /></Field></div>
+            <div className="sm:col-span-2"><Field label="Address"><Textarea className="rounded-none border border-foreground bg-transparent" value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} maxLength={500} rows={3} /></Field></div>
+            <Field label="Pincode"><Input className="rounded-none border border-foreground bg-transparent" value={form.pincode ?? ""} onChange={(e) => set("pincode", e.target.value)} maxLength={10} /></Field>
+            <Field label="City"><Input className="rounded-none border border-foreground bg-transparent" value={form.city ?? ""} onChange={(e) => set("city", e.target.value)} maxLength={80} /></Field>
+            <Field label="District"><Input className="rounded-none border border-foreground bg-transparent" value={form.district ?? ""} onChange={(e) => set("district", e.target.value)} maxLength={80} /></Field>
+            <Field label="State"><Input className="rounded-none border border-foreground bg-transparent" value={form.state ?? ""} onChange={(e) => set("state", e.target.value)} maxLength={80} /></Field>
+            <div className="sm:col-span-2"><Field label="Location (display)" required><Input className="rounded-none border border-foreground bg-transparent" value={form.location} onChange={(e) => set("location", e.target.value)} maxLength={120} placeholder="City, State" required /></Field></div>
           </TabsContent>
 
           {/* EDUCATION */}
@@ -461,51 +914,69 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
 
           {/* FEES */}
           <TabsContent value="fees" className="grid gap-4 sm:grid-cols-2 pt-4">
-            <Field label="Total fee (₹)"><Input type="number" min={0} step="0.01" value={form.total_fee ?? ""} onChange={(e) => set("total_fee", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Fee paid (₹)"><Input type="number" min={0} step="0.01" value={form.fee_paid ?? ""} onChange={(e) => set("fee_paid", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Fee pending (₹)"><Input type="number" min={0} step="0.01" value={form.fee_pending ?? ""} onChange={(e) => set("fee_pending", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Total fee (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.total_fee ?? ""} onChange={(e) => set("total_fee", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee paid (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.fee_paid ?? ""} onChange={(e) => set("fee_paid", e.target.value ? Number(e.target.value) : null)} /></Field>
+            <Field label="Fee pending (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.fee_pending ?? ""} onChange={(e) => set("fee_pending", e.target.value ? Number(e.target.value) : null)} /></Field>
             <Field label="Payment status">
               <Select value={form.payment_status ?? ""} onValueChange={(v) => set("payment_status", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Payment mode">
               <Select value={form.payment_mode ?? ""} onValueChange={(v) => set("payment_mode", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Last payment date"><Input type="date" value={form.last_payment_date ?? ""} onChange={(e) => set("last_payment_date", e.target.value || null)} /></Field>
-            <Field label="Next due date"><Input type="date" value={form.next_due_date ?? ""} onChange={(e) => set("next_due_date", e.target.value || null)} /></Field>
+            <Field label="Last payment date"><Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.last_payment_date ?? ""} onChange={(e) => set("last_payment_date", e.target.value || null)} /></Field>
+            <Field label="Next due date"><Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.next_due_date ?? ""} onChange={(e) => set("next_due_date", e.target.value || null)} /></Field>
+            
+            <div className="sm:col-span-2 border-t border-foreground/20 pt-4 mt-2 grid gap-4 sm:grid-cols-2">
+              <Field label="Invoice Receipt Link / PDF URL">
+                <Input className="rounded-none border border-foreground bg-transparent font-serif-news text-xs" value={invoiceUrlInput} onChange={(e) => setInvoiceUrlInput(e.target.value)} placeholder="https://..." />
+              </Field>
+              <div>
+                <Label className="font-sans font-bold uppercase tracking-wider text-[10px] block mb-1">Upload Invoice File</Label>
+                <Input type="file" onChange={handleUploadInvoice} className="rounded-none border border-foreground bg-transparent text-xs p-1 cursor-pointer" />
+              </div>
+              <div className="sm:col-span-2">
+                <Field label="Counselor / Booking Office Notes">
+                  <Textarea className="rounded-none border border-foreground bg-transparent font-serif-news text-xs" value={generalNotesInput} onChange={(e) => setGeneralNotesInput(e.target.value)} placeholder="Enter counselor notes, details of past sessions, pending items..." rows={3} />
+                </Field>
+              </div>
+            </div>
           </TabsContent>
 
           {/* DOCS */}
           <TabsContent value="docs" className="pt-4">
-            <p className="text-sm text-muted-foreground mb-4">Tick each document once it has been received and verified.</p>
+            <p className="font-serif-news text-xs italic text-[#6b3e1a] mb-4">Tick each document once it has been received and verified.</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 ["doc_photo", "Passport-size photo"],
-                ["doc_signature", "Signature"],
+                ["doc_signature", "Signature scan"],
                 ["doc_id_proof", "ID proof (Aadhar / PAN)"],
                 ["doc_marksheet_10", "10th marksheet"],
                 ["doc_marksheet_12", "12th / Diploma marksheet"],
                 ["doc_marksheet_degree", "Degree marksheet"],
               ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/30">
+                <label key={key} className="flex items-center gap-3 border-2 border-foreground p-3 cursor-pointer hover:bg-foreground/5 rounded-none">
                   <Checkbox
                     checked={Boolean(form[key as keyof TablesInsert<"students">])}
                     onCheckedChange={(v) => set(key as keyof TablesInsert<"students">, Boolean(v) as never)}
+                    className="border-2 border-foreground rounded-none"
                   />
-                  <span className="text-sm font-medium">{label}</span>
+                  <span className="text-xs uppercase font-bold tracking-wider">{label}</span>
                 </label>
               ))}
             </div>
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button type="submit" disabled={saving} className="bg-gradient-hero shadow-glow">{saving ? "Saving…" : editing ? "Save changes" : "Add student"}</Button>
+        <DialogFooter className="pt-4">
+          <Button type="submit" disabled={saving} className="rounded-none bg-foreground text-background border-2 border-foreground py-3 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
+            {saving ? "Saving Record..." : editing ? "Save Credentials" : "Add Student"}
+          </Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -525,25 +996,25 @@ function EducationBlock({
   onChange: (field: "board" | "year" | "marks" | "percentage" | "result", value: string | number | null) => void;
 }) {
   return (
-    <div className="rounded-xl border border-border p-4 bg-muted/20">
-      <h3 className="font-semibold mb-3">{title}</h3>
+    <div className="border-2 border-foreground p-4 bg-[#f4ecd8]/40 rounded-none">
+      <h3 className="font-sans font-bold uppercase tracking-wider text-[#6b3e1a] mb-3">{title}</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label={universityField ? "University" : "Board name"}>
-          <Input value={board ?? ""} onChange={(e) => onChange("board", e.target.value)} maxLength={120} />
+        <Field label={universityField ? "University" : "Board Name"}>
+          <Input className="rounded-none border border-foreground bg-transparent" value={board ?? ""} onChange={(e) => onChange("board", e.target.value)} maxLength={120} />
         </Field>
-        <Field label="Year of passing">
-          <Input type="number" min={1980} max={2040} value={year ?? ""} onChange={(e) => onChange("year", e.target.value ? Number(e.target.value) : null)} />
+        <Field label="Year of Passing">
+          <Input className="rounded-none border border-foreground bg-transparent" type="number" min={1980} max={2040} value={year ?? ""} onChange={(e) => onChange("year", e.target.value ? Number(e.target.value) : null)} />
         </Field>
-        <Field label={universityField ? "Consolidated marks" : "Marks"}>
-          <Input value={marks ?? ""} onChange={(e) => onChange("marks", e.target.value)} maxLength={50} />
+        <Field label={universityField ? "Consolidated Marks" : "Marks"}>
+          <Input className="rounded-none border border-foreground bg-transparent" value={marks ?? ""} onChange={(e) => onChange("marks", e.target.value)} maxLength={50} />
         </Field>
         <Field label={universityField ? "Consolidated %" : "Percentage"}>
-          <Input type="number" step="0.01" min={0} max={100} value={percentage ?? ""} onChange={(e) => onChange("percentage", e.target.value ? Number(e.target.value) : null)} />
+          <Input className="rounded-none border border-foreground bg-transparent" type="number" step="0.01" min={0} max={100} value={percentage ?? ""} onChange={(e) => onChange("percentage", e.target.value ? Number(e.target.value) : null)} />
         </Field>
         <Field label="Result">
           <Select value={result ?? ""} onValueChange={(v) => onChange("result", v)}>
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>{RESULTS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{RESULTS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
       </div>
@@ -553,14 +1024,14 @@ function EducationBlock({
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <Label>{label}{required && <span className="text-destructive ml-0.5">*</span>}</Label>
+    <div className="space-y-1">
+      <Label className="font-sans font-bold uppercase tracking-wider text-[10px] block">{label}{required && <span className="text-destructive ml-0.5">*</span>}</Label>
       {children}
     </div>
   );
 }
 
-/* -------------------------- STUDENT -------------------------- */
+/* -------------------------- STUDENT PANEL -------------------------- */
 
 function StudentPanel({ email }: { email: string }) {
   const [record, setRecord] = useState<Student | null>(null);
@@ -574,38 +1045,44 @@ function StudentPanel({ email }: { email: string }) {
     })();
   }, [email]);
 
+  const notesText = record?.notes || "";
+  const match = notesText.match(/\[INVOICE_URL\]:\s*([^\n]+)/);
+  const invoiceUrl = match ? match[1].trim() : "";
+  const generalNotes = notesText.replace(/\[INVOICE_URL\]:\s*[^\n]+\n?/, "").trim();
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl md:text-4xl font-bold">My learning</h1>
-        <p className="text-muted-foreground mt-1">Your enrollment details, personal info and academic history.</p>
+        <h1 className="font-headline text-4xl uppercase tracking-tight">Academic Intake Ledger</h1>
+        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">Your verified enrollment details, credentials and fee record.</p>
       </div>
 
       {loading ? (
-        <div className="bg-card border border-border rounded-2xl p-10 text-center text-muted-foreground">Loading your record…</div>
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-10 text-center font-serif-news italic">Loading verified credentials ledger…</div>
       ) : !record ? (
-        <div className="bg-gradient-card border border-border rounded-2xl p-10 text-center shadow-card">
-          <h3 className="font-display font-semibold text-xl">No enrollment found yet</h3>
-          <p className="text-muted-foreground mt-2">Your account is created. Once an admin links your enrollment record, your program details will appear here.</p>
-          <p className="text-xs text-muted-foreground mt-4">Signed in as <span className="font-medium">{email}</span></p>
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-10 text-center shadow-[6px_6px_0px_0px_#1a1410]">
+          <h3 className="font-headline text-2xl uppercase">No enrolment records active</h3>
+          <p className="font-serif-news text-sm mt-2 max-w-lg mx-auto">Your portal registration is active. Once our admissions team verifies your credentials, your ledger will be loaded.</p>
+          <p className="text-xs font-sans font-bold text-[#6b3e1a] mt-4 uppercase">Applicant Account: {email}</p>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-gradient-card border border-border rounded-3xl p-8 shadow-card">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="bg-[#fbf6e7] border-4 border-foreground p-8 shadow-[6px_6px_0px_0px_#1a1410]">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-foreground/30 pb-4">
               <div>
-                <div className="text-sm uppercase tracking-wider text-muted-foreground">Enrolled in</div>
-                <h2 className="text-3xl font-display font-bold mt-1">{record.program} · {record.specialization}</h2>
-                <div className="text-muted-foreground mt-1">{record.university}</div>
+                <div className="font-sans font-bold uppercase tracking-wider text-xs text-[#6b3e1a]">Registered Active Degree</div>
+                <h2 className="font-headline text-3xl mt-1">{record.program} · {record.specialization}</h2>
+                <div className="font-serif-news text-sm italic mt-1 text-foreground/80">{record.university}</div>
               </div>
               <StatusBadge status={record.status} />
             </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <Info icon={GraduationCap} label="Batch year" value={String(record.batch_year)} />
-              <Info icon={BookOpen} label="Enrolled on" value={new Date(record.enrollment_date).toLocaleDateString()} />
-              <Info icon={MapPin} label="Location" value={record.location} />
-              <Info icon={Mail} label="Email" value={record.email} />
-              {record.phone && <Info icon={Phone} label="Phone" value={record.phone} />}
+            
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <Info icon={GraduationCap} label="Academic Session" value={`${record.admission_session || "July"} ${record.batch_year}`} />
+              <Info icon={BookOpen} label="Study Delivery Mode" value={record.study_mode || "Online"} />
+              <Info icon={MapPin} label="Intake Location" value={record.location} />
+              <Info icon={Mail} label="Academic Email" value={record.email} />
+              {record.phone && <Info icon={Phone} label="Contact Phone" value={record.phone} />}
             </div>
           </div>
 
@@ -671,7 +1148,7 @@ function StudentPanel({ email }: { email: string }) {
             ["Referral", record.referral_name],
           ]} />
 
-          <DetailSection title="Fees" rows={[
+          <DetailSection title="Fees Status" rows={[
             ["Total fee", record.total_fee != null ? `₹ ${record.total_fee}` : null],
             ["Fee paid", record.fee_paid != null ? `₹ ${record.fee_paid}` : null],
             ["Fee pending", record.fee_pending != null ? `₹ ${record.fee_pending}` : null],
@@ -680,6 +1157,30 @@ function StudentPanel({ email }: { email: string }) {
             ["Last payment", record.last_payment_date],
             ["Next due", record.next_due_date],
           ]} />
+
+          {(invoiceUrl || generalNotes) && (
+            <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410] grid gap-6 md:grid-cols-2">
+              {invoiceUrl && (
+                <div className="space-y-2">
+                  <h3 className="font-headline text-xl uppercase border-b border-foreground/30 pb-1 text-[#6b3e1a]">Official Fee Invoice</h3>
+                  <p className="font-serif-news text-xs italic text-foreground/80">Please download or print your verified ledger receipt for your records.</p>
+                  <div className="pt-2">
+                    <a href={invoiceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-foreground text-background border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] px-4 py-2.5 hover:bg-transparent hover:text-foreground transition-colors">
+                      <Download className="w-3.5 h-3.5" /> Download / View PDF Invoice
+                    </a>
+                  </div>
+                </div>
+              )}
+              {generalNotes && (
+                <div className="space-y-2">
+                  <h3 className="font-headline text-xl uppercase border-b border-foreground/30 pb-1 text-[#6b3e1a]">Counselor Desk Remarks</h3>
+                  <div className="font-serif-news text-xs leading-relaxed bg-[#f4ecd8] border border-foreground/30 p-4 italic text-foreground/90 whitespace-pre-line rounded-none">
+                    "{generalNotes}"
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <DetailSection title="Documents submitted" rows={[
             ["Photo", record.doc_photo ? "✓ Received" : "Pending"],
@@ -699,13 +1200,13 @@ function DetailSection({ title, rows }: { title: string; rows: Array<[string, st
   const hasAny = rows.some(([, v]) => v !== null && v !== undefined && v !== "");
   if (!hasAny) return null;
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
-      <h3 className="font-display font-semibold text-lg mb-4">{title}</h3>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410]">
+      <h3 className="font-headline text-2xl uppercase border-b border-foreground/30 pb-2 mb-4">{title}</h3>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 font-serif-news text-sm">
         {rows.map(([label, value]) => (
-          <div key={label}>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-            <div className="text-sm font-medium mt-0.5">{value ?? "—"}</div>
+          <div key={label} className="border-b border-foreground/10 pb-1">
+            <div className="font-sans font-bold uppercase tracking-wider text-[10px] text-[#6b3e1a]">{label}</div>
+            <div className="font-medium mt-0.5">{value ?? "—"}</div>
           </div>
         ))}
       </div>
@@ -715,11 +1216,11 @@ function DetailSection({ title, rows }: { title: string; rows: Array<[string, st
 
 function Info({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 p-4 rounded-xl bg-background/60 border border-border">
-      <span className="grid place-items-center w-9 h-9 rounded-lg bg-primary/10 text-primary shrink-0"><Icon className="w-4 h-4" /></span>
+    <div className="flex items-start gap-3 p-4 bg-[#f4ecd8]/40 border-2 border-foreground rounded-none">
+      <span className="grid place-items-center w-9 h-9 border border-foreground bg-foreground text-background shrink-0"><Icon className="w-4 h-4 text-background" /></span>
       <div>
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="text-sm font-medium mt-0.5">{value}</div>
+        <div className="font-sans font-bold uppercase tracking-wider text-[10px] text-[#6b3e1a]">{label}</div>
+        <div className="font-serif-news text-sm font-medium mt-0.5">{value}</div>
       </div>
     </div>
   );

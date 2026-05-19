@@ -25,10 +25,10 @@ export function SiteHeader() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }: any) => {
       setUser(data.session?.user ?? null);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
@@ -104,7 +104,7 @@ export function SiteHeader() {
             ) : (
               <>
                 <Link to="/login" className="uppercase tracking-wider news-link">Sign in</Link>
-                <Link to="/signup" className="uppercase tracking-wider bg-foreground text-background px-3 py-1">
+                <Link to="/admission-desk" className="uppercase tracking-wider bg-foreground text-background px-3 py-1">
                   Apply now
                 </Link>
               </>
@@ -143,7 +143,7 @@ export function SiteHeader() {
               ) : (
                 <>
                   <Link to="/login" className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>Sign in</Link>
-                  <Link to="/signup" className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>Apply now</Link>
+                  <Link to="/admission-desk" className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>Apply now</Link>
                 </>
               )}
             </div>
