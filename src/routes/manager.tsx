@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, ShieldCheck, Wallet, Receipt, PhoneCall, TrendingUp, Calendar, Trash2, Download, Upload, IndianRupee, FileSpreadsheet, ArrowLeft, Pencil, Percent, Briefcase, Building } from "lucide-react";
+import { GraduationCap, LogOut, Plus, ShieldCheck, Wallet, Receipt, PhoneCall, TrendingUp, Calendar, Trash2, Download, Upload, IndianRupee, FileSpreadsheet, ArrowLeft, Pencil, Percent, Briefcase, Building, Users, CheckCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,8 +76,9 @@ function ManagerPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 w-full h-auto bg-transparent gap-2 p-0">
+          <TabsList className="flex flex-wrap w-full h-auto bg-transparent gap-2 p-0 justify-start">
             <TabsTrigger value="overview" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><TrendingUp className="w-4 h-4 mr-1.5" /> Overview</TabsTrigger>
+            <TabsTrigger value="students" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Users className="w-4 h-4 mr-1.5" /> Students</TabsTrigger>
             <TabsTrigger value="payments" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Receipt className="w-4 h-4 mr-1.5" /> Payments</TabsTrigger>
             <TabsTrigger value="followups" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><PhoneCall className="w-4 h-4 mr-1.5" /> Follow-ups</TabsTrigger>
             <TabsTrigger value="expenses" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Wallet className="w-4 h-4 mr-1.5" /> Expenses</TabsTrigger>
@@ -85,9 +86,11 @@ function ManagerPage() {
             <TabsTrigger value="compliance" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><ShieldCheck className="w-4 h-4 mr-1.5" /> Compliance</TabsTrigger>
             <TabsTrigger value="academics" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><GraduationCap className="w-4 h-4 mr-1.5" /> Academics</TabsTrigger>
             <TabsTrigger value="exports" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><FileSpreadsheet className="w-4 h-4 mr-1.5" /> Exports</TabsTrigger>
+            <TabsTrigger value="settings" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Settings className="w-4 h-4 mr-1.5" /> Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="pt-6"><OverviewTab /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab /></TabsContent>
           <TabsContent value="payments" className="pt-6"><PaymentsTab /></TabsContent>
           <TabsContent value="followups" className="pt-6"><FollowUpsTab /></TabsContent>
           <TabsContent value="expenses" className="pt-6"><ExpensesTab /></TabsContent>
@@ -95,6 +98,7 @@ function ManagerPage() {
           <TabsContent value="compliance" className="pt-6"><ComplianceTab /></TabsContent>
           <TabsContent value="academics" className="pt-6"><AcademicsTab /></TabsContent>
           <TabsContent value="exports" className="pt-6"><ExportsTab /></TabsContent>
+          <TabsContent value="settings" className="pt-6"><SettingsTab /></TabsContent>
         </Tabs>
       </main>
     </div>
@@ -1404,4 +1408,391 @@ function Field({ label, children, required, full }: { label: string; children: R
 
 function Th({ children, className }: { children: React.ReactNode; className?: string }) {
   return <th className={`p-4 font-medium text-xs uppercase tracking-wider text-muted-foreground ${className || ""}`}>{children}</th>;
+}
+
+/* ----------------------- STUDENTS DIRECTORY ----------------------- */
+
+function StudentsTab() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+
+  async function load() {
+    const { data } = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    if (data) setStudents(data);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const bbaCount = students.filter(s => s.program === "BBA").length;
+  const mbaCount = students.filter(s => s.program === "MBA").length;
+  const otherCount = students.length - bbaCount - mbaCount;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-4">
+        <KPI label="Total Students" value={String(students.length)} icon={Users} />
+        <KPI label="BBA Students" value={String(bbaCount)} icon={GraduationCap} />
+        <KPI label="MBA Students" value={String(mbaCount)} icon={Briefcase} />
+        <KPI label="Other Programs" value={String(otherCount)} icon={Building} />
+      </div>
+
+      <div className="flex flex-wrap gap-4 justify-between items-center bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-4">
+        <h2 className="font-headline text-2xl uppercase tracking-tighter">Student Registry</h2>
+        <Button onClick={() => { setEditingStudent(null); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground">
+          <Plus className="w-4 h-4 mr-2" /> Add New Student Data
+        </Button>
+      </div>
+
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b-4 border-foreground bg-foreground text-background">
+              <Th>Name & Contact</Th>
+              <Th>Program & Batch</Th>
+              <Th>Location</Th>
+              <Th>Status</Th>
+              <Th className="text-right">Action</Th>
+            </tr>
+          </thead>
+          <tbody className="font-serif-news text-sm">
+            {students.map((s) => (
+              <tr key={s.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
+                <td className="p-4">
+                  <div className="font-bold">{s.full_name}</div>
+                  <div className="text-xs text-muted-foreground">{s.email}</div>
+                  <div className="text-xs text-muted-foreground">{s.phone || "No phone"}</div>
+                </td>
+                <td className="p-4">
+                  <div className="font-bold">{s.program} {s.specialization ? `(${s.specialization})` : ""}</div>
+                  <div className="text-xs text-muted-foreground">Batch: {s.batch_year}</div>
+                </td>
+                <td className="p-4">
+                  <div>{s.city || s.location}</div>
+                  <div className="text-xs text-muted-foreground">{s.state || ""} {s.pincode ? `- ${s.pincode}` : ""}</div>
+                </td>
+                <td className="p-4">
+                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
+                    {s.status}
+                  </Badge>
+                </td>
+                <td className="p-4 text-right">
+                  <Button size="sm" variant="outline" onClick={() => { setEditingStudent(s); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background">
+                    <Pencil className="w-3 h-3 mr-1" /> Edit
+                  </Button>
+                </td>
+              </tr>
+            ))}
+            {students.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-muted-foreground italic">No student records found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+        <StudentEditorDialog 
+          student={editingStudent} 
+          onClose={() => { setEditorOpen(false); load(); }} 
+        />
+      </Dialog>
+    </div>
+  );
+}
+
+function StudentEditorDialog({ student, onClose }: { student: Student | null; onClose: () => void }) {
+  const [form, setForm] = useState<Partial<Student>>({
+    full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
+    dob: "", gender: "", category: "", father_name: "", mother_name: "",
+    edu_10_year: undefined, edu_10_board: "", edu_10_percentage: undefined,
+    edu_12_year: undefined, edu_12_board: "", edu_12_percentage: undefined,
+    program: "BBA", specialization: "", batch_year: new Date().getFullYear(), university: "",
+    status: "active", location: "",
+    doc_photo: false, doc_id_proof: false, doc_marksheet_10: false, doc_marksheet_12: false
+  });
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (student) {
+      setForm({
+        ...student,
+        doc_photo: !!student.doc_photo,
+        doc_id_proof: !!student.doc_id_proof,
+        doc_marksheet_10: !!student.doc_marksheet_10,
+        doc_marksheet_12: !!student.doc_marksheet_12,
+      });
+    } else {
+      setForm({
+        full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
+        dob: "", gender: "", category: "", father_name: "", mother_name: "",
+        edu_10_year: undefined, edu_10_board: "", edu_10_percentage: undefined,
+        edu_12_year: undefined, edu_12_board: "", edu_12_percentage: undefined,
+        program: "BBA", specialization: "", batch_year: new Date().getFullYear(), university: "",
+        status: "active", location: "",
+        doc_photo: false, doc_id_proof: false, doc_marksheet_10: false, doc_marksheet_12: false
+      });
+    }
+  }, [student]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const payload = { ...form, location: form.city || form.state || form.location || "Not specified" };
+      if (student?.id) {
+        await supabase.from("students").update(payload).eq("id", student.id);
+        toast.success("Student updated successfully");
+      } else {
+        await supabase.from("students").insert([payload as TablesInsert<"students">]);
+        toast.success("Student created successfully");
+      }
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDocToggle = (field: keyof Student) => {
+    setForm(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  return (
+    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground shadow-[8px_8px_0px_0px_#1a1410] rounded-none p-0">
+      <div className="bg-foreground text-background p-4 flex items-center justify-between sticky top-0 z-10 shadow-[0_4px_0_0_#1a1410]">
+        <DialogTitle className="font-headline text-2xl uppercase tracking-tight">
+          {student ? "Modify Student Record" : "New Student Registry"}
+        </DialogTitle>
+      </div>
+      <form onSubmit={handleSubmit} className="p-6 space-y-10">
+        
+        {/* Personal Details */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">I. Personal Demographics</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Field label="Full Name" required><Input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Email Address" required><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Phone Number" required><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            
+            <Field label="Date of Birth"><Input type="date" value={form.dob || ""} onChange={e => setForm({...form, dob: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Gender">
+              <Select value={form.gender || ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px]"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
+                  <SelectItem value="Male" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Male</SelectItem>
+                  <SelectItem value="Female" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Female</SelectItem>
+                  <SelectItem value="Other" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Category"><Input value={form.category || ""} placeholder="e.g. General, OBC, SC/ST" onChange={e => setForm({...form, category: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+
+            <Field label="Father's Name"><Input value={form.father_name || ""} onChange={e => setForm({...form, father_name: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Mother's Name"><Input value={form.mother_name || ""} onChange={e => setForm({...form, mother_name: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Address Line 1" full><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="City"><Input value={form.city || ""} onChange={e => setForm({...form, city: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="District"><Input value={form.district || ""} onChange={e => setForm({...form, district: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="State"><Input value={form.state || ""} onChange={e => setForm({...form, state: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Pincode"><Input value={form.pincode || ""} onChange={e => setForm({...form, pincode: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+          </div>
+        </section>
+
+        {/* Academic History */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">II. Academic History</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="Class 10 Year"><Input type="number" value={form.edu_10_year || ""} onChange={e => setForm({...form, edu_10_year: Number(e.target.value)})} placeholder="YYYY" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Class 10 Board"><Input value={form.edu_10_board || ""} onChange={e => setForm({...form, edu_10_board: e.target.value})} placeholder="e.g. CBSE" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Class 10 Percentage"><Input type="number" step="0.1" value={form.edu_10_percentage || ""} onChange={e => setForm({...form, edu_10_percentage: Number(e.target.value)})} placeholder="%" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+
+            <Field label="Class 12 Year"><Input type="number" value={form.edu_12_year || ""} onChange={e => setForm({...form, edu_12_year: Number(e.target.value)})} placeholder="YYYY" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Class 12 Board"><Input value={form.edu_12_board || ""} onChange={e => setForm({...form, edu_12_board: e.target.value})} placeholder="e.g. ISC" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Class 12 Percentage"><Input type="number" step="0.1" value={form.edu_12_percentage || ""} onChange={e => setForm({...form, edu_12_percentage: Number(e.target.value)})} placeholder="%" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+          </div>
+        </section>
+
+        {/* Program Selection */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">III. Enrollment Program</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Program Level" required>
+              <Select value={form.program || "BBA"} onValueChange={(v: any) => setForm({ ...form, program: v })}>
+                <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px]"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
+                  {["BBA", "MBA", "BCA", "MCA", "B.Com", "M.Com", "10th", "12th Arts", "12th Commerce", "12th Science"].map(p => (
+                    <SelectItem key={p} value={p} className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Specialization" required><Input value={form.specialization || ""} onChange={e => setForm({...form, specialization: e.target.value})} placeholder="e.g. Marketing" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Batch Year" required><Input type="number" value={form.batch_year || ""} onChange={e => setForm({...form, batch_year: Number(e.target.value)})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="University Name" required><Input value={form.university || ""} onChange={e => setForm({...form, university: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+          </div>
+        </section>
+
+        {/* Document Tracking (Simulated Upload) */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">IV. Document Archive</h3>
+          <p className="text-xs font-serif-news italic mb-4 text-[#6b3e1a]">Click to simulate uploading and verifying physical documents to the student's digital archive.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { key: "doc_photo", label: "Passport Photo" },
+              { key: "doc_id_proof", label: "Govt ID Proof" },
+              { key: "doc_marksheet_10", label: "10th Marksheet" },
+              { key: "doc_marksheet_12", label: "12th Marksheet" },
+            ].map(doc => {
+              const isUploaded = form[doc.key as keyof Student] as boolean;
+              return (
+                <div 
+                  key={doc.key} 
+                  onClick={() => handleDocToggle(doc.key as keyof Student)}
+                  className={`border-4 border-foreground p-4 cursor-pointer transition-colors flex flex-col items-center justify-center text-center gap-3 ${isUploaded ? "bg-foreground text-background" : "bg-transparent hover:bg-black/5"}`}
+                >
+                  {isUploaded ? <CheckCircle className="w-8 h-8" /> : <Upload className="w-8 h-8 opacity-70" />}
+                  <span className="font-sans font-bold uppercase tracking-widest text-[10px]">{doc.label}</span>
+                  <span className="text-[9px] opacity-70 border-t border-current pt-2">{isUploaded ? "VERIFIED DOCUMENT" : "CLICK TO UPLOAD"}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="pt-6 flex flex-col sm:flex-row justify-end gap-4 border-t-4 border-foreground mt-2 sticky bottom-0 bg-[#fbf6e7] py-4">
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background h-12 px-8">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 px-8">
+            {busy ? "Saving..." : student ? "Commit Modifications" : "Archive New Student"}
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  );
+}
+
+/* ----------------------- SETTINGS / ACCESS ----------------------- */
+
+function SettingsTab() {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [roles, setRoles] = useState<any[]>([]);
+
+  const loadRoles = async () => {
+    const { data } = await supabase.from("user_roles").select("*").order("created_at", { ascending: false });
+    if (data) setRoles(data);
+  };
+
+  useEffect(() => {
+    loadRoles();
+  }, []);
+
+  const handleGrantAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("user_roles").insert([{ user_id: email.toLowerCase().trim(), role: "admin" }]);
+      if (error) throw error;
+      toast.success(`Admin privileges granted to ${email}`);
+      setEmail("");
+      loadRoles();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    setBusy(true);
+    try {
+      await supabase.from("user_roles").delete().eq("id", id);
+      toast.success("Privileges revoked");
+      loadRoles();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-6">
+        <h2 className="font-headline text-2xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-6">Access & Credentials</h2>
+        
+        <div className="max-w-xl space-y-8">
+          <div className="p-6 border-4 border-foreground bg-foreground text-background shadow-[4px_4px_0px_0px_#1a1410]">
+            <h4 className="font-sans font-bold uppercase tracking-widest text-xs mb-2 text-background/70 border-b border-background/20 pb-2">Master Access</h4>
+            <div className="font-bold text-xl">ulfathai003@gmail.com</div>
+            <p className="text-xs font-serif-news italic mt-3 text-background/80">This account is hardcoded with superuser manager privileges and cannot be revoked.</p>
+          </div>
+
+          <form onSubmit={handleGrantAdmin} className="space-y-4 pt-6 border-t-4 border-foreground">
+            <h4 className="font-sans font-bold uppercase tracking-widest text-sm text-foreground">Provision New Manager Account</h4>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Input 
+                type="email" 
+                placeholder="manager@domain.com" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="rounded-none border-4 border-foreground bg-transparent focus-visible:ring-0 flex-1 h-12 shadow-[2px_2px_0px_0px_#1a1410]" 
+              />
+              <Button type="submit" disabled={busy} className="rounded-none border-4 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 shadow-[2px_2px_0px_0px_#1a1410]">
+                <ShieldCheck className="w-4 h-4 mr-2" /> Grant Access
+              </Button>
+            </div>
+            <p className="text-xs font-serif-news italic text-[#6b3e1a]">The user must already have registered an account, or they will be granted admin status upon their first login.</p>
+          </form>
+        </div>
+      </div>
+
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b-4 border-foreground bg-foreground text-background">
+              <Th>User Identifier</Th>
+              <Th>Role Level</Th>
+              <Th>Provisioned At</Th>
+              <Th className="text-right">Action</Th>
+            </tr>
+          </thead>
+          <tbody className="font-serif-news text-sm">
+            {roles.map((r) => (
+              <tr key={r.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
+                <td className="p-4 font-bold">{r.user_id}</td>
+                <td className="p-4">
+                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
+                    {r.role}
+                  </Badge>
+                </td>
+                <td className="p-4 text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="p-4 text-right">
+                  <Button size="sm" variant="outline" onClick={() => handleRevoke(r.id)} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive hover:bg-destructive hover:text-background">
+                    Revoke
+                  </Button>
+                </td>
+              </tr>
+            ))}
+            {roles.length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-muted-foreground italic">No additional roles provisioned.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
