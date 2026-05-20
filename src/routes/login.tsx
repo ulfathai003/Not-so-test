@@ -62,6 +62,7 @@ function LoginPage() {
             <Label htmlFor="email" className="font-sans font-bold uppercase tracking-wider text-xs block">Email Address</Label>
             <Input 
               id="email" 
+              name="email"
               type="email" 
               autoComplete="email" 
               required 
@@ -73,9 +74,10 @@ function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pw" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>
+            <Label htmlFor="password" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>
             <Input 
-              id="pw" 
+              id="password" 
+              name="password"
               type="password" 
               autoComplete="current-password" 
               required 

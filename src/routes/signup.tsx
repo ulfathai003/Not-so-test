@@ -67,9 +67,11 @@ function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="n" className="font-sans font-bold uppercase tracking-wider text-xs block">Full Name</Label>
+            <Label htmlFor="fullName" className="font-sans font-bold uppercase tracking-wider text-xs block">Full Name</Label>
             <Input 
-              id="n" 
+              id="fullName" 
+              name="name"
+              autoComplete="name"
               required 
               maxLength={100}
               value={fullName} 
@@ -83,7 +85,9 @@ function SignupPage() {
             <Label htmlFor="email" className="font-sans font-bold uppercase tracking-wider text-xs block">Email Address</Label>
             <Input 
               id="email" 
+              name="email"
               type="email" 
+              autoComplete="email"
               required 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
@@ -93,10 +97,12 @@ function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pw" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>
+            <Label htmlFor="password" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>
             <Input 
-              id="pw" 
+              id="password" 
+              name="password"
               type="password" 
+              autoComplete="new-password"
               minLength={8}
               required 
               value={password} 

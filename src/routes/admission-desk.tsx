@@ -113,7 +113,7 @@ const initialFormState: FormState = {
 };
 
 function AdmissionDeskPage() {
-  const { user, refetchStudent } = useAuth();
+  const { user, studentData, refetchStudent } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormState>(initialFormState);
@@ -131,6 +131,56 @@ function AdmissionDeskPage() {
       }
     }
   }, []);
+
+  // Autofill from studentData or user metadata if fields are empty
+  useEffect(() => {
+    if (studentData) {
+      setFormData((prev) => ({
+        ...prev,
+        program: prev.program || studentData.program || "MBA",
+        university: prev.university || studentData.university || "Jain University",
+        specialization: prev.specialization || studentData.specialization || "",
+        medium_of_instruction: prev.medium_of_instruction || studentData.medium_of_instruction || "English",
+        admission_session: prev.admission_session || studentData.admission_session || "January",
+        study_mode: prev.study_mode || studentData.study_mode || "Online",
+        full_name: prev.full_name || studentData.full_name || "",
+        father_name: prev.father_name || studentData.father_name || "",
+        mother_name: prev.mother_name || studentData.mother_name || "",
+        dob: prev.dob || studentData.dob || "",
+        gender: prev.gender || studentData.gender || "Male",
+        category: prev.category || studentData.category || "General",
+        aadhar_number: prev.aadhar_number || studentData.aadhar_number || "",
+        phone: prev.phone || studentData.phone || "",
+        location: prev.location || studentData.location || "",
+        address: prev.address || studentData.address || "",
+        state: prev.state || studentData.state || "",
+        pincode: prev.pincode || studentData.pincode || "",
+        edu_10_board: prev.edu_10_board || studentData.edu_10_board || "",
+        edu_10_year: prev.edu_10_year || (studentData.edu_10_year ? String(studentData.edu_10_year) : ""),
+        edu_10_percentage: prev.edu_10_percentage || (studentData.edu_10_percentage ? String(studentData.edu_10_percentage) : ""),
+        edu_10_result: prev.edu_10_result || studentData.edu_10_result || "Pass",
+        edu_12_board: prev.edu_12_board || studentData.edu_12_board || "",
+        edu_12_year: prev.edu_12_year || (studentData.edu_12_year ? String(studentData.edu_12_year) : ""),
+        edu_12_percentage: prev.edu_12_percentage || (studentData.edu_12_percentage ? String(studentData.edu_12_percentage) : ""),
+        edu_12_result: prev.edu_12_result || studentData.edu_12_result || "Pass",
+        edu_degree_university: prev.edu_degree_university || studentData.edu_degree_university || "",
+        edu_degree_year: prev.edu_degree_year || (studentData.edu_degree_year ? String(studentData.edu_degree_year) : ""),
+        edu_degree_percentage: prev.edu_degree_percentage || (studentData.edu_degree_percentage ? String(studentData.edu_degree_percentage) : ""),
+        edu_degree_result: prev.edu_degree_result || studentData.edu_degree_result || "Pass",
+        doc_photo: prev.doc_photo || !!studentData.doc_photo,
+        doc_signature: prev.doc_signature || !!studentData.doc_signature,
+        doc_id_proof: prev.doc_id_proof || !!studentData.doc_id_proof,
+        doc_marksheet_10: prev.doc_marksheet_10 || !!studentData.doc_marksheet_10,
+        doc_marksheet_12: prev.doc_marksheet_12 || !!studentData.doc_marksheet_12,
+        doc_marksheet_degree: prev.doc_marksheet_degree || !!studentData.doc_marksheet_degree,
+      }));
+    } else if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        full_name: prev.full_name || user.user_metadata?.full_name || "",
+      }));
+    }
+  }, [studentData, user]);
 
   // Sync draft to localStorage on change
   const updateField = (key: keyof FormState, value: any) => {
@@ -547,8 +597,11 @@ function AdmissionDeskPage() {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Full Name</Label>
+                  <Label htmlFor="full_name" className="font-bold uppercase tracking-wider text-xs block">Full Name</Label>
                   <Input 
+                    id="full_name"
+                    name="name"
+                    autoComplete="name"
                     value={formData.full_name} 
                     onChange={(e) => updateField("full_name", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -557,8 +610,10 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Father's Name</Label>
+                  <Label htmlFor="father_name" className="font-bold uppercase tracking-wider text-xs block">Father's Name</Label>
                   <Input 
+                    id="father_name"
+                    name="father_name"
                     value={formData.father_name} 
                     onChange={(e) => updateField("father_name", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -566,8 +621,10 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Mother's Name</Label>
+                  <Label htmlFor="mother_name" className="font-bold uppercase tracking-wider text-xs block">Mother's Name</Label>
                   <Input 
+                    id="mother_name"
+                    name="mother_name"
                     value={formData.mother_name} 
                     onChange={(e) => updateField("mother_name", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -575,8 +632,11 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Date of Birth</Label>
+                  <Label htmlFor="dob" className="font-bold uppercase tracking-wider text-xs block">Date of Birth</Label>
                   <Input 
+                    id="dob"
+                    name="bday"
+                    autoComplete="bday"
                     type="date" 
                     value={formData.dob} 
                     onChange={(e) => updateField("dob", e.target.value)} 
@@ -585,9 +645,9 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Gender</Label>
+                  <Label htmlFor="gender" className="font-bold uppercase tracking-wider text-xs block">Gender</Label>
                   <Select value={formData.gender} onValueChange={(val) => updateField("gender", val)}>
-                    <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent font-sans">
+                    <SelectTrigger id="gender" className="rounded-none border-2 border-foreground bg-transparent font-sans">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
@@ -599,9 +659,9 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Category</Label>
+                  <Label htmlFor="category" className="font-bold uppercase tracking-wider text-xs block">Category</Label>
                   <Select value={formData.category} onValueChange={(val) => updateField("category", val)}>
-                    <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent font-sans">
+                    <SelectTrigger id="category" className="rounded-none border-2 border-foreground bg-transparent font-sans">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
@@ -613,8 +673,10 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Aadhar Number</Label>
+                  <Label htmlFor="aadhar_number" className="font-bold uppercase tracking-wider text-xs block">Aadhar Number</Label>
                   <Input 
+                    id="aadhar_number"
+                    name="aadhar_number"
                     value={formData.aadhar_number} 
                     onChange={(e) => updateField("aadhar_number", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -623,8 +685,11 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Phone Number</Label>
+                  <Label htmlFor="phone" className="font-bold uppercase tracking-wider text-xs block">Phone Number</Label>
                   <Input 
+                    id="phone"
+                    name="phone"
+                    autoComplete="tel"
                     value={formData.phone} 
                     onChange={(e) => updateField("phone", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -633,8 +698,11 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">City / Village</Label>
+                  <Label htmlFor="location" className="font-bold uppercase tracking-wider text-xs block">City / Village</Label>
                   <Input 
+                    id="location"
+                    name="city"
+                    autoComplete="address-level2"
                     value={formData.location} 
                     onChange={(e) => updateField("location", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
@@ -643,8 +711,11 @@ function AdmissionDeskPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-bold uppercase tracking-wider text-xs block">Full Postal Address</Label>
+                <Label htmlFor="address" className="font-bold uppercase tracking-wider text-xs block">Full Postal Address</Label>
                 <Input 
+                  id="address"
+                  name="address"
+                  autoComplete="street-address"
                   value={formData.address} 
                   onChange={(e) => updateField("address", e.target.value)} 
                   className="rounded-none border-2 border-foreground bg-transparent"
@@ -653,16 +724,22 @@ function AdmissionDeskPage() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">State</Label>
+                  <Label htmlFor="state" className="font-bold uppercase tracking-wider text-xs block">State</Label>
                   <Input 
+                    id="state"
+                    name="state"
+                    autoComplete="address-level1"
                     value={formData.state} 
                     onChange={(e) => updateField("state", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold uppercase tracking-wider text-xs block">Pincode</Label>
+                  <Label htmlFor="pincode" className="font-bold uppercase tracking-wider text-xs block">Pincode</Label>
                   <Input 
+                    id="pincode"
+                    name="pincode"
+                    autoComplete="postal-code"
                     value={formData.pincode} 
                     onChange={(e) => updateField("pincode", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"

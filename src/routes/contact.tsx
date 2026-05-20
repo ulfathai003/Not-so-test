@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -20,11 +21,22 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
+  const { user, studentData } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setName(user.user_metadata?.full_name || studentData?.full_name || "");
+      setEmail(user.email || "");
+      if (studentData?.phone) {
+        setPhone(studentData.phone);
+      }
+    }
+  }, [user, studentData]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,9 +62,9 @@ function ContactPage() {
       const result = await response.json();
       if (result.success) {
         toast.success("Message sent! A counselor will reach out within a day.");
-        setName("");
-        setEmail("");
-        setPhone("");
+        setName(user?.user_metadata?.full_name || studentData?.full_name || "");
+        setEmail(user?.email || "");
+        setPhone(studentData?.phone || "");
         setMessage("");
       } else {
         throw new Error(result.message || "Failed to submit form");
@@ -116,9 +128,11 @@ function ContactPage() {
             <p className="news-kicker text-center mb-4">Official Inquiry Form</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="n" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Full name</Label>
+                <Label htmlFor="name" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Full name</Label>
                 <Input 
-                  id="n" 
+                  id="name" 
+                  name="name"
+                  autoComplete="name"
                   required 
                   maxLength={100} 
                   value={name}
@@ -127,10 +141,12 @@ function ContactPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="e" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Email address</Label>
+                <Label htmlFor="email" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Email address</Label>
                 <Input 
-                  id="e" 
+                  id="email" 
+                  name="email"
                   type="email" 
+                  autoComplete="email"
                   required 
                   maxLength={255} 
                   value={email}
@@ -139,9 +155,11 @@ function ContactPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="p" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Phone number</Label>
+                <Label htmlFor="phone" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Phone number</Label>
                 <Input 
-                  id="p" 
+                  id="phone" 
+                  name="phone"
+                  autoComplete="tel"
                   maxLength={20} 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -149,9 +167,10 @@ function ContactPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="m" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Message</Label>
+                <Label htmlFor="message" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Message</Label>
                 <Textarea 
-                  id="m" 
+                  id="message" 
+                  name="message"
                   rows={4} 
                   required 
                   maxLength={1000} 
