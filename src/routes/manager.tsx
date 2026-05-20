@@ -1414,37 +1414,68 @@ function Th({ children, className }: { children: React.ReactNode; className?: st
 
 function StudentsTab() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [busy, setBusy] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterProgram, setFilterProgram] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   async function load() {
     const { data } = await supabase.from("students").select("*").order("created_at", { ascending: false });
     if (data) setStudents(data);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  const bbaCount = students.filter(s => s.program === "BBA").length;
-  const mbaCount = students.filter(s => s.program === "MBA").length;
-  const otherCount = students.length - bbaCount - mbaCount;
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return students.filter(s => {
+      const matchSearch = !q || s.full_name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.phone || "").includes(q) || (s.enrollment_number || "").toLowerCase().includes(q);
+      const matchProgram = filterProgram === "all" || s.program === filterProgram;
+      const matchStatus = filterStatus === "all" || s.status === filterStatus;
+      return matchSearch && matchProgram && matchStatus;
+    });
+  }, [students, search, filterProgram, filterStatus]);
+
+  const activeCount = students.filter(s => s.status === "active").length;
+  const graduatedCount = students.filter(s => s.status === "graduated").length;
+  const programCount = new Set(students.map(s => s.program)).size;
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4">
         <KPI label="Total Students" value={String(students.length)} icon={Users} />
-        <KPI label="BBA Students" value={String(bbaCount)} icon={GraduationCap} />
-        <KPI label="MBA Students" value={String(mbaCount)} icon={Briefcase} />
-        <KPI label="Other Programs" value={String(otherCount)} icon={Building} />
+        <KPI label="Active" value={String(activeCount)} icon={GraduationCap} />
+        <KPI label="Graduated" value={String(graduatedCount)} icon={Briefcase} />
+        <KPI label="Programs" value={String(programCount)} icon={Building} />
       </div>
 
-      <div className="flex flex-wrap gap-4 justify-between items-center bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-4">
-        <h2 className="font-headline text-2xl uppercase tracking-tighter">Student Registry</h2>
-        <Button onClick={() => { setEditingStudent(null); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Add New Student Data
-        </Button>
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-4 space-y-3">
+        <div className="flex flex-wrap gap-4 justify-between items-center">
+          <h2 className="font-headline text-2xl uppercase tracking-tighter">Student Registry</h2>
+          <Button onClick={() => { setEditingStudent(null); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Add New Student
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Input placeholder="Search by name, email, phone, enrollment no…" value={search} onChange={e => setSearch(e.target.value)} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0 flex-1 min-w-[200px]" />
+          <Select value={filterProgram} onValueChange={setFilterProgram}>
+            <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px] w-[140px]"><SelectValue placeholder="Program" /></SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
+              {["all", "BBA", "MBA", "BCA", "MCA", "B.Com", "M.Com", "10th", "12th Arts", "12th Commerce", "12th Science"].map(p => (
+                <SelectItem key={p} value={p} className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">{p === "all" ? "All Programs" : p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px] w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
+              {["all", "active", "inactive", "graduated", "suspended"].map(s => (
+                <SelectItem key={s} value={s} className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">{s === "all" ? "All Statuses" : s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
@@ -1454,25 +1485,36 @@ function StudentsTab() {
               <Th>Name & Contact</Th>
               <Th>Program & Batch</Th>
               <Th>Location</Th>
+              <Th>Fee Status</Th>
               <Th>Status</Th>
               <Th className="text-right">Action</Th>
             </tr>
           </thead>
           <tbody className="font-serif-news text-sm">
-            {students.map((s) => (
+            {filtered.map((s) => (
               <tr key={s.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
                 <td className="p-4">
                   <div className="font-bold">{s.full_name}</div>
                   <div className="text-xs text-muted-foreground">{s.email}</div>
                   <div className="text-xs text-muted-foreground">{s.phone || "No phone"}</div>
+                  {s.enrollment_number && <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#6b3e1a] mt-0.5">#{s.enrollment_number}</div>}
                 </td>
                 <td className="p-4">
-                  <div className="font-bold">{s.program} {s.specialization ? `(${s.specialization})` : ""}</div>
+                  <div className="font-bold">{s.program}{s.specialization ? ` — ${s.specialization}` : ""}</div>
                   <div className="text-xs text-muted-foreground">Batch: {s.batch_year}</div>
+                  <div className="text-xs text-muted-foreground">{s.university}</div>
                 </td>
                 <td className="p-4">
                   <div>{s.city || s.location}</div>
-                  <div className="text-xs text-muted-foreground">{s.state || ""} {s.pincode ? `- ${s.pincode}` : ""}</div>
+                  <div className="text-xs text-muted-foreground">{s.state || ""}{s.pincode ? ` — ${s.pincode}` : ""}</div>
+                </td>
+                <td className="p-4">
+                  {s.payment_status ? (
+                    <Badge variant="outline" className={`border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] ${s.payment_status === "Paid" ? "bg-foreground text-background" : s.payment_status === "Overdue" ? "bg-red-100 text-red-800 border-red-800" : "bg-background"}`}>
+                      {s.payment_status}
+                    </Badge>
+                  ) : <span className="text-muted-foreground text-xs italic">—</span>}
+                  {s.total_fee && <div className="text-xs text-muted-foreground mt-0.5">{inr(s.total_fee)}</div>}
                 </td>
                 <td className="p-4">
                   <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
@@ -1486,9 +1528,9 @@ function StudentsTab() {
                 </td>
               </tr>
             ))}
-            {students.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-foreground italic">No student records found.</td>
+                <td colSpan={6} className="p-8 text-center text-muted-foreground italic">No students match your filters.</td>
               </tr>
             )}
           </tbody>
@@ -1496,9 +1538,9 @@ function StudentsTab() {
       </div>
 
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <StudentEditorDialog 
-          student={editingStudent} 
-          onClose={() => { setEditorOpen(false); load(); }} 
+        <StudentEditorDialog
+          student={editingStudent}
+          onClose={() => { setEditorOpen(false); load(); }}
         />
       </Dialog>
     </div>
@@ -1506,38 +1548,37 @@ function StudentsTab() {
 }
 
 function StudentEditorDialog({ student, onClose }: { student: Student | null; onClose: () => void }) {
-  const [form, setForm] = useState<Partial<Student>>({
+  const emptyForm: Partial<Student> = {
     full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
-    dob: "", gender: "", category: "", father_name: "", mother_name: "",
-    edu_10_year: undefined, edu_10_board: "", edu_10_percentage: undefined,
-    edu_12_year: undefined, edu_12_board: "", edu_12_percentage: undefined,
+    dob: "", gender: "", category: "", religion: "", marital_status: "", employment_status: "",
+    father_name: "", mother_name: "", aadhar_number: "", abc_id: "", deb_id: "",
+    edu_10_year: undefined, edu_10_board: "", edu_10_percentage: undefined, edu_10_result: "", edu_10_marks: "",
+    edu_12_year: undefined, edu_12_board: "", edu_12_percentage: undefined, edu_12_result: "", edu_12_marks: "",
+    edu_degree_year: undefined, edu_degree_university: "", edu_degree_percentage: undefined, edu_degree_result: "", edu_degree_marks: "",
     program: "BBA", specialization: "", batch_year: new Date().getFullYear(), university: "",
+    enrollment_number: "", admission_session: "", study_mode: "", medium_of_instruction: "",
+    current_semester: undefined, total_semesters: undefined, duration_years: undefined, course_code: "", course_name: "",
+    total_fee: undefined, fee_paid: undefined, fee_pending: undefined, payment_status: "", payment_mode: "",
+    lead_source: "", counsellor_name: "", referral_name: "", notes: "",
     status: "active", location: "",
-    doc_photo: false, doc_id_proof: false, doc_marksheet_10: false, doc_marksheet_12: false
-  });
+    doc_photo: false, doc_id_proof: false, doc_marksheet_10: false, doc_marksheet_12: false,
+    doc_marksheet_degree: false, doc_signature: false,
+  };
+  const [form, setForm] = useState<Partial<Student>>(emptyForm);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (student) {
-      setForm({
-        ...student,
-        doc_photo: !!student.doc_photo,
-        doc_id_proof: !!student.doc_id_proof,
-        doc_marksheet_10: !!student.doc_marksheet_10,
-        doc_marksheet_12: !!student.doc_marksheet_12,
-      });
-    } else {
-      setForm({
-        full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
-        dob: "", gender: "", category: "", father_name: "", mother_name: "",
-        edu_10_year: undefined, edu_10_board: "", edu_10_percentage: undefined,
-        edu_12_year: undefined, edu_12_board: "", edu_12_percentage: undefined,
-        program: "BBA", specialization: "", batch_year: new Date().getFullYear(), university: "",
-        status: "active", location: "",
-        doc_photo: false, doc_id_proof: false, doc_marksheet_10: false, doc_marksheet_12: false
-      });
-    }
+    setForm(student ? { ...student } : { ...emptyForm, batch_year: new Date().getFullYear() });
   }, [student]);
+
+  const f = (field: keyof Student) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const fn = (field: keyof Student) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(prev => ({ ...prev, [field]: e.target.value ? Number(e.target.value) : undefined }));
+  const fs = (field: keyof Student) => (v: string) =>
+    setForm(prev => ({ ...prev, [field]: v }));
+  const fdoc = (field: keyof Student) => () =>
+    setForm(prev => ({ ...prev, [field]: !prev[field] }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1545,134 +1586,196 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
     try {
       const payload = { ...form, location: form.city || form.state || form.location || "Not specified" };
       if (student?.id) {
-        await supabase.from("students").update(payload).eq("id", student.id);
-        toast.success("Student updated successfully");
+        const { error } = await supabase.from("students").update(payload).eq("id", student.id);
+        if (error) throw error;
+        toast.success("Student record updated");
       } else {
-        await supabase.from("students").insert([payload as TablesInsert<"students">]);
-        toast.success("Student created successfully");
+        const { error } = await supabase.from("students").insert([payload as TablesInsert<"students">]);
+        if (error) throw error;
+        toast.success("New student archived");
       }
       onClose();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to save student");
     } finally {
       setBusy(false);
     }
   };
 
-  const handleDocToggle = (field: keyof Student) => {
-    setForm(prev => ({ ...prev, [field]: !prev[field] }));
-  };
+  const cls = "rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0 focus:ring-0";
+  const selCls = "bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]";
+  const selItemCls = "font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background";
+  const trigCls = "rounded-none border-2 border-foreground bg-transparent focus:ring-0 focus-visible:ring-0 font-bold uppercase tracking-wider text-[10px]";
+
+  const SelWrap = ({ field, options, placeholder }: { field: keyof Student; options: string[]; placeholder?: string }) => (
+    <Select value={(form[field] as string) || ""} onValueChange={fs(field)}>
+      <SelectTrigger className={trigCls}><SelectValue placeholder={placeholder || "Select"} /></SelectTrigger>
+      <SelectContent className={selCls}>
+        {options.map(v => <SelectItem key={v} value={v} className={selItemCls}>{v}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground shadow-[8px_8px_0px_0px_#1a1410] rounded-none p-0">
-      <div className="bg-foreground text-background p-4 flex items-center justify-between sticky top-0 z-10 shadow-[0_4px_0_0_#1a1410]">
+      <div className="bg-foreground text-background p-4 sticky top-0 z-20 shadow-[0_4px_0_0_#1a1410]">
         <DialogTitle className="font-headline text-2xl uppercase tracking-tight">
-          {student ? "Modify Student Record" : "New Student Registry"}
+          {student ? `Editing: ${student.full_name}` : "New Student Registry"}
         </DialogTitle>
+        <DialogDescription className="text-background/60 font-serif-news text-xs italic mt-0.5">
+          {student ? `Enrollment: ${student.enrollment_number || "Not assigned"}` : "Complete all required fields to archive a new student."}
+        </DialogDescription>
       </div>
+
       <form onSubmit={handleSubmit} className="p-6 space-y-10">
-        
-        {/* Personal Details */}
+
+        {/* SECTION I */}
         <section>
-          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">I. Personal Demographics</h3>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">I. Identity & Contact</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Field label="Full Name" required><Input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Email Address" required><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Phone Number" required><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} required className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            
-            <Field label="Date of Birth"><Input type="date" value={form.dob || ""} onChange={e => setForm({...form, dob: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Gender">
-              <Select value={form.gender || ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
-                <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px]"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
-                  <SelectItem value="Male" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Male</SelectItem>
-                  <SelectItem value="Female" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Female</SelectItem>
-                  <SelectItem value="Other" className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">Other</SelectItem>
-                </SelectContent>
-              </Select>
+            <Field label="Full Name" required><Input value={form.full_name || ""} onChange={f("full_name")} required className={cls} /></Field>
+            <Field label="Email Address" required><Input type="email" value={form.email || ""} onChange={f("email")} required className={cls} /></Field>
+            <Field label="Phone Number" required><Input value={form.phone || ""} onChange={f("phone")} required className={cls} /></Field>
+            <Field label="Date of Birth"><Input type="date" value={form.dob || ""} onChange={f("dob")} className={cls} /></Field>
+            <Field label="Gender"><SelWrap field="gender" options={["Male", "Female", "Other"]} /></Field>
+            <Field label="Category"><SelWrap field="category" options={["General", "OBC", "SC", "ST", "EWS", "Other"]} /></Field>
+            <Field label="Religion"><Input value={form.religion || ""} onChange={f("religion")} placeholder="e.g. Hindu" className={cls} /></Field>
+            <Field label="Marital Status"><SelWrap field="marital_status" options={["Single", "Married", "Divorced", "Widowed"]} /></Field>
+            <Field label="Employment Status"><SelWrap field="employment_status" options={["Employed", "Unemployed", "Self-employed", "Student"]} /></Field>
+            <Field label="Father's Name"><Input value={form.father_name || ""} onChange={f("father_name")} className={cls} /></Field>
+            <Field label="Mother's Name"><Input value={form.mother_name || ""} onChange={f("mother_name")} className={cls} /></Field>
+            <Field label="Aadhar Number"><Input value={form.aadhar_number || ""} onChange={f("aadhar_number")} placeholder="12-digit" className={cls} /></Field>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Field label="Address" full><Input value={form.address || ""} onChange={f("address")} className={cls} /></Field>
+            <Field label="City"><Input value={form.city || ""} onChange={f("city")} className={cls} /></Field>
+            <Field label="District"><Input value={form.district || ""} onChange={f("district")} className={cls} /></Field>
+            <Field label="State"><Input value={form.state || ""} onChange={f("state")} className={cls} /></Field>
+            <Field label="Pincode"><Input value={form.pincode || ""} onChange={f("pincode")} className={cls} /></Field>
+          </div>
+        </section>
+
+        {/* SECTION II */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">II. Academic History</h3>
+          <div className="space-y-4">
+            {[
+              { title: "Class 10th", yr: "edu_10_year", board: "edu_10_board", pct: "edu_10_percentage", marks: "edu_10_marks", result: "edu_10_result" },
+              { title: "Class 12th", yr: "edu_12_year", board: "edu_12_board", pct: "edu_12_percentage", marks: "edu_12_marks", result: "edu_12_result" },
+            ].map(row => (
+              <div key={row.title} className="bg-foreground/5 border-2 border-foreground/20 p-4">
+                <p className="font-sans font-bold uppercase tracking-widest text-[10px] mb-3 border-b border-foreground/20 pb-1">{row.title}</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <Field label="Year"><Input type="number" value={(form[row.yr as keyof Student] as number) || ""} onChange={fn(row.yr as keyof Student)} placeholder="YYYY" className={cls} /></Field>
+                  <Field label="Board"><Input value={(form[row.board as keyof Student] as string) || ""} onChange={f(row.board as keyof Student)} placeholder="CBSE" className={cls} /></Field>
+                  <Field label="%"><Input type="number" step="0.1" value={(form[row.pct as keyof Student] as number) || ""} onChange={fn(row.pct as keyof Student)} placeholder="%" className={cls} /></Field>
+                  <Field label="Marks"><Input value={(form[row.marks as keyof Student] as string) || ""} onChange={f(row.marks as keyof Student)} placeholder="e.g. 450/500" className={cls} /></Field>
+                  <Field label="Result"><SelWrap field={row.result as keyof Student} options={["Pass", "Fail", "Distinction", "First Class", "Second Class"]} /></Field>
+                </div>
+              </div>
+            ))}
+            <div className="bg-foreground/5 border-2 border-foreground/20 p-4">
+              <p className="font-sans font-bold uppercase tracking-widest text-[10px] mb-3 border-b border-foreground/20 pb-1">Graduation / Degree (if applicable)</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <Field label="Year"><Input type="number" value={form.edu_degree_year || ""} onChange={fn("edu_degree_year")} placeholder="YYYY" className={cls} /></Field>
+                <Field label="University"><Input value={form.edu_degree_university || ""} onChange={f("edu_degree_university")} className={cls} /></Field>
+                <Field label="%"><Input type="number" step="0.1" value={form.edu_degree_percentage || ""} onChange={fn("edu_degree_percentage")} placeholder="%" className={cls} /></Field>
+                <Field label="Marks"><Input value={form.edu_degree_marks || ""} onChange={f("edu_degree_marks")} className={cls} /></Field>
+                <Field label="Result"><SelWrap field="edu_degree_result" options={["Pass", "Fail", "Distinction", "First Class", "Second Class"]} /></Field>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION III */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">III. Enrollment & Program</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Field label="Program" required>
+              <SelWrap field="program" options={["BBA", "MBA", "BCA", "MCA", "B.Com", "M.Com", "10th", "12th Arts", "12th Commerce", "12th Science"]} />
             </Field>
-            <Field label="Category"><Input value={form.category || ""} placeholder="e.g. General, OBC, SC/ST" onChange={e => setForm({...form, category: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-
-            <Field label="Father's Name"><Input value={form.father_name || ""} onChange={e => setForm({...form, father_name: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Mother's Name"><Input value={form.mother_name || ""} onChange={e => setForm({...form, mother_name: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-          </div>
-          
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Address Line 1" full><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="City"><Input value={form.city || ""} onChange={e => setForm({...form, city: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="District"><Input value={form.district || ""} onChange={e => setForm({...form, district: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="State"><Input value={form.state || ""} onChange={e => setForm({...form, state: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Pincode"><Input value={form.pincode || ""} onChange={e => setForm({...form, pincode: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-          </div>
-        </section>
-
-        {/* Academic History */}
-        <section>
-          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">II. Academic History</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Class 10 Year"><Input type="number" value={form.edu_10_year || ""} onChange={e => setForm({...form, edu_10_year: Number(e.target.value)})} placeholder="YYYY" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Class 10 Board"><Input value={form.edu_10_board || ""} onChange={e => setForm({...form, edu_10_board: e.target.value})} placeholder="e.g. CBSE" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Class 10 Percentage"><Input type="number" step="0.1" value={form.edu_10_percentage || ""} onChange={e => setForm({...form, edu_10_percentage: Number(e.target.value)})} placeholder="%" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-
-            <Field label="Class 12 Year"><Input type="number" value={form.edu_12_year || ""} onChange={e => setForm({...form, edu_12_year: Number(e.target.value)})} placeholder="YYYY" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Class 12 Board"><Input value={form.edu_12_board || ""} onChange={e => setForm({...form, edu_12_board: e.target.value})} placeholder="e.g. ISC" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Class 12 Percentage"><Input type="number" step="0.1" value={form.edu_12_percentage || ""} onChange={e => setForm({...form, edu_12_percentage: Number(e.target.value)})} placeholder="%" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
+            <Field label="Specialization" required><Input value={form.specialization || ""} onChange={f("specialization")} placeholder="e.g. Marketing" className={cls} /></Field>
+            <Field label="University" required><Input value={form.university || ""} onChange={f("university")} className={cls} /></Field>
+            <Field label="Batch Year" required><Input type="number" value={form.batch_year || ""} onChange={fn("batch_year")} className={cls} /></Field>
+            <Field label="Admission Session"><SelWrap field="admission_session" options={["January", "July"]} /></Field>
+            <Field label="Study Mode"><SelWrap field="study_mode" options={["Online", "Distance", "Hybrid"]} /></Field>
+            <Field label="Medium"><SelWrap field="medium_of_instruction" options={["English", "Hindi", "Bilingual"]} /></Field>
+            <Field label="Enrollment No."><Input value={form.enrollment_number || ""} onChange={f("enrollment_number")} className={cls} /></Field>
+            <Field label="Course Code"><Input value={form.course_code || ""} onChange={f("course_code")} className={cls} /></Field>
+            <Field label="Course Name"><Input value={form.course_name || ""} onChange={f("course_name")} className={cls} /></Field>
+            <Field label="Duration (Years)"><Input type="number" value={form.duration_years || ""} onChange={fn("duration_years")} className={cls} /></Field>
+            <Field label="Total Semesters"><Input type="number" value={form.total_semesters || ""} onChange={fn("total_semesters")} className={cls} /></Field>
+            <Field label="Current Semester"><Input type="number" value={form.current_semester || ""} onChange={fn("current_semester")} className={cls} /></Field>
+            <Field label="ABC ID"><Input value={form.abc_id || ""} onChange={f("abc_id")} className={cls} /></Field>
+            <Field label="DEB ID"><Input value={form.deb_id || ""} onChange={f("deb_id")} className={cls} /></Field>
+            <Field label="Account Status"><SelWrap field="status" options={["active", "inactive", "graduated", "suspended"]} /></Field>
           </div>
         </section>
 
-        {/* Program Selection */}
+        {/* SECTION IV */}
         <section>
-          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">III. Enrollment Program</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Program Level" required>
-              <Select value={form.program || "BBA"} onValueChange={(v: any) => setForm({ ...form, program: v })}>
-                <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent focus:ring-0 font-bold uppercase tracking-wider text-[10px]"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border-4 border-foreground rounded-none shadow-[4px_4px_0px_0px_#1a1410]">
-                  {["BBA", "MBA", "BCA", "MCA", "B.Com", "M.Com", "10th", "12th Arts", "12th Commerce", "12th Science"].map(p => (
-                    <SelectItem key={p} value={p} className="font-bold uppercase tracking-wider text-[10px] rounded-none focus:bg-foreground focus:text-background">{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">IV. Fee & Financial Details</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Field label="Total Fee (₹)"><Input type="number" value={form.total_fee || ""} onChange={fn("total_fee")} className={cls} /></Field>
+            <Field label="Fee Paid (₹)"><Input type="number" value={form.fee_paid || ""} onChange={fn("fee_paid")} className={cls} /></Field>
+            <Field label="Fee Pending (₹)"><Input type="number" value={form.fee_pending || ""} onChange={fn("fee_pending")} className={cls} /></Field>
+            <Field label="Payment Status"><SelWrap field="payment_status" options={["Paid", "Partial", "Pending", "Overdue"]} /></Field>
+            <Field label="Payment Mode"><SelWrap field="payment_mode" options={["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"]} /></Field>
+          </div>
+        </section>
+
+        {/* SECTION V */}
+        <section>
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">V. Admissions Source & Notes</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Field label="Lead Source"><SelWrap field="lead_source" options={["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair", "Partner College", "WhatsApp"]} /></Field>
+            <Field label="Counsellor Name"><Input value={form.counsellor_name || ""} onChange={f("counsellor_name")} className={cls} /></Field>
+            <Field label="Referral Name"><Input value={form.referral_name || ""} onChange={f("referral_name")} className={cls} /></Field>
+          </div>
+          <div className="mt-4">
+            <Field label="Internal Notes">
+              <Textarea value={form.notes || ""} onChange={f("notes")} rows={3} placeholder="Any special notes about this student…" className={`${cls} resize-y`} />
             </Field>
-            <Field label="Specialization" required><Input value={form.specialization || ""} onChange={e => setForm({...form, specialization: e.target.value})} placeholder="e.g. Marketing" className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="Batch Year" required><Input type="number" value={form.batch_year || ""} onChange={e => setForm({...form, batch_year: Number(e.target.value)})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
-            <Field label="University Name" required><Input value={form.university || ""} onChange={e => setForm({...form, university: e.target.value})} className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0" /></Field>
           </div>
         </section>
 
-        {/* Document Tracking (Simulated Upload) */}
+        {/* SECTION VI */}
         <section>
-          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-4">IV. Document Archive</h3>
-          <p className="text-xs font-serif-news italic mb-4 text-[#6b3e1a]">Click to simulate uploading and verifying physical documents to the student's digital archive.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">VI. Document Archive</h3>
+          <p className="text-xs font-serif-news italic mb-4 text-[#6b3e1a]">Click each tile to mark a document as verified and received.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
               { key: "doc_photo", label: "Passport Photo" },
               { key: "doc_id_proof", label: "Govt ID Proof" },
               { key: "doc_marksheet_10", label: "10th Marksheet" },
               { key: "doc_marksheet_12", label: "12th Marksheet" },
+              { key: "doc_marksheet_degree", label: "Degree Marksheet" },
+              { key: "doc_signature", label: "Signature" },
             ].map(doc => {
-              const isUploaded = form[doc.key as keyof Student] as boolean;
+              const uploaded = form[doc.key as keyof Student] as boolean;
               return (
-                <div 
-                  key={doc.key} 
-                  onClick={() => handleDocToggle(doc.key as keyof Student)}
-                  className={`border-4 border-foreground p-4 cursor-pointer transition-colors flex flex-col items-center justify-center text-center gap-3 ${isUploaded ? "bg-foreground text-background" : "bg-transparent hover:bg-black/5"}`}
+                <div
+                  key={doc.key}
+                  onClick={fdoc(doc.key as keyof Student)}
+                  className={`border-4 border-foreground p-3 cursor-pointer transition-all select-none flex flex-col items-center justify-center text-center gap-2 min-h-[100px] ${uploaded ? "bg-foreground text-background shadow-[4px_4px_0px_0px_#6b3e1a]" : "bg-transparent hover:bg-black/5"}`}
                 >
-                  {isUploaded ? <CheckCircle className="w-8 h-8" /> : <Upload className="w-8 h-8 opacity-70" />}
-                  <span className="font-sans font-bold uppercase tracking-widest text-[10px]">{doc.label}</span>
-                  <span className="text-[9px] opacity-70 border-t border-current pt-2">{isUploaded ? "VERIFIED DOCUMENT" : "CLICK TO UPLOAD"}</span>
+                  {uploaded ? <CheckCircle className="w-7 h-7" /> : <Upload className="w-7 h-7 opacity-50" />}
+                  <span className="font-sans font-bold uppercase tracking-widest text-[9px] leading-tight">{doc.label}</span>
+                  <span className={`text-[8px] border-t pt-1.5 w-full ${uploaded ? "border-background/30 opacity-70" : "border-foreground/20 text-muted-foreground"}`}>
+                    {uploaded ? "VERIFIED ✓" : "PENDING"}
+                  </span>
                 </div>
               );
             })}
           </div>
         </section>
 
-        <div className="pt-6 flex flex-col sm:flex-row justify-end gap-4 border-t-4 border-foreground mt-2 sticky bottom-0 bg-[#fbf6e7] py-4">
+        <div className="sticky bottom-0 bg-[#fbf6e7] border-t-4 border-foreground py-4 flex flex-col sm:flex-row justify-end gap-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background h-12 px-8">
             Cancel
           </Button>
-          <Button type="submit" disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 px-8">
-            {busy ? "Saving..." : student ? "Commit Modifications" : "Archive New Student"}
+          <Button type="submit" disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 px-10">
+            {busy ? "Saving…" : student ? "Commit Modifications" : "Archive New Student"}
           </Button>
         </div>
       </form>
