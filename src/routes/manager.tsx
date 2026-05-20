@@ -1788,15 +1788,15 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
 function SettingsTab() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [managers, setManagers] = useState<any[]>([]);
 
-  const loadRoles = async () => {
-    const { data } = await supabase.from("user_roles").select("*").order("created_at", { ascending: false });
-    if (data) setRoles(data);
+  const loadManagers = async () => {
+    const { data } = await supabase.from("allowed_managers" as any).select("*").order("created_at", { ascending: false });
+    if (data) setManagers(data);
   };
 
   useEffect(() => {
-    loadRoles();
+    loadManagers();
   }, []);
 
   const handleGrantAdmin = async (e: React.FormEvent) => {
@@ -1804,11 +1804,15 @@ function SettingsTab() {
     if (!email) return;
     setBusy(true);
     try {
-      const { error } = await supabase.from("user_roles").insert([{ user_id: email.toLowerCase().trim(), role: "admin" }]);
+      const cleanEmail = email.toLowerCase().trim();
+      if (cleanEmail === "ulfathai003@gmail.com") {
+        throw new Error("The master admin account is already permanently whitelisted!");
+      }
+      const { error } = await supabase.from("allowed_managers" as any).insert([{ email: cleanEmail }]);
       if (error) throw error;
-      toast.success(`Admin privileges granted to ${email}`);
+      toast.success(`Manager credentials whitelisted for ${cleanEmail}`);
       setEmail("");
-      loadRoles();
+      loadManagers();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -1816,12 +1820,16 @@ function SettingsTab() {
     }
   };
 
-  const handleRevoke = async (id: string) => {
+  const handleRevoke = async (id: string, managerEmail: string) => {
+    if (managerEmail.toLowerCase().trim() === "ulfathai003@gmail.com") {
+      return toast.error("Cannot revoke master admin privileges.");
+    }
     setBusy(true);
     try {
-      await supabase.from("user_roles").delete().eq("id", id);
-      toast.success("Privileges revoked");
-      loadRoles();
+      const { error } = await supabase.from("allowed_managers" as any).delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Manager privileges revoked");
+      loadManagers();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -1856,7 +1864,7 @@ function SettingsTab() {
                 <ShieldCheck className="w-4 h-4 mr-2" /> Grant Access
               </Button>
             </div>
-            <p className="text-xs font-serif-news italic text-[#6b3e1a]">The user must already have registered an account, or they will be granted admin status upon their first login.</p>
+            <p className="text-xs font-serif-news italic text-[#6b3e1a]">The user will be automatically granted admin status when they register or next log in.</p>
           </form>
         </div>
       </div>
@@ -1865,30 +1873,34 @@ function SettingsTab() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b-4 border-foreground bg-foreground text-background">
-              <Th>User Identifier</Th>
+              <Th>User Email</Th>
               <Th>Role Level</Th>
               <Th>Provisioned At</Th>
               <Th className="text-right">Action</Th>
             </tr>
           </thead>
           <tbody className="font-serif-news text-sm">
-            {roles.map((r) => (
-              <tr key={r.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
-                <td className="p-4 font-bold">{r.user_id}</td>
+            {managers.map((m) => (
+              <tr key={m.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
+                <td className="p-4 font-bold">{m.email}</td>
                 <td className="p-4">
                   <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
-                    {r.role}
+                    admin
                   </Badge>
                 </td>
-                <td className="p-4 text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="p-4 text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</td>
                 <td className="p-4 text-right">
-                  <Button size="sm" variant="outline" onClick={() => handleRevoke(r.id)} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive hover:bg-destructive hover:text-background">
-                    Revoke
-                  </Button>
+                  {m.email.toLowerCase().trim() !== "ulfathai003@gmail.com" ? (
+                    <Button size="sm" variant="outline" onClick={() => handleRevoke(m.id, m.email)} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive hover:bg-destructive hover:text-background">
+                      Revoke
+                    </Button>
+                  ) : (
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground italic px-3 py-1 bg-black/5 border border-foreground/20">Permanent</span>
+                  )}
                 </td>
               </tr>
             ))}
-            {roles.length === 0 && (
+            {managers.length === 0 && (
               <tr>
                 <td colSpan={4} className="p-8 text-center text-muted-foreground italic">No additional roles provisioned.</td>
               </tr>

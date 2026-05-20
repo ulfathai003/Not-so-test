@@ -7,8 +7,9 @@ function createSupabaseClient() {
 
   const hasKeys = !!SUPABASE_URL && !!SUPABASE_PUBLISHABLE_KEY;
 
+  let realClient: any = null;
   if (hasKeys) {
-    return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    realClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         storage: typeof window !== 'undefined' ? localStorage : undefined,
         persistSession: true,
@@ -240,9 +241,20 @@ function createSupabaseClient() {
       if (!localStorage.getItem("educonnect_mock_user_roles")) {
         const roles = [
           { user_id: "admin@educonnect.com", role: "admin" },
-          { user_id: "student@educonnect.com", role: "student" }
+          { user_id: "student@educonnect.com", role: "student" },
+          { user_id: "ulfathai003@gmail.com", role: "admin" }
         ];
         localStorage.setItem("educonnect_mock_user_roles", JSON.stringify(roles));
+      }
+
+      // 6. Users
+      if (!localStorage.getItem("educonnect_mock_users")) {
+        const users = [
+          { id: "admin@educonnect.com", email: "admin@educonnect.com", full_name: "Admin" },
+          { id: "student@educonnect.com", email: "student@educonnect.com", full_name: "Student" },
+          { id: "ulfathai003@gmail.com", email: "ulfathai003@gmail.com", full_name: "Master Admin" }
+        ];
+        localStorage.setItem("educonnect_mock_users", JSON.stringify(users));
       }
     };
     initSeed();
@@ -565,7 +577,212 @@ function createSupabaseClient() {
     }
   };
 
-  return mockSupabase as any;
+  const hybridClient = {
+    auth: {
+      async signInWithPassword({ email, password }: any) {
+        const cleanEmail = email.trim().toLowerCase();
+        
+        // 1. Try real Supabase auth first
+        if (realClient) {
+          try {
+            const { data, error } = await realClient.auth.signInWithPassword({ email: cleanEmail, password });
+            if (!error && data?.session) {
+              localStorage.removeItem("educonnect_mock_session");
+              return { data, error: null };
+            }
+          } catch (e) {
+            console.warn("Real Supabase auth failed, falling back to local storage:", e);
+          }
+        }
+
+        // 2. Local fallback
+        const users = JSON.parse(localStorage.getItem("educonnect_mock_users") || "[]");
+        let user = users.find((u: any) => u.email === cleanEmail);
+        
+        if (user) {
+          if (user.password && user.password !== password) {
+            return { data: null, error: { message: "Invalid login credentials" } };
+          }
+        } else {
+          // If they didn't exist in local users, check if they are the master admin or seeded accounts
+          const isMasterAdmin = cleanEmail === "ulfathai003@gmail.com";
+          const isAdmin = isMasterAdmin || cleanEmail.includes("admin");
+          user = { id: cleanEmail, email: cleanEmail, full_name: cleanEmail.split("@")[0], password };
+          users.push(user);
+          localStorage.setItem("educonnect_mock_users", JSON.stringify(users));
+
+          const roles = JSON.parse(localStorage.getItem("educonnect_mock_user_roles") || "[]");
+          const userRole = isAdmin ? "admin" : "student";
+          if (!roles.some((r: any) => r.user_id === cleanEmail)) {
+            roles.push({ user_id: cleanEmail, role: userRole });
+            localStorage.setItem("educonnect_mock_user_roles", JSON.stringify(roles));
+          }
+        }
+
+        const session = { user, access_token: "mock-token", refresh_token: "mock-token", expires_in: 3600 };
+        localStorage.setItem("educonnect_mock_session", JSON.stringify(session));
+
+        setTimeout(() => {
+          authListeners.forEach((l) => l("SIGNED_IN", session));
+        }, 0);
+
+        return { data: { session, user }, error: null };
+      },
+
+      async signUp({ email, password, options }: any) {
+        const cleanEmail = email.trim().toLowerCase();
+        const fullName = options?.data?.full_name || cleanEmail.split("@")[0];
+
+        // 1. Try real Supabase signup
+        if (realClient) {
+          try {
+            await realClient.auth.signUp({
+              email: cleanEmail,
+              password,
+              options
+            });
+          } catch (e) {
+            console.warn("Real Supabase signup error (ignoring for fallback):", e);
+          }
+        }
+
+        // 2. Always store locally so they can log in next time
+        const users = JSON.parse(localStorage.getItem("educonnect_mock_users") || "[]");
+        if (!users.some((u: any) => u.email === cleanEmail)) {
+          const user = { id: cleanEmail, email: cleanEmail, full_name: fullName, password };
+          users.push(user);
+          localStorage.setItem("educonnect_mock_users", JSON.stringify(users));
+
+          const roles = JSON.parse(localStorage.getItem("educonnect_mock_user_roles") || "[]");
+          const userRole = cleanEmail.includes("admin") || cleanEmail === "ulfathai003@gmail.com" ? "admin" : "student";
+          roles.push({ user_id: cleanEmail, role: userRole });
+          localStorage.setItem("educonnect_mock_user_roles", JSON.stringify(roles));
+
+          if (userRole === "student") {
+            const students = JSON.parse(localStorage.getItem("educonnect_mock_students") || "[]");
+            if (!students.some((s: any) => s.email === cleanEmail)) {
+              students.push({
+                id: `stud-${Math.random().toString(36).substring(2, 9)}`,
+                full_name: fullName,
+                email: cleanEmail,
+                phone: "",
+                batch_year: 2026,
+                program: "MBA",
+                specialization: "General Management",
+                university: "Mangalayatan University",
+                location: "Not specified",
+                status: "active",
+                total_fee: 150000,
+                fee_paid: 0,
+                fee_pending: 150000,
+                payment_status: "Pending",
+                enrollment_date: new Date().toISOString(),
+                enrollment_number: `EDU-MBA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+              });
+              localStorage.setItem("educonnect_mock_students", JSON.stringify(students));
+            }
+          }
+        }
+
+        const user = { id: cleanEmail, email: cleanEmail, full_name: fullName };
+        const session = { user, access_token: "mock-token", refresh_token: "mock-token", expires_in: 3600 };
+        localStorage.setItem("educonnect_mock_session", JSON.stringify(session));
+
+        setTimeout(() => {
+          authListeners.forEach((l) => l("SIGNED_IN", session));
+        }, 0);
+
+        return { data: { session, user }, error: null };
+      },
+
+      async signOut() {
+        if (realClient) {
+          try {
+            await realClient.auth.signOut();
+          } catch (e) {
+            console.warn("Real Supabase signOut failed:", e);
+          }
+        }
+        localStorage.removeItem("educonnect_mock_session");
+        setTimeout(() => {
+          authListeners.forEach((l) => l("SIGNED_OUT", null));
+        }, 0);
+        return { error: null };
+      },
+
+      async getSession() {
+        const sessionStr = localStorage.getItem("educonnect_mock_session");
+        if (sessionStr) {
+          return { data: { session: JSON.parse(sessionStr) }, error: null };
+        }
+        if (realClient) {
+          return realClient.auth.getSession();
+        }
+        return { data: { session: null }, error: null };
+      },
+
+      onAuthStateChange(callback: any) {
+        authListeners.push(callback);
+        
+        let realUnsubscribe: any = null;
+        if (realClient) {
+          const { data: { subscription } } = realClient.auth.onAuthStateChange((event: any, session: any) => {
+            if (!localStorage.getItem("educonnect_mock_session")) {
+              callback(event, session);
+            }
+          });
+          realUnsubscribe = subscription.unsubscribe;
+        }
+
+        const sessionStr = localStorage.getItem("educonnect_mock_session");
+        if (sessionStr) {
+          callback("SIGNED_IN", JSON.parse(sessionStr));
+        } else if (realClient) {
+          realClient.auth.getSession().then(({ data: { session } }: any) => {
+            if (session) {
+              callback("SIGNED_IN", session);
+            } else {
+              callback("SIGNED_OUT", null);
+            }
+          });
+        } else {
+          callback("SIGNED_OUT", null);
+        }
+
+        return {
+          data: {
+            subscription: {
+              unsubscribe() {
+                const idx = authListeners.indexOf(callback);
+                if (idx > -1) authListeners.splice(idx, 1);
+                if (realUnsubscribe) realUnsubscribe();
+              }
+            }
+          }
+        };
+      }
+    },
+
+    from(tableName: string) {
+      const isMockSession = !!localStorage.getItem("educonnect_mock_session");
+      if (isMockSession || !realClient) {
+        return mockSupabase.from(tableName);
+      }
+      return realClient.from(tableName);
+    }
+  };
+
+  return new Proxy(hybridClient, {
+    get(target: any, prop: string | symbol, receiver: any) {
+      if (prop in target) {
+        return Reflect.get(target, prop, receiver);
+      }
+      if (realClient && prop in realClient) {
+        return Reflect.get(realClient, prop, receiver);
+      }
+      return undefined;
+    }
+  }) as any;
 }
 
 let _supabase: any;
