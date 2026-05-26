@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_invites: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          note: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          note?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          note?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
