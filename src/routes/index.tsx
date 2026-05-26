@@ -19,6 +19,7 @@ const partners = [
   "NMIMS",
   "IGNOU",
   "LPU",
+  "Sikkim Board (SBSE)",
 ];
 
 const stats = [
@@ -137,7 +138,11 @@ function HomePage() {
           <p className="news-kicker text-center">In Partnership With</p>
           <div className="news-divider mt-3 pt-4 flex flex-wrap justify-center gap-x-8 gap-y-2 font-serif-news text-sm">
             {partners.map((p) => (
-              <span key={p}>· {p} ·</span>
+              <span key={p}>
+                · {p === "Sikkim Board (SBSE)" ? (
+                  <Link to="/contact" className="hover:underline decoration-double underline-offset-4 decoration-foreground/40">{p}</Link>
+                ) : p} ·
+              </span>
             ))}
           </div>
         </section>

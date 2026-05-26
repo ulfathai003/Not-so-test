@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admission-desk")({
   head: () => ({
     meta: [
       { title: "Admissions Intake Desk | EduConnect Times" },
-      { name: "description", content: "Apply for Online MBA, BBA and distance courses. Mondrian editorial intake desk." },
+      { name: "description", content: "Apply for Online MBA, BBA and distance courses. Official intake desk." },
     ],
   }),
   component: AdmissionDeskPage,

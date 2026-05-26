@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -46,7 +47,23 @@ function ContactPage() {
     setLoading(true);
 
     try {
-      // Submit form directly to user email using FormSubmit.co's free AJAX endpoint
+      // 1. Save to Supabase (Order Flow: Lands in Manager Console for Prashant Bhai)
+      const { error: dbError } = await (supabase as any).from("students").insert([{
+        full_name: name,
+        email: email,
+        phone: phone,
+        university: university,
+        program: course.includes("10th") ? "10th" : course.includes("12th") ? "12th Commerce" : (course as any),
+        specialization: course,
+        notes: `Interest: ${courseDescription}. Message: ${message}`,
+        status: "lead",
+        batch_year: new Date().getFullYear(),
+        location: "Website Inbound"
+      }]);
+
+      if (dbError) throw dbError;
+
+      // 2. Original FormSubmit.co notification fallback
       const response = await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
         method: "POST",
         headers: {
@@ -65,21 +82,16 @@ function ContactPage() {
         })
       });
 
-      const result = await response.json();
-      if (result.success) {
-        toast.success("Message sent! A counselor will reach out within a day.");
-        setName(user?.user_metadata?.full_name || studentData?.full_name || "");
-        setEmail(user?.email || "");
-        setPhone(studentData?.phone || "");
-        setUniversity("");
-        setCourse("");
-        setCourseDescription("");
-        setMessage("");
-      } else {
-        throw new Error(result.message || "Failed to submit form");
-      }
+      toast.success("Inquiry received! Prashant Bhai is allocating your counselor now.");
+      setName(user?.user_metadata?.full_name || studentData?.full_name || "");
+      setEmail(user?.email || "");
+      setPhone(studentData?.phone || "");
+      setUniversity("");
+      setCourse("");
+      setCourseDescription("");
+      setMessage("");
     } catch (err: any) {
-      toast.error(err.message || "Something went wrong. Please try again.");
+      toast.error(err.message || "Failed to submit inquiry. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -174,84 +186,88 @@ function ContactPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
                 />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              </div>              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="university" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Select University</Label>
+                  <Label htmlFor="university" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Affiliated University / Board</Label>
                   <select 
                     id="university" 
                     name="university"
                     required 
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-transparent border border-foreground/40 focus:border-foreground rounded-none font-serif-news p-2"
+                    className="w-full h-10 px-3 bg-transparent border-2 border-foreground focus:ring-0 focus:outline-none rounded-none font-serif-news text-sm appearance-none cursor-pointer"
+                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
                   >
-                    <option value="">Select a University</option>
-                    <option value="jain">Jain (Deemed-to-be) University</option>
-                    <option value="manipal">Manipal University</option>
-                    <option value="amity">Amity University</option>
-                    <option value="nmims">NMIMS</option>
-                    <option value="lpu">LPU</option>
-                    <option value="sikkim-board">Sikkim Board (SBSE)</option>
-                    <option value="other">Other / Not Sure</option>
+                    <option value="">-- Choose University --</option>
+                    <option value="Jain (Deemed-to-be) University">Jain (Deemed-to-be) University</option>
+                    <option value="Manipal University">Manipal University</option>
+                    <option value="Amity University">Amity University</option>
+                    <option value="NMIMS">NMIMS</option>
+                    <option value="LPU">LPU</option>
+                    <option value="Sikkim Board (SBSE)">Sikkim Board (SBSE)</option>
+                    <option value="Other">Other / Not Listed</option>
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="course" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Select Course</Label>
+                  <Label htmlFor="course" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Desired Course (Dropdown)</Label>
                   <select 
                     id="course" 
                     name="course"
                     required 
                     value={course}
                     onChange={(e) => setCourse(e.target.value)}
-                    className="w-full bg-transparent border border-foreground/40 focus:border-foreground rounded-none font-serif-news p-2"
+                    className="w-full h-10 px-3 bg-transparent border-2 border-foreground focus:ring-0 focus:outline-none rounded-none font-serif-news text-sm appearance-none cursor-pointer"
+                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
                   >
-                    <option value="">Select a Course</option>
-                    {university === "sikkim-board" ? (
+                    <option value="">-- Select Qualification --</option>
+                    {university === "Sikkim Board (SBSE)" ? (
                       <>
-                        <option value="Secondary">Secondary (10th)</option>
-                        <option value="Senior Secondary">Senior Secondary (12th)</option>
+                        <option value="Secondary (10th)">Secondary (10th)</option>
+                        <option value="Senior Secondary (12th)">Senior Secondary (12th)</option>
                       </>
                     ) : (
                       <>
-                        <option value="MBA">Online MBA</option>
-                        <option value="MCA">Online MCA</option>
-                        <option value="BBA">Online BBA</option>
-                        <option value="BCom">Online B.Com</option>
-                        <option value="BCA">Online BCA</option>
-                        <option value="MA">Online MA</option>
-                        <option value="BA">Online BA</option>
+                        <option value="Online MBA">Online MBA</option>
+                        <option value="Online MCA">Online MCA</option>
+                        <option value="Online BBA">Online BBA</option>
+                        <option value="Online B.Com">Online B.Com</option>
+                        <option value="Online BCA">Online BCA</option>
+                        <option value="Online MA">Online MA</option>
+                        <option value="Online BA">Online BA</option>
+                        <option value="Diploma">Professional Diploma</option>
                       </>
                     )}
                   </select>
                 </div>
               </div>
               <div>
-                <Label htmlFor="courseDescription" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Course Description / Requirements</Label>
+                <Label htmlFor="courseDescription" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Course Description & Goals</Label>
                 <Textarea 
                   id="courseDescription" 
                   name="courseDescription"
                   rows={2} 
+                  required
                   maxLength={500} 
-                  placeholder="Tell us about your educational background or specific course interests..."
+                  placeholder="Briefly describe your interest in this course..."
                   value={courseDescription}
                   onChange={(e) => setCourseDescription(e.target.value)}
-                  className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
+                  className="bg-transparent border-2 border-foreground focus:ring-0 focus:outline-none rounded-none font-serif-news p-3" 
                 />
               </div>
               <div>
-                <Label htmlFor="message" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Additional Message</Label>
+                <Label htmlFor="message" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Queries / Message</Label>
                 <Textarea 
                   id="message" 
                   name="message"
                   rows={3} 
-                  required 
                   maxLength={1000} 
+                  placeholder="Any other specific queries? (Optional)"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
+                  className="bg-transparent border-2 border-foreground focus:ring-0 focus:outline-none rounded-none font-serif-news p-3" 
                 />
               </div>
+
               <div className="pt-2">
                 <Button 
                   disabled={loading} 

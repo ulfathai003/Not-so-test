@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings } from "lucide-react";
+import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,17 +77,22 @@ function ManagerPage() {
           <TabsList className="flex flex-wrap w-full h-auto bg-transparent gap-2 p-0 justify-start">
             <TabsTrigger value="overview" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><TrendingUp className="w-4 h-4 mr-1.5" /> Overview</TabsTrigger>
             <TabsTrigger value="students" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Users className="w-4 h-4 mr-1.5" /> Leads & Students</TabsTrigger>
-            <TabsTrigger value="payments" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Receipt className="w-4 h-4 mr-1.5" /> Fees & Collections</TabsTrigger>
             {role === "admin" && (
-              <TabsTrigger value="settings" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Settings className="w-4 h-4 mr-1.5" /> Admin Settings</TabsTrigger>
+              <>
+                <TabsTrigger value="enquiries" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Mail className="w-4 h-4 mr-1.5" /> Inbound Enquiries</TabsTrigger>
+                <TabsTrigger value="settings" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Settings className="w-4 h-4 mr-1.5" /> Admin Settings</TabsTrigger>
+              </>
             )}
           </TabsList>
 
-          <TabsContent value="overview" className="pt-6"><OverviewTab role={role} userEmail={user.email!} /></TabsContent>
-          <TabsContent value="students" className="pt-6"><StudentsTab role={role} userEmail={user.email!} /></TabsContent>
-          <TabsContent value="payments" className="pt-6"><PaymentsTab role={role} userEmail={user.email!} /></TabsContent>
+          <TabsContent value="overview" className="pt-6"><OverviewTab role={role} userEmail={user.email || ""} /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab role={role} userEmail={user.email || ""} /></TabsContent>
+          <TabsContent value="payments" className="pt-6"><PaymentsTab role={role} userEmail={user.email || ""} /></TabsContent>
           {role === "admin" && (
-            <TabsContent value="settings" className="pt-6"><SettingsTab /></TabsContent>
+            <>
+              <TabsContent value="enquiries" className="pt-6"><EnquiriesTab /></TabsContent>
+              <TabsContent value="settings" className="pt-6"><SettingsTab /></TabsContent>
+            </>
           )}
         </Tabs>
       </main>
@@ -107,8 +112,13 @@ function OverviewTab({ role, userEmail }: { role: string; userEmail: string }) {
       let paymentQuery = supabase.from("fee_payments").select("*, student:students(*)");
       
       if (role === "center") {
+        studentQuery = studentQuery.eq("counsellor_name", userEmail).neq("status", "lead");
+      }
+      if (role === "staff") {
         studentQuery = studentQuery.eq("counsellor_name", userEmail);
-        // paymentQuery = paymentQuery.filter("student.counsellor_name", "eq", userEmail); // Subquery filter might be tricky
+      }
+      if (role === "admin") {
+        // Admin sees everything
       }
 
       const [s, p] = await Promise.all([
@@ -430,7 +440,13 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
   async function load() {
     let query = supabase.from("students").select("*").order("created_at", { ascending: false });
     if (role === "center") {
+      query = query.eq("counsellor_name", userEmail).neq("status", "lead");
+    }
+    if (role === "staff") {
       query = query.eq("counsellor_name", userEmail);
+    }
+    if (role === "admin") {
+      // Sees all
     }
     const { data } = await query;
     if (data) setStudents(data);
@@ -578,6 +594,15 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
   const [form, setForm] = useState<Partial<Student>>(emptyForm);
   const [busy, setBusy] = useState(false);
 
+  const [staffList, setStaffList] = useState<{email: string}[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("allowed_managers" as any).select("email");
+      if (data) setStaffList(data);
+    })();
+  }, []);
+
   useEffect(() => {
     setForm(student ? { ...student } : { ...emptyForm, batch_year: new Date().getFullYear() });
   }, [student]);
@@ -655,7 +680,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
             <Field label="Employment Status"><SelWrap field="employment_status" options={["Employed", "Unemployed", "Self-employed", "Student"]} /></Field>
             <Field label="Father's Name"><Input value={form.father_name || ""} onChange={f("father_name")} className={cls} /></Field>
             <Field label="Mother's Name"><Input value={form.mother_name || ""} onChange={f("mother_name")} className={cls} /></Field>
-            <Field label="Aadhar Number"><Input value={form.aadhar_number || ""} onChange={f("aadhar_number")} placeholder="12-digit" className={cls} /></Field>
+            <Field label="Aadhaar Number"><Input value={form.aadhar_number || ""} onChange={f("aadhar_number")} placeholder="12-digit Aadhaar Card number" className={cls} /></Field>
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Field label="Address" full><Input value={form.address || ""} onChange={f("address")} className={cls} /></Field>
@@ -719,7 +744,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
             <Field label="Current Semester"><Input type="number" value={form.current_semester || ""} onChange={fn("current_semester")} className={cls} /></Field>
             <Field label="ABC ID"><Input value={form.abc_id || ""} onChange={f("abc_id")} className={cls} /></Field>
             <Field label="DEB ID"><Input value={form.deb_id || ""} onChange={f("deb_id")} className={cls} /></Field>
-            <Field label="Account Status"><SelWrap field="status" options={["active", "inactive", "graduated", "suspended"]} /></Field>
+            <Field label="Account Status"><SelWrap field="status" options={["lead", "active", "inactive", "graduated", "suspended"]} /></Field>
           </div>
         </section>
 
@@ -729,9 +754,10 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Field label="Total Fee (₹)"><Input type="number" value={form.total_fee || ""} onChange={fn("total_fee")} className={cls} /></Field>
             <Field label="Fee Paid (₹)"><Input type="number" value={form.fee_paid || ""} onChange={fn("fee_paid")} className={cls} /></Field>
-            <Field label="Fee Pending (₹)"><Input type="number" value={form.fee_pending || ""} onChange={fn("fee_pending")} className={cls} /></Field>
-            <Field label="Payment Status"><SelWrap field="payment_status" options={["Paid", "Partial", "Pending", "Overdue"]} /></Field>
-            <Field label="Payment Mode"><SelWrap field="payment_mode" options={["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"]} /></Field>
+            <div className="bg-foreground text-background p-4 shadow-[4px_4px_0px_0px_#1a1410] flex flex-col justify-center items-center text-center">
+              <span className="font-sans font-bold uppercase tracking-widest text-[10px] opacity-70">Balance Due</span>
+              <span className="text-2xl font-headline mt-1">{inr(Number(form.total_fee ?? 0) - Number(form.fee_paid ?? 0))}</span>
+            </div>
           </div>
         </section>
 
@@ -740,7 +766,14 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
           <h3 className="font-headline text-xl uppercase tracking-tighter border-b-4 border-foreground pb-2 mb-5">V. Admissions Source & Notes</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Field label="Lead Source"><SelWrap field="lead_source" options={["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair", "Partner College", "WhatsApp"]} /></Field>
-            <Field label="Counsellor Name"><Input value={form.counsellor_name || ""} onChange={f("counsellor_name")} className={cls} /></Field>
+            <Field label="Assigned Counsellor (Lead Allocation)" required>
+              <Select value={form.counsellor_name || ""} onValueChange={fs("counsellor_name")}>
+                <SelectTrigger className={trigCls}><SelectValue placeholder="Assign Staff" /></SelectTrigger>
+                <SelectContent className={selCls}>
+                  {staffList.map(s => <SelectItem key={s.email} value={s.email} className={selItemCls}>{s.email}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field label="Referral Name"><Input value={form.referral_name || ""} onChange={f("referral_name")} className={cls} /></Field>
           </div>
           <div className="mt-4">
@@ -756,11 +789,11 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
           <p className="text-xs font-serif-news italic mb-4 text-[#6b3e1a]">Click each tile to mark a document as verified and received.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
-              { key: "doc_photo", label: "Passport Photo" },
-              { key: "doc_id_proof", label: "Govt ID Proof" },
-              { key: "doc_marksheet_10", label: "10th Marksheet" },
-              { key: "doc_marksheet_12", label: "12th Marksheet" },
-              { key: "doc_marksheet_degree", label: "Degree Marksheet" },
+              { key: "doc_photo", label: "Passport Photo", required: true },
+              { key: "doc_id_proof", label: "Aadhaar Card", required: true },
+              { key: "doc_marksheet_10", label: "10th Marksheet", required: true },
+              { key: "doc_marksheet_12", label: "12th Marksheet", required: form.program === "12th Arts" || form.program === "12th Commerce" || form.program === "12th Science" || (form.program as any) === "MBA" || (form.program as any) === "MCA" },
+              { key: "doc_marksheet_degree", label: "Degree Marksheet", required: (form.program as any) === "MBA" || (form.program as any) === "MCA" },
               { key: "doc_signature", label: "Signature" },
             ].map(doc => {
               const uploaded = form[doc.key as keyof Student] as boolean;
@@ -768,12 +801,12 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
                 <div
                   key={doc.key}
                   onClick={fdoc(doc.key as keyof Student)}
-                  className={`border-4 border-foreground p-3 cursor-pointer transition-all select-none flex flex-col items-center justify-center text-center gap-2 min-h-[100px] ${uploaded ? "bg-foreground text-background shadow-[4px_4px_0px_0px_#6b3e1a]" : "bg-transparent hover:bg-black/5"}`}
+                  className={`border-4 border-foreground p-3 cursor-pointer transition-all select-none flex flex-col items-center justify-center text-center gap-2 min-h-[100px] ${uploaded ? "bg-foreground text-background shadow-[4px_4px_0px_0px_#6b3e1a]" : "bg-transparent hover:bg-black/5"} ${doc.required && !uploaded ? "border-red-500/50" : ""}`}
                 >
                   {uploaded ? <CheckCircle className="w-7 h-7" /> : <Upload className="w-7 h-7 opacity-50" />}
-                  <span className="font-sans font-bold uppercase tracking-widest text-[9px] leading-tight">{doc.label}</span>
+                  <span className="font-sans font-bold uppercase tracking-widest text-[9px] leading-tight">{doc.label}{doc.required && <span className="text-red-500 ml-1">*</span>}</span>
                   <span className={`text-[8px] border-t pt-1.5 w-full ${uploaded ? "border-background/30 opacity-70" : "border-foreground/20 text-muted-foreground"}`}>
-                    {uploaded ? "VERIFIED ✓" : "PENDING"}
+                    {uploaded ? "VERIFIED ✓" : "MANDATORY"}
                   </span>
                 </div>
               );
@@ -785,8 +818,12 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
           <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background h-12 px-8">
             Cancel
           </Button>
-          <Button type="submit" disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 px-10">
-            {busy ? "Saving…" : student ? "Commit Modifications" : "Archive New Student"}
+          <Button 
+            type="submit" 
+            disabled={busy || !form.doc_photo || !form.doc_id_proof || !form.doc_marksheet_10} 
+            className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 px-10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {busy ? "Saving…" : (!form.doc_photo || !form.doc_id_proof || !form.doc_marksheet_10) ? "Upload Mandatory Docs" : student ? "Commit Modifications" : "Archive New Student"}
           </Button>
         </div>
       </form>
@@ -807,7 +844,7 @@ const STUDENT_TEMPLATE = `1. Course:
 9. Employment Status: 
 10. Marital Status: 
 11. Religion: 
-12. Aadhar Number: 
+12. Aadhaar Number: 
 13. ABC ID: 
 14. DEB ID: 
 15. Address: . 
@@ -963,7 +1000,7 @@ function SettingsTab() {
                       Revoke
                     </Button>
                   ) : (
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground italic px-3 py-1 bg-black/5 border border-foreground/20">Permanent</span>
+                    <Badge variant="secondary" className="rounded-none font-sans font-bold uppercase tracking-widest text-[9px] bg-foreground text-background">Master</Badge>
                   )}
                 </td>
               </tr>
@@ -975,6 +1012,110 @@ function SettingsTab() {
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+
+/* ----------------------- ENQUIRIES TAB ----------------------- */
+
+function EnquiriesTab() {
+  const [leads, setLeads] = useState<Student[]>([]);
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const loadData = async () => {
+    setBusy(true);
+    const [leadsRes, staffRes] = await Promise.all([
+      supabase.from("students").select("*").eq("status", "lead").order("created_at", { ascending: false }),
+      supabase.from("allowed_managers" as any).select("*"),
+    ]);
+    if (leadsRes.data) setLeads(leadsRes.data);
+    if (staffRes.data) setStaffList(staffRes.data);
+    setBusy(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleAllocate = async (leadId: string, staffEmail: string) => {
+    const { error } = await supabase.from("students").update({ counsellor_name: staffEmail }).eq("id", leadId);
+    if (error) toast.error("Allocation failed");
+    else { toast.success(`Lead allocated to ${staffEmail}`); loadData(); }
+  };
+
+  const handleApprove = async (leadId: string) => {
+    const { error } = await supabase.from("students").update({ status: "active" }).eq("id", leadId);
+    if (error) toast.error("Conversion failed");
+    else { toast.success("Lead converted to Active Student"); loadData(); }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-hidden">
+        <div className="p-4 bg-foreground text-background border-b-4 border-foreground flex items-center justify-between">
+          <h2 className="font-headline text-2xl uppercase tracking-tighter">Inbound Website Enquiries</h2>
+          <Button size="sm" onClick={loadData} disabled={busy} className="rounded-none border-2 border-background font-sans font-bold uppercase tracking-widest text-[10px] bg-background text-foreground hover:bg-foreground hover:text-background hover:border-foreground">
+            Refresh
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b-2 border-foreground bg-foreground/5">
+                <Th>Candidate</Th>
+                <Th>Course Interest</Th>
+                <Th>Assigned To</Th>
+                <Th className="text-right">Actions</Th>
+              </tr>
+            </thead>
+            <tbody className="font-serif-news text-sm">
+              {leads.map(lead => (
+                <tr key={lead.id} className="border-b-2 border-foreground/10 hover:bg-black/5 transition-colors">
+                  <td className="p-4">
+                    <div className="font-bold">{lead.full_name}</div>
+                    <div className="text-xs text-muted-foreground">{lead.email} | {lead.phone}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{lead.location}</div>
+                  </td>
+                  <td className="p-4 text-xs">
+                    <div className="font-bold">{lead.university}</div>
+                    <div>{lead.program}{lead.specialization ? ` - ${lead.specialization}` : ""}</div>
+                    <div className="italic text-muted-foreground mt-1 line-clamp-2">{lead.notes}</div>
+                  </td>
+                  <td className="p-4">
+                    <Badge variant="outline" className="border border-foreground rounded-none text-[9px] uppercase font-bold">
+                      {lead.counsellor_name || "Unassigned"}
+                    </Badge>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-2 flex-wrap">
+                      <Select onValueChange={(val) => handleAllocate(lead.id, val)}>
+                        <SelectTrigger className="h-8 w-36 rounded-none border-2 border-foreground text-[9px] uppercase font-bold">
+                          <SelectValue placeholder="Allocate Staff" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+                          {staffList.map(s => (
+                            <SelectItem key={s.id} value={s.email} className="text-[9px] font-bold uppercase">{s.email}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" onClick={() => handleApprove(lead.id)} className="h-8 rounded-none border-2 border-foreground bg-foreground text-background text-[9px] font-bold uppercase hover:bg-background hover:text-foreground">
+                        Approve
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {leads.length === 0 && !busy && (
+                <tr>
+                  <td colSpan={4} className="p-10 text-center italic text-muted-foreground">
+                    No pending inbound enquiries from the website.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
