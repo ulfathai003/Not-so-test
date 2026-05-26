@@ -995,7 +995,7 @@ function SettingsTab() {
 function AccessTab() {
   const [invites, setInvites] = useState<any[]>([]);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [role, setRole] = useState<"admin" | "staff" | "center">("staff");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const { user } = useAuth();
@@ -1023,7 +1023,7 @@ function AccessTab() {
     } as any);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(`Invited ${e} as ${role === "admin" ? "Master" : "User"}`);
+    toast.success(`Invited ${e} as ${role === "admin" ? "Master" : role === "center" ? "Center" : "User"}`);
     setEmail(""); setNote(""); setRole("staff");
     load();
   };
@@ -1036,7 +1036,7 @@ function AccessTab() {
     load();
   };
 
-  const roleLabel = (r: string) => r === "admin" ? "Master" : r === "staff" ? "User" : r;
+  const roleLabel = (r: string) => r === "admin" ? "Master" : r === "center" ? "Center" : r === "staff" ? "User" : r;
 
   return (
     <div className="space-y-8">
@@ -1057,6 +1057,7 @@ function AccessTab() {
               <SelectTrigger className="border-2 border-foreground rounded-none"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Master (full access)</SelectItem>
+                <SelectItem value="center">Center (CX/location office)</SelectItem>
                 <SelectItem value="staff">User (assigned leads only)</SelectItem>
               </SelectContent>
             </Select>
@@ -1072,7 +1073,7 @@ function AccessTab() {
       </div>
 
       {/* Access matrix */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
           <p className="news-kicker text-xs">Master</p>
           <h4 className="font-headline text-xl mt-1 mb-3">Full control</h4>
@@ -1082,6 +1083,17 @@ function AccessTab() {
             <li>Fees, collections, expenses, reports</li>
             <li>Manage users & access</li>
             <li>Final enrollment numbers</li>
+          </ul>
+        </div>
+        <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
+          <p className="news-kicker text-xs">Center (CX)</p>
+          <h4 className="font-headline text-xl mt-1 mb-3">Branch / counselling desk</h4>
+          <ul className="text-sm font-serif-news space-y-1 list-disc list-inside">
+            <li>Students mapped to this center</li>
+            <li>Add new admissions & enquiries</li>
+            <li>View payment status (no edits)</li>
+            <li>No global fees / settings access</li>
+            <li>No user management</li>
           </ul>
         </div>
         <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
