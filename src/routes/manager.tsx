@@ -989,3 +989,162 @@ function SettingsTab() {
     </div>
   );
 }
+
+/* ----------------------- USERS & ACCESS ----------------------- */
+
+function AccessTab() {
+  const [invites, setInvites] = useState<any[]>([]);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from("access_invites" as any)
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) return toast.error(error.message);
+    setInvites((data as any[]) ?? []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const invite = async () => {
+    const e = email.trim().toLowerCase();
+    if (!e) return toast.error("Email required");
+    setBusy(true);
+    const { error } = await supabase.from("access_invites" as any).insert({
+      email: e,
+      role,
+      note: note || null,
+      invited_by: user?.id ?? null,
+    } as any);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Invited ${e} as ${role === "admin" ? "Master" : "User"}`);
+    setEmail(""); setNote(""); setRole("staff");
+    load();
+  };
+
+  const revoke = async (id: string) => {
+    if (!confirm("Revoke this invite?")) return;
+    const { error } = await supabase.from("access_invites" as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Invite revoked");
+    load();
+  };
+
+  const roleLabel = (r: string) => r === "admin" ? "Master" : r === "staff" ? "User" : r;
+
+  return (
+    <div className="space-y-8">
+      {/* Invite form */}
+      <div className="border-2 border-foreground bg-[#fbf6e7] p-6">
+        <h3 className="font-headline text-2xl uppercase tracking-tight mb-1">Invite a teammate</h3>
+        <p className="font-serif-news italic text-sm text-[#6b3e1a] mb-5">
+          Masters see everything (finances, settings, all leads). Users only see leads & students assigned to them.
+        </p>
+        <div className="grid md:grid-cols-4 gap-3 items-end">
+          <div className="md:col-span-2">
+            <Label className="text-xs uppercase tracking-widest font-bold">Email</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="border-2 border-foreground rounded-none" />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest font-bold">Access level</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+              <SelectTrigger className="border-2 border-foreground rounded-none"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Master (full access)</SelectItem>
+                <SelectItem value="staff">User (assigned leads only)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={invite} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] h-10">
+            <Plus className="w-4 h-4 mr-1" /> Send invite
+          </Button>
+        </div>
+        <div className="mt-3">
+          <Label className="text-xs uppercase tracking-widest font-bold">Note (optional)</Label>
+          <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. counsellor for Bangalore region" className="border-2 border-foreground rounded-none" />
+        </div>
+      </div>
+
+      {/* Access matrix */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
+          <p className="news-kicker text-xs">Master</p>
+          <h4 className="font-headline text-xl mt-1 mb-3">Full control</h4>
+          <ul className="text-sm font-serif-news space-y-1 list-disc list-inside">
+            <li>All inbound enquiries & lead allocation</li>
+            <li>All students across staff</li>
+            <li>Fees, collections, expenses, reports</li>
+            <li>Manage users & access</li>
+            <li>Final enrollment numbers</li>
+          </ul>
+        </div>
+        <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
+          <p className="news-kicker text-xs">User</p>
+          <h4 className="font-headline text-xl mt-1 mb-3">Limited to assigned work</h4>
+          <ul className="text-sm font-serif-news space-y-1 list-disc list-inside">
+            <li>Only leads allocated to them</li>
+            <li>Only students they are assigned to</li>
+            <li>No fees / collections tab</li>
+            <li>No admin settings</li>
+            <li>No user management</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Invites list */}
+      <div>
+        <h3 className="font-headline text-2xl uppercase tracking-tight mb-3">Invites & accounts</h3>
+        <div className="overflow-x-auto border-2 border-foreground">
+          <table className="w-full text-sm">
+            <thead className="bg-foreground text-background font-sans uppercase tracking-widest text-[10px]">
+              <tr>
+                <th className="text-left p-3">Email</th>
+                <th className="text-left p-3">Access</th>
+                <th className="text-left p-3">Note</th>
+                <th className="text-left p-3">Status</th>
+                <th className="text-left p-3">Invited</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {invites.length === 0 && (
+                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground font-serif-news italic">No invites yet.</td></tr>
+              )}
+              {invites.map((i) => (
+                <tr key={i.id} className="border-t border-foreground/30">
+                  <td className="p-3 font-medium">{i.email}</td>
+                  <td className="p-3">
+                    <Badge variant="outline" className="border-2 border-foreground rounded-none font-bold uppercase tracking-widest text-[10px]">
+                      {roleLabel(i.role)}
+                    </Badge>
+                  </td>
+                  <td className="p-3 text-muted-foreground">{i.note || "—"}</td>
+                  <td className="p-3">
+                    {i.activated_at
+                      ? <Badge className="rounded-none border-2 border-foreground bg-foreground text-background text-[10px] uppercase tracking-widest"><CheckCircle className="w-3 h-3 mr-1" /> Active</Badge>
+                      : <Badge variant="outline" className="rounded-none border-2 border-foreground text-[10px] uppercase tracking-widest">Pending</Badge>}
+                  </td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(i.created_at).toLocaleDateString()}</td>
+                  <td className="p-3 text-right">
+                    <Button size="sm" variant="outline" onClick={() => revoke(i.id)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px]">
+                      <Trash2 className="w-3 h-3 mr-1" /> Revoke
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs font-serif-news italic text-[#6b3e1a] mt-3">
+          Invited people get their access automatically when they sign up using the same email.
+        </p>
+      </div>
+    </div>
+  );
+}
