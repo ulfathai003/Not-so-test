@@ -1057,6 +1057,7 @@ function AccessTab() {
               <SelectTrigger className="border-2 border-foreground rounded-none"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Master (full access)</SelectItem>
+                <SelectItem value="center">Center (CX/location office)</SelectItem>
                 <SelectItem value="staff">User (assigned leads only)</SelectItem>
               </SelectContent>
             </Select>
