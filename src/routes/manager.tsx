@@ -1023,7 +1023,7 @@ function AccessTab() {
     } as any);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(`Invited ${e} as ${role === "admin" ? "Master" : "User"}`);
+    toast.success(`Invited ${e} as ${role === "admin" ? "Master" : role === "center" ? "Center" : "User"}`);
     setEmail(""); setNote(""); setRole("staff");
     load();
   };
@@ -1036,7 +1036,7 @@ function AccessTab() {
     load();
   };
 
-  const roleLabel = (r: string) => r === "admin" ? "Master" : r === "staff" ? "User" : r;
+  const roleLabel = (r: string) => r === "admin" ? "Master" : r === "center" ? "Center" : r === "staff" ? "User" : r;
 
   return (
     <div className="space-y-8">
