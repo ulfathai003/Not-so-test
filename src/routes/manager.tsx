@@ -995,7 +995,7 @@ function SettingsTab() {
 function AccessTab() {
   const [invites, setInvites] = useState<any[]>([]);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [role, setRole] = useState<"admin" | "staff" | "center">("staff");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const { user } = useAuth();
