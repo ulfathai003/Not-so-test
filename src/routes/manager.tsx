@@ -1073,7 +1073,7 @@ function AccessTab() {
       </div>
 
       {/* Access matrix */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
           <p className="news-kicker text-xs">Master</p>
           <h4 className="font-headline text-xl mt-1 mb-3">Full control</h4>
@@ -1083,6 +1083,17 @@ function AccessTab() {
             <li>Fees, collections, expenses, reports</li>
             <li>Manage users & access</li>
             <li>Final enrollment numbers</li>
+          </ul>
+        </div>
+        <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
+          <p className="news-kicker text-xs">Center (CX)</p>
+          <h4 className="font-headline text-xl mt-1 mb-3">Branch / counselling desk</h4>
+          <ul className="text-sm font-serif-news space-y-1 list-disc list-inside">
+            <li>Students mapped to this center</li>
+            <li>Add new admissions & enquiries</li>
+            <li>View payment status (no edits)</li>
+            <li>No global fees / settings access</li>
+            <li>No user management</li>
           </ul>
         </div>
         <div className="border-2 border-foreground p-5 bg-[#fbf6e7]">
