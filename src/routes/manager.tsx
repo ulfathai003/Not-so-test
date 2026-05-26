@@ -88,10 +88,10 @@ function ManagerPage() {
             )}
           </TabsList>
 
-          <TabsContent value="overview" className="pt-6"><OverviewTab role={role} userEmail={(user.email ?? "") as string} /></TabsContent>
-          <TabsContent value="students" className="pt-6"><StudentsTab role={role} userEmail={(user.email ?? "") as string} /></TabsContent>
+          <TabsContent value="overview" className="pt-6"><OverviewTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           {role === "admin" && (
-            <TabsContent value="payments" className="pt-6"><PaymentsTab role={role} userEmail={(user.email ?? "") as string} /></TabsContent>
+            <TabsContent value="payments" className="pt-6"><PaymentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           )}
           {role === "admin" && (
             <TabsContent value="access" className="pt-6"><AccessTab /></TabsContent>
