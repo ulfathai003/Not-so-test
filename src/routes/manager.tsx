@@ -863,152 +863,159 @@ Education Details
 
 3. Degree University, Year of Passing, Consolidated Marks, Consolidated Percentage, Result:`;
 
-function SettingsTab() {
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [managers, setManagers] = useState<any[]>([]);
+/* ----------------------- SETTINGS TAB (ADMIN CENTRE) ----------------------- */
 
-  const loadManagers = async () => {
+const ROLES = [
+  { value: "admin", label: "Admin", desc: "Full access — sees all leads, assigns staff, approves enrollment" },
+  { value: "center", label: "Center", desc: "Admission entry only — add students & upload documents" },
+  { value: "staff", label: "Staff", desc: "Assigned leads only — follow-up, notes & status updates" },
+];
+
+function SettingsTab() {
+  const [email, setEmail] = React.useState("");
+  const [selectedRole, setSelectedRole] = React.useState("center");
+  const [busy, setBusy] = React.useState(false);
+  const [members, setMembers] = React.useState<any[]>([]);
+
+  const loadMembers = async () => {
     const { data } = await supabase.from("allowed_managers" as any).select("*").order("created_at", { ascending: false });
-    if (data) setManagers(data);
+    if (data) setMembers(data);
   };
 
-  useEffect(() => {
-    loadManagers();
-  }, []);
+  React.useEffect(() => { loadMembers(); }, []);
 
-  const handleGrantAdmin = async (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
     setBusy(true);
     try {
       const cleanEmail = email.toLowerCase().trim();
-      if (cleanEmail === "ulfathai003@gmail.com") {
-        throw new Error("The master admin account is already permanently whitelisted!");
-      }
-      const { error } = await supabase.from("allowed_managers" as any).insert([{ email: cleanEmail }]);
+      if (cleanEmail === "ulfathai003@gmail.com") throw new Error("Master admin is permanently whitelisted.");
+      const { error } = await supabase.from("allowed_managers" as any).upsert([{ email: cleanEmail, role: selectedRole }], { onConflict: "email" });
       if (error) throw error;
-      toast.success(`Manager credentials whitelisted for ${cleanEmail}`);
+      toast.success(`${cleanEmail} invited as ${selectedRole.toUpperCase()}`);
       setEmail("");
-      loadManagers();
+      loadMembers();
     } catch (err: any) {
       toast.error(err.message);
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
-  const handleRevoke = async (id: string, managerEmail: string) => {
-    if (managerEmail.toLowerCase().trim() === "ulfathai003@gmail.com") {
-      return toast.error("Cannot revoke master admin privileges.");
-    }
+  const handleChangeRole = async (id: string, memberEmail: string, newRole: string) => {
+    if (memberEmail.toLowerCase().trim() === "ulfathai003@gmail.com") return toast.error("Cannot change master admin role.");
+    const { error } = await supabase.from("allowed_managers" as any).update({ role: newRole }).eq("id", id);
+    if (error) toast.error("Role update failed");
+    else { toast.success("Role updated to " + newRole); loadMembers(); }
+  };
+
+  const handleRevoke = async (id: string, memberEmail: string) => {
+    if (memberEmail.toLowerCase().trim() === "ulfathai003@gmail.com") return toast.error("Cannot revoke master admin.");
     setBusy(true);
     try {
       const { error } = await supabase.from("allowed_managers" as any).delete().eq("id", id);
       if (error) throw error;
-      toast.success("Manager privileges revoked");
-      loadManagers();
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setBusy(false);
-    }
+      toast.success("Access revoked");
+      loadMembers();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setBusy(false); }
   };
 
-  const handleCopyTemplate = () => {
-    navigator.clipboard.writeText(STUDENT_TEMPLATE);
-    toast.success("Student registration template copied to clipboard!");
+  const roleColor: Record<string, string> = {
+    admin: "bg-foreground text-background",
+    center: "bg-[#6b3e1a] text-[#fbf6e7]",
+    staff: "bg-foreground/20 text-foreground",
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-6">
-        <h2 className="font-headline text-2xl uppercase tracking-tighter border-b-2 border-foreground/30 pb-2 mb-6">Access & Credentials</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
-          <div className="space-y-6">
-            <div className="p-6 border-4 border-foreground bg-foreground text-background shadow-[4px_4px_0px_0px_#1a1410]">
-              <h4 className="font-sans font-bold uppercase tracking-widest text-xs mb-2 text-background/70 border-b border-background/20 pb-2">Master Access</h4>
-              <div className="font-bold text-xl">ulfathai003@gmail.com</div>
-              <p className="text-xs font-serif-news italic mt-3 text-background/80">This account is hardcoded with superuser manager privileges and cannot be revoked.</p>
-            </div>
-
-            <form onSubmit={handleGrantAdmin} className="space-y-4 pt-6 border-t-4 border-foreground">
-              <h4 className="font-sans font-bold uppercase tracking-widest text-sm text-foreground">Provision New Manager Account</h4>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Input 
-                  type="email" 
-                  placeholder="manager@domain.com" 
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  className="rounded-none border-4 border-foreground bg-transparent focus-visible:ring-0 flex-1 h-12 shadow-[2px_2px_0px_0px_#1a1410]" 
-                />
-                <Button type="submit" disabled={busy} className="rounded-none border-4 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 shadow-[2px_2px_0px_0px_#1a1410]">
-                  <ShieldCheck className="w-4 h-4 mr-2" /> Grant Access
-                </Button>
-              </div>
-              <p className="text-xs font-serif-news italic text-[#6b3e1a]">The user will be automatically granted admin status when they register or next log in.</p>
-            </form>
-          </div>
-
-          <div className="p-6 border-4 border-foreground bg-[#fbf6e7] text-foreground shadow-[4px_4px_0px_0px_#1a1410] flex flex-col justify-between">
-            <div>
-              <h4 className="font-sans font-bold uppercase tracking-wider text-xs border-b-2 border-foreground pb-2 mb-3 text-[#6b3e1a] flex items-center justify-between">
-                <span>Student Info Template</span>
-                <Button 
-                  onClick={handleCopyTemplate} 
-                  size="sm" 
-                  variant="outline" 
-                  className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[9px] h-7 px-2 hover:bg-foreground hover:text-background"
-                >
-                  Copy Template
-                </Button>
-              </h4>
-              <p className="text-xs font-serif-news italic mb-3">Copy this standard profile layout for admissions and manager testing:</p>
-              <pre className="p-3 bg-foreground/5 border-2 border-foreground/20 font-mono text-[9px] text-[#1a1410] max-h-48 overflow-y-auto whitespace-pre-wrap select-all cursor-pointer" onClick={handleCopyTemplate}>
-                {STUDENT_TEMPLATE}
-              </pre>
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-foreground text-background border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#6b3e1a] flex items-start gap-4">
+        <ShieldCheck className="w-10 h-10 shrink-0 mt-1" />
+        <div>
+          <h2 className="font-headline text-3xl uppercase tracking-tight">Admin Centre</h2>
+          <p className="text-sm font-serif-news italic mt-1 text-background/80">Only Prashant Bhai controls who can access this system and what role they have. Invite-only.</p>
         </div>
       </div>
 
+      {/* Role Reference Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {ROLES.map(r => (
+          <div key={r.value} className="p-4 border-4 border-foreground bg-[#fbf6e7] shadow-[4px_4px_0px_0px_#1a1410]">
+            <div className={"inline-block px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-widest mb-2 " + (roleColor[r.value] || "")}>{r.label}</div>
+            <p className="text-xs font-serif-news text-foreground/80">{r.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Invite Form */}
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] p-6">
+        <h3 className="font-headline text-xl uppercase tracking-tighter mb-5 border-b-2 border-foreground pb-2">Invite New Member</h3>
+        <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-4">
+          <Input type="email" placeholder="user@email.com" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-none border-4 border-foreground bg-transparent focus-visible:ring-0 h-12 shadow-[2px_2px_0px_0px_#1a1410] flex-1" />
+          <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <SelectTrigger className="rounded-none border-4 border-foreground bg-transparent h-12 font-sans font-bold uppercase tracking-widest text-[10px] w-40 shadow-[2px_2px_0px_0px_#1a1410]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+              {ROLES.map(r => <SelectItem key={r.value} value={r.value} className="font-sans font-bold uppercase tracking-widest text-[10px]">{r.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button type="submit" disabled={busy} className="rounded-none border-4 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-background hover:text-foreground h-12 shadow-[2px_2px_0px_0px_#1a1410] whitespace-nowrap">
+            <ShieldCheck className="w-4 h-4 mr-2" /> Send Invite
+          </Button>
+        </form>
+        <p className="text-xs font-serif-news italic text-[#6b3e1a] mt-3">User gets the assigned role automatically when they sign up or next log in.</p>
+      </div>
+
+      {/* Members Table */}
       <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
+        <div className="p-4 bg-foreground text-background border-b-4 border-foreground">
+          <h3 className="font-headline text-xl uppercase tracking-tighter">Team Members & Access Levels</h3>
+        </div>
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b-4 border-foreground bg-foreground text-background">
-              <Th>User Email</Th>
-              <Th>Role Level</Th>
-              <Th>Provisioned At</Th>
-              <Th className="text-right">Action</Th>
+            <tr className="border-b-2 border-foreground bg-foreground/5">
+              <Th>Email</Th>
+              <Th>Role</Th>
+              <Th>Added On</Th>
+              <Th className="text-right">Change Role / Revoke</Th>
             </tr>
           </thead>
           <tbody className="font-serif-news text-sm">
-            {managers.map((m) => (
-              <tr key={m.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
+            <tr className="border-b-2 border-foreground/10 bg-foreground/5">
+              <td className="p-4 font-bold">ulfathai003@gmail.com</td>
+              <td className="p-4"><span className="inline-block px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-widest bg-foreground text-background">Admin — Master</span></td>
+              <td className="p-4 text-muted-foreground text-xs">Permanent</td>
+              <td className="p-4 text-right"><span className="text-[10px] italic text-muted-foreground">Permanent access</span></td>
+            </tr>
+            {members.map(m => (
+              <tr key={m.id} className="border-b-2 border-foreground/10 hover:bg-black/5 transition-colors">
                 <td className="p-4 font-bold">{m.email}</td>
                 <td className="p-4">
-                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
-                    admin
-                  </Badge>
+                  <span className={"inline-block px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-widest " + (roleColor[m.role || "admin"] || "bg-foreground/20 text-foreground")}>
+                    {m.role || "admin"}
+                  </span>
                 </td>
-                <td className="p-4 text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</td>
+                <td className="p-4 text-muted-foreground text-xs">{new Date(m.created_at).toLocaleDateString("en-IN")}</td>
                 <td className="p-4 text-right">
-                  {m.email.toLowerCase().trim() !== "ulfathai003@gmail.com" ? (
-                    <Button size="sm" variant="outline" onClick={() => handleRevoke(m.id, m.email)} disabled={busy} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive hover:bg-destructive hover:text-background">
+                  <div className="flex justify-end gap-2">
+                    <Select onValueChange={(val) => handleChangeRole(m.id, m.email, val)} defaultValue={m.role || "admin"}>
+                      <SelectTrigger className="h-7 w-28 rounded-none border-2 border-foreground text-[9px] uppercase font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+                        {ROLES.map(r => <SelectItem key={r.value} value={r.value} className="text-[9px] font-bold uppercase">{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="outline" onClick={() => handleRevoke(m.id, m.email)} disabled={busy} className="h-7 rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[9px] text-destructive hover:bg-destructive hover:text-background">
                       Revoke
                     </Button>
-                  ) : (
-                    <Badge variant="secondary" className="rounded-none font-sans font-bold uppercase tracking-widest text-[9px] bg-foreground text-background">Master</Badge>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
-            {managers.length === 0 && (
-              <tr>
-                <td colSpan={4} className="p-8 text-center text-muted-foreground italic">No additional roles provisioned.</td>
-              </tr>
+            {members.length === 0 && (
+              <tr><td colSpan={4} className="p-8 text-center text-muted-foreground italic">No members invited yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -1017,13 +1024,12 @@ function SettingsTab() {
   );
 }
 
-
 /* ----------------------- ENQUIRIES TAB ----------------------- */
 
 function EnquiriesTab() {
-  const [leads, setLeads] = useState<Student[]>([]);
-  const [staffList, setStaffList] = useState<any[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [leads, setLeads] = React.useState<Student[]>([]);
+  const [staffList, setStaffList] = React.useState<any[]>([]);
+  const [busy, setBusy] = React.useState(false);
 
   const loadData = async () => {
     setBusy(true);
@@ -1036,12 +1042,12 @@ function EnquiriesTab() {
     setBusy(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  React.useEffect(() => { loadData(); }, []);
 
   const handleAllocate = async (leadId: string, staffEmail: string) => {
     const { error } = await supabase.from("students").update({ counsellor_name: staffEmail }).eq("id", leadId);
     if (error) toast.error("Allocation failed");
-    else { toast.success(`Lead allocated to ${staffEmail}`); loadData(); }
+    else { toast.success("Lead allocated to " + staffEmail); loadData(); }
   };
 
   const handleApprove = async (leadId: string) => {
@@ -1055,9 +1061,7 @@ function EnquiriesTab() {
       <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-hidden">
         <div className="p-4 bg-foreground text-background border-b-4 border-foreground flex items-center justify-between">
           <h2 className="font-headline text-2xl uppercase tracking-tighter">Inbound Website Enquiries</h2>
-          <Button size="sm" onClick={loadData} disabled={busy} className="rounded-none border-2 border-background font-sans font-bold uppercase tracking-widest text-[10px] bg-background text-foreground hover:bg-foreground hover:text-background hover:border-foreground">
-            Refresh
-          </Button>
+          <Button size="sm" onClick={loadData} disabled={busy} className="rounded-none border-2 border-background font-sans font-bold uppercase tracking-widest text-[10px] bg-background text-foreground hover:bg-foreground hover:text-background hover:border-foreground">Refresh</Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -1079,7 +1083,7 @@ function EnquiriesTab() {
                   </td>
                   <td className="p-4 text-xs">
                     <div className="font-bold">{lead.university}</div>
-                    <div>{lead.program}{lead.specialization ? ` - ${lead.specialization}` : ""}</div>
+                    <div>{lead.program}{lead.specialization ? " - " + lead.specialization : ""}</div>
                     <div className="italic text-muted-foreground mt-1 line-clamp-2">{lead.notes}</div>
                   </td>
                   <td className="p-4">
@@ -1094,24 +1098,16 @@ function EnquiriesTab() {
                           <SelectValue placeholder="Allocate Staff" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
-                          {staffList.map(s => (
-                            <SelectItem key={s.id} value={s.email} className="text-[9px] font-bold uppercase">{s.email}</SelectItem>
-                          ))}
+                          {staffList.map(s => <SelectItem key={s.id} value={s.email} className="text-[9px] font-bold uppercase">{s.email}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <Button size="sm" onClick={() => handleApprove(lead.id)} className="h-8 rounded-none border-2 border-foreground bg-foreground text-background text-[9px] font-bold uppercase hover:bg-background hover:text-foreground">
-                        Approve
-                      </Button>
+                      <Button size="sm" onClick={() => handleApprove(lead.id)} className="h-8 rounded-none border-2 border-foreground bg-foreground text-background text-[9px] font-bold uppercase hover:bg-background hover:text-foreground">Approve</Button>
                     </div>
                   </td>
                 </tr>
               ))}
               {leads.length === 0 && !busy && (
-                <tr>
-                  <td colSpan={4} className="p-10 text-center italic text-muted-foreground">
-                    No pending inbound enquiries from the website.
-                  </td>
-                </tr>
+                <tr><td colSpan={4} className="p-10 text-center italic text-muted-foreground">No pending inbound enquiries from the website.</td></tr>
               )}
             </tbody>
           </table>

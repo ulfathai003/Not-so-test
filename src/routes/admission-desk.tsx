@@ -1067,7 +1067,7 @@ function AdmissionDeskPage() {
             <div className="space-y-6">
               <div className="border-b border-foreground/30 pb-4">
                 <h3 className="font-headline text-3xl uppercase">Step 6: Confirm Declarations</h3>
-                <p className="font-serif-news text-sm italic text-[#6b3e1a]">Official declarations and compliance review.</p>
+                <p className="font-serif-news text-sm italic text-[#6b3e1a]">Official declarations and data accuracy statement.</p>
               </div>
 
               <div className="space-y-4 bg-background/40 p-6 border-2 border-dashed border-foreground/40 font-serif-news text-sm leading-relaxed">
