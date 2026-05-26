@@ -26,6 +26,9 @@ function ContactPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [university, setUniversity] = useState("");
+  const [course, setCourse] = useState("");
+  const [courseDescription, setCourseDescription] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -54,6 +57,9 @@ function ContactPage() {
           name,
           email,
           phone,
+          university,
+          course,
+          courseDescription,
           message,
           _subject: `New Admission Inquiry from ${name}`
         })
@@ -65,6 +71,9 @@ function ContactPage() {
         setName(user?.user_metadata?.full_name || studentData?.full_name || "");
         setEmail(user?.email || "");
         setPhone(studentData?.phone || "");
+        setUniversity("");
+        setCourse("");
+        setCourseDescription("");
         setMessage("");
       } else {
         throw new Error(result.message || "Failed to submit form");
@@ -166,12 +175,76 @@ function ContactPage() {
                   className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
                 />
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="university" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Select University</Label>
+                  <select 
+                    id="university" 
+                    name="university"
+                    required 
+                    value={university}
+                    onChange={(e) => setUniversity(e.target.value)}
+                    className="w-full bg-transparent border border-foreground/40 focus:border-foreground rounded-none font-serif-news p-2"
+                  >
+                    <option value="">Select a University</option>
+                    <option value="jain">Jain (Deemed-to-be) University</option>
+                    <option value="manipal">Manipal University</option>
+                    <option value="amity">Amity University</option>
+                    <option value="nmims">NMIMS</option>
+                    <option value="lpu">LPU</option>
+                    <option value="sikkim-board">Sikkim Board (SBSE)</option>
+                    <option value="other">Other / Not Sure</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="course" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Select Course</Label>
+                  <select 
+                    id="course" 
+                    name="course"
+                    required 
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                    className="w-full bg-transparent border border-foreground/40 focus:border-foreground rounded-none font-serif-news p-2"
+                  >
+                    <option value="">Select a Course</option>
+                    {university === "sikkim-board" ? (
+                      <>
+                        <option value="Secondary">Secondary (10th)</option>
+                        <option value="Senior Secondary">Senior Secondary (12th)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="MBA">Online MBA</option>
+                        <option value="MCA">Online MCA</option>
+                        <option value="BBA">Online BBA</option>
+                        <option value="BCom">Online B.Com</option>
+                        <option value="BCA">Online BCA</option>
+                        <option value="MA">Online MA</option>
+                        <option value="BA">Online BA</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+              </div>
               <div>
-                <Label htmlFor="message" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Message</Label>
+                <Label htmlFor="courseDescription" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Course Description / Requirements</Label>
+                <Textarea 
+                  id="courseDescription" 
+                  name="courseDescription"
+                  rows={2} 
+                  maxLength={500} 
+                  placeholder="Tell us about your educational background or specific course interests..."
+                  value={courseDescription}
+                  onChange={(e) => setCourseDescription(e.target.value)}
+                  className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
+                />
+              </div>
+              <div>
+                <Label htmlFor="message" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Additional Message</Label>
                 <Textarea 
                   id="message" 
                   name="message"
-                  rows={4} 
+                  rows={3} 
                   required 
                   maxLength={1000} 
                   value={message}

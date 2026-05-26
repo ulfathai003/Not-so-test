@@ -12,6 +12,36 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+const STUDENT_TEMPLATE = `1. Course: 
+2. Specilisation:  and Management
+3. Full Name (as per sslc): 
+4. Father Name: 
+5. Mother Name: 
+6. DOB: 
+7. Gender: 
+8. Category (Gen/OBC/SC/ST/Other): OBC
+9. Employment Status: 
+10. Marital Status: 
+11. Religion: 
+12. Aadhar Number: 
+13. ABC ID: 
+14. DEB ID: 
+15. Address: . 
+16. Pincode: 590006
+17. City: Belagavi
+18. District: Belagavi
+19. State: Karnataka
+20. Email: 
+21. Mobile: 
+
+Education Details
+
+1. 10th Board Name, Year of Paasing, Marks, Percentage, Result: 
+
+2. 12th Board Name (Diploma), Year of Paasing, Marks, Percentage, Result:
+
+3. Degree University, Year of Passing, Consolidated Marks, Consolidated Percentage, Result:`;
+
 function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -37,6 +67,11 @@ function LoginPage() {
       return toast.error("Authentication failed. Please check your network connection.");
     }
   }
+
+  const handleCopyTemplate = () => {
+    navigator.clipboard.writeText(STUDENT_TEMPLATE);
+    toast.success("Student registration template copied to clipboard!");
+  };
 
   return (
     <div className="min-h-screen news-paper flex flex-col items-center justify-center p-4 sm:p-8">
@@ -95,7 +130,11 @@ function LoginPage() {
             {loading ? "Verifying Credentials..." : "Access Console"}
           </Button>
 
-          <div className="text-xs sm:text-sm text-center pt-4 border-t border-foreground/30 font-serif-news">
+          <div className="text-xs sm:text-sm text-center pt-4 border-t border-foreground/30 font-serif-news text-[#6b3e1a]">
+            <strong>Partner & Center Access:</strong> Use your official registered credentials to access the manager console.
+          </div>
+
+          <div className="text-xs sm:text-sm text-center pt-2 font-serif-news">
             New applicant? <Link to="/signup" className="news-link font-bold">Register on the Desk</Link>
           </div>
           
@@ -103,6 +142,25 @@ function LoginPage() {
             <Link to="/" className="text-xs uppercase tracking-wider font-sans font-bold text-[#6b3e1a] hover:opacity-80">← Return to Main Page</Link>
           </div>
         </form>
+      </div>
+
+      {/* Copyable Student Registration Helper */}
+      <div className="w-full max-w-md mt-6 bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[8px_8px_0px_0px_#1a1410] transition-transform hover:-translate-y-1">
+        <h4 className="font-sans font-bold uppercase tracking-wider text-xs border-b-2 border-foreground pb-2 mb-3 text-[#6b3e1a] flex items-center justify-between">
+          <span>Student Info Template</span>
+          <Button 
+            onClick={handleCopyTemplate} 
+            size="sm" 
+            variant="outline" 
+            className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[9px] h-7 px-2 hover:bg-foreground hover:text-background"
+          >
+            Copy Template
+          </Button>
+        </h4>
+        <p className="text-xs font-serif-news italic mb-3">Copy this standard profile layout for admissions and manager testing:</p>
+        <pre className="p-3 bg-foreground/5 border-2 border-foreground/20 font-mono text-[9px] text-[#1a1410] max-h-48 overflow-y-auto whitespace-pre-wrap select-all cursor-pointer" onClick={handleCopyTemplate}>
+          {STUDENT_TEMPLATE}
+        </pre>
       </div>
 
       {/* Fine Print Footer */}

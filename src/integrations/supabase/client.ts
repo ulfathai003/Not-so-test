@@ -1,5 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { toast } from 'sonner';
+
+class RateLimiter {
+  private limit: number;
+  private windowMs: number;
+  private requests: number[] = [];
+
+  constructor(limit: number, windowMs: number = 60000) {
+    this.limit = limit;
+    this.windowMs = windowMs;
+  }
+
+  check(): boolean {
+    const now = Date.now();
+    this.requests = this.requests.filter(t => now - t < this.windowMs);
+    if (this.requests.length >= this.limit) {
+      return false;
+    }
+    this.requests.push(now);
+    return true;
+  }
+}
+
+const dbLimiter = new RateLimiter(60); // 60 DB requests per minute
+const authLimiter = new RateLimiter(5); // 5 auth requests per minute
 
 function createSupabaseClient() {
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -764,6 +789,12 @@ function createSupabaseClient() {
     },
 
     from(tableName: string) {
+      if (!dbLimiter.check()) {
+        if (typeof window !== "undefined") {
+          toast.error("Rate limit exceeded. Too many database queries. Please try again later.");
+        }
+        throw new Error("Rate limit exceeded. Too many database queries.");
+      }
       const isMockSession = !!localStorage.getItem("educonnect_mock_session");
       if (isMockSession || !realClient) {
         return mockSupabase.from(tableName);
@@ -774,6 +805,28 @@ function createSupabaseClient() {
 
   return new Proxy(hybridClient, {
     get(target: any, prop: string | symbol, receiver: any) {
+      if (prop === 'auth') {
+        const originalAuth = target.auth || (realClient && realClient.auth);
+        if (originalAuth) {
+          return new Proxy(originalAuth, {
+            get(authTarget, authProp) {
+              const val = Reflect.get(authTarget, authProp);
+              if (typeof val === 'function' && ['signInWithPassword', 'signUp'].includes(authProp as string)) {
+                return async function(...args: any[]) {
+                  if (!authLimiter.check()) {
+                    if (typeof window !== "undefined") {
+                      toast.error("Authentication rate limit exceeded. Please wait a minute before trying again.");
+                    }
+                    throw new Error("Rate limit exceeded. Too many login/signup attempts.");
+                  }
+                  return val.apply(authTarget, args);
+                };
+              }
+              return val;
+            }
+          });
+        }
+      }
       if (prop in target) {
         return Reflect.get(target, prop, receiver);
       }

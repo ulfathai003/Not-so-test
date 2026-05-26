@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
 
 const links = [
   { to: "/", label: "Front Page" },
@@ -21,23 +21,10 @@ const today = new Date().toLocaleDateString("en-IN", {
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
+  const { user, role, signOut } = useAuth();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }: any) => {
-      setUser(data.session?.user ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
-  }
+  const isManager = role === "admin" || role === "center" || role === "staff";
+  const dashboardPath = isManager ? "/manager" : "/dashboard";
 
   return (
     <header className="news-paper border-b border-foreground/80">
@@ -87,14 +74,14 @@ export function SiteHeader() {
                   {user.email}
                 </span>
                 <Link
-                  to="/dashboard"
+                  to={dashboardPath}
                   className="inline-flex items-center gap-1 uppercase tracking-wider news-link"
                 >
                   <LayoutDashboard className="w-3 h-3" />
                   Dashboard
                 </Link>
                 <button
-                  onClick={handleSignOut}
+                  onClick={signOut}
                   className="inline-flex items-center gap-1 uppercase tracking-wider bg-foreground text-background px-3 py-1 hover:opacity-80"
                 >
                   <LogOut className="w-3 h-3" />
@@ -133,10 +120,10 @@ export function SiteHeader() {
             <div className="flex gap-2 pt-2">
               {user ? (
                 <>
-                  <Link to="/dashboard" className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>
+                  <Link to={dashboardPath} className="flex-1 text-center border border-foreground py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>
                     Dashboard
                   </Link>
-                  <button onClick={() => { handleSignOut(); setOpen(false); }} className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider">
+                  <button onClick={() => { signOut(); setOpen(false); }} className="flex-1 text-center bg-foreground text-background py-2 text-sm uppercase tracking-wider">
                     Sign out
                   </button>
                 </>

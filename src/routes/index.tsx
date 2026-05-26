@@ -23,8 +23,8 @@ const partners = [
 
 const stats = [
   { k: "12,000+", v: "Active learners" },
-  { k: "6", v: "Partner universities" },
-  { k: "20+", v: "Specializations" },
+  { k: "25+", v: "Partner universities" },
+  { k: "50+", v: "Specializations" },
   { k: "94%", v: "Completion rate" },
 ];
 
@@ -80,10 +80,43 @@ function HomePage() {
             <Link to="/programs" className="bg-foreground text-background px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest">
               Read All Programs →
             </Link>
-            <Link to="/signup" className="border border-foreground px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest">
+            <Link to="/contact" className="border border-foreground px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest">
               Apply Today
             </Link>
           </div>
+        </section>
+
+        {/* DISTANCE EDUCATION FOR WHO? - REFINED SECTION */}
+        <section className="mt-16 news-rule py-10 news-card bg-[#fbf6e7]">
+           <p className="news-kicker">Special Feature</p>
+           <h3 className="font-headline text-4xl md:text-5xl mt-2">Distance Education for Who?</h3>
+           <div className="news-columns-2 mt-6 font-serif-news text-[16px] leading-relaxed">
+             <p className="mb-4">
+               <strong>The Working Professional:</strong> Those currently in the workforce who seek to upgrade their 
+               credentials without pausing their career trajectory. Our programs are designed to fit 
+               around a 9-to-5 schedule, with weekend live sessions and 24/7 portal access.
+             </p>
+             <p className="mb-4">
+               <strong>Dropouts & Busy Learners:</strong> For those who had to leave their education 
+               unfinished due to time, financial, or personal constraints. We offer a path to re-entry 
+               into formal education with flexible credit systems and dedicated support.
+             </p>
+             <p className="mb-4">
+               <strong>Early-Career Adventurers:</strong> Class XII graduates who wish to combine their first 
+               degree with real-world internships. By studying online, you gain a three-year head start 
+               in professional experience compared to traditional peers.
+             </p>
+             <p className="mb-4">
+               <strong>Geographical Bound Learners:</strong> Aimed at students in Tier-2 and Tier-3 cities 
+               who deserve the same quality of education as those in metros. Access India's top 
+               universities from the comfort of your home.
+             </p>
+             <p className="mb-4">
+               <strong>Eligibility:</strong> For Undergrad (BBA), a Class XII pass is mandatory. 
+               For Postgrad (MBA), a recognized Bachelor's degree is required. No entrance exam 
+               score is mandatory for most programs, focusing instead on prior academic merit.
+             </p>
+           </div>
         </section>
 
         {/* STATS as classified */}

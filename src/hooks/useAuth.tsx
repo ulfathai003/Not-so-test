@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "student";
+export type AppRole = "admin" | "center" | "staff" | "student";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -20,10 +20,17 @@ export function useAuth() {
         .eq("user_id", userId);
       
       const roles = (roleData ?? []).map((r: any) => r.role as AppRole);
-      const isAdmin = roles.includes("admin") || email === "ulfathai003@gmail.com";
-
-      if (isAdmin) {
+      
+      if (roles.includes("admin") || email === "ulfathai003@gmail.com") {
         setRole("admin");
+        setStudentStatus(null);
+        setStudentData(null);
+      } else if (roles.includes("center")) {
+        setRole("center");
+        setStudentStatus(null);
+        setStudentData(null);
+      } else if (roles.includes("staff")) {
+        setRole("staff");
         setStudentStatus(null);
         setStudentData(null);
       } else {

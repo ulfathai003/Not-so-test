@@ -76,10 +76,10 @@ function DashboardPage() {
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {role === "admin" && (
+            {(role === "admin" || role === "center") && (
               <Link to="/manager">
                 <Button size="sm" className="rounded-none border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/5 font-sans font-bold uppercase tracking-wider text-xs">
-                  Manager Console
+                  {role === "admin" ? "Super Admin Console" : "Center Manager"}
                 </Button>
               </Link>
             )}
@@ -107,6 +107,8 @@ function DashboardPage() {
       <main className="container mx-auto px-4 py-8 flex-1">
         {role === "admin" ? (
           <AdminPanel />
+        ) : role === "center" ? (
+          <AdminPanel isCenter />
         ) : isProspect ? (
           <ProspectDashboard studentStatus={studentStatus} studentData={studentData} refetchStudent={refetchStudent} email={user.email!} />
         ) : (
@@ -490,7 +492,8 @@ function CounselorChatWidget({ fullName, email }: { fullName: string; email: str
 
 /* -------------------------- ADMIN PANEL -------------------------- */
 
-function AdminPanel() {
+function AdminPanel({ isCenter }: { isCenter?: boolean }) {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -501,7 +504,15 @@ function AdminPanel() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.from("students").select("*").order("batch_year", { ascending: false }).order("full_name");
+    let query = supabase.from("students").select("*").order("batch_year", { ascending: false }).order("full_name");
+    
+    if (isCenter && user?.email) {
+      // Centers only see students they are assigned to (stored in counsellor_name or a new field)
+      // For now, filtering by counsellor_name matching center email or name
+      query = query.filter("counsellor_name", "eq", user.email);
+    }
+    
+    const { data, error } = await query;
     if (error) toast.error(error.message);
     setStudents(data ?? []);
     setLoading(false);
@@ -538,8 +549,12 @@ function AdminPanel() {
   return (
     <div className="space-y-6">
       <div className="border-b-4 border-foreground pb-4">
-        <h1 className="font-headline text-4xl uppercase tracking-tight">Admin admissions command</h1>
-        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">A bento overview of your learners, programs and universities.</p>
+        <h1 className="font-headline text-4xl uppercase tracking-tight">
+          {isCenter ? "Center Admissions Desk" : "Admin Admissions Command"}
+        </h1>
+        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">
+          {isCenter ? "Managing your assigned learners and enrollment progress." : "A bento overview of your learners, programs and universities."}
+        </p>
       </div>
 
       {/* BENTO GRID - Brutalist News Style */}

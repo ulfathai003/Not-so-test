@@ -29,6 +29,8 @@ const PROGRAMS = ["10th", "12th Arts", "12th Commerce", "12th Science", "BBA", "
 const UNIVERSITIES = ["Mangalayatan University", "Jain University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
 const GENDERS = ["Male", "Female", "Other"];
 const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
+const MARITAL_STATUSES = ["Single", "Married", "Divorced", "Widowed", "Other"];
+const EMPLOYMENT_STATUSES = ["Student", "Employed", "Unemployed", "Self-employed", "Other"];
 const RESULTS = ["Pass", "Fail", "Distinction", "First Class", "Second Class"];
 const SESSIONS = ["January", "July"];
 const STUDY_MODES = ["Online", "Distance", "Hybrid"];
@@ -47,22 +49,32 @@ interface FormState {
   dob: string;
   gender: string;
   category: string;
+  religion: string;
+  marital_status: string;
+  employment_status: string;
   aadhar_number: string;
+  abc_id: string;
+  deb_id: string;
   phone: string;
   location: string;
   address: string;
+  city: string;
+  district: string;
   state: string;
   pincode: string;
   edu_10_board: string;
   edu_10_year: string;
+  edu_10_marks: string;
   edu_10_percentage: string;
   edu_10_result: string;
   edu_12_board: string;
   edu_12_year: string;
+  edu_12_marks: string;
   edu_12_percentage: string;
   edu_12_result: string;
   edu_degree_university: string;
   edu_degree_year: string;
+  edu_degree_marks: string;
   edu_degree_percentage: string;
   edu_degree_result: string;
   doc_photo: boolean;
@@ -86,22 +98,32 @@ const initialFormState: FormState = {
   dob: "",
   gender: "Male",
   category: "General",
+  religion: "",
+  marital_status: "Single",
+  employment_status: "Student",
   aadhar_number: "",
+  abc_id: "",
+  deb_id: "",
   phone: "",
   location: "",
   address: "",
+  city: "",
+  district: "",
   state: "",
   pincode: "",
   edu_10_board: "",
   edu_10_year: "",
+  edu_10_marks: "",
   edu_10_percentage: "",
   edu_10_result: "Pass",
   edu_12_board: "",
   edu_12_year: "",
+  edu_12_marks: "",
   edu_12_percentage: "",
   edu_12_result: "Pass",
   edu_degree_university: "",
   edu_degree_year: "",
+  edu_degree_marks: "",
   edu_degree_percentage: "",
   edu_degree_result: "Pass",
   doc_photo: false,
@@ -167,6 +189,16 @@ function AdmissionDeskPage() {
         edu_degree_year: prev.edu_degree_year || (studentData.edu_degree_year ? String(studentData.edu_degree_year) : ""),
         edu_degree_percentage: prev.edu_degree_percentage || (studentData.edu_degree_percentage ? String(studentData.edu_degree_percentage) : ""),
         edu_degree_result: prev.edu_degree_result || studentData.edu_degree_result || "Pass",
+        religion: prev.religion || studentData.religion || "",
+        marital_status: prev.marital_status || studentData.marital_status || "Single",
+        employment_status: prev.employment_status || studentData.employment_status || "Student",
+        abc_id: prev.abc_id || studentData.abc_id || "",
+        deb_id: prev.deb_id || studentData.deb_id || "",
+        city: prev.city || studentData.city || "",
+        district: prev.district || studentData.district || "",
+        edu_10_marks: prev.edu_10_marks || studentData.edu_10_marks || "",
+        edu_12_marks: prev.edu_12_marks || studentData.edu_12_marks || "",
+        edu_degree_marks: prev.edu_degree_marks || studentData.edu_degree_marks || "",
         doc_photo: prev.doc_photo || !!studentData.doc_photo,
         doc_signature: prev.doc_signature || !!studentData.doc_signature,
         doc_id_proof: prev.doc_id_proof || !!studentData.doc_id_proof,
@@ -209,22 +241,32 @@ function AdmissionDeskPage() {
           dob: formData.dob || null,
           gender: formData.gender,
           category: formData.category,
+          religion: formData.religion,
+          marital_status: formData.marital_status,
+          employment_status: formData.employment_status,
           aadhar_number: formData.aadhar_number,
+          abc_id: formData.abc_id,
+          deb_id: formData.deb_id,
           phone: formData.phone,
           location: formData.location || "Online Intake",
           address: formData.address,
+          city: formData.city,
+          district: formData.district,
           state: formData.state,
           pincode: formData.pincode,
           edu_10_board: formData.edu_10_board,
           edu_10_year: formData.edu_10_year ? parseInt(formData.edu_10_year) : null,
+          edu_10_marks: formData.edu_10_marks,
           edu_10_percentage: formData.edu_10_percentage ? parseFloat(formData.edu_10_percentage) : null,
           edu_10_result: formData.edu_10_result,
           edu_12_board: formData.edu_12_board,
           edu_12_year: formData.edu_12_year ? parseInt(formData.edu_12_year) : null,
+          edu_12_marks: formData.edu_12_marks,
           edu_12_percentage: formData.edu_12_percentage ? parseFloat(formData.edu_12_percentage) : null,
           edu_12_result: formData.edu_12_result,
           edu_degree_university: formData.edu_degree_university,
           edu_degree_year: formData.edu_degree_year ? parseInt(formData.edu_degree_year) : null,
+          edu_degree_marks: formData.edu_degree_marks,
           edu_degree_percentage: formData.edu_degree_percentage ? parseFloat(formData.edu_degree_percentage) : null,
           edu_degree_result: formData.edu_degree_result,
           doc_photo: formData.doc_photo,
@@ -324,7 +366,11 @@ function AdmissionDeskPage() {
     }
 
     if (!formData.full_name || !formData.phone || !formData.aadhar_number) {
-      return toast.error("Please fill in key applicant details (Name, Phone, Aadhar).");
+      return toast.error("Please fill in key applicant details (Name, Phone, Aadhaar).");
+    }
+
+    if (!formData.doc_marksheet_10 || !formData.doc_photo || !formData.doc_id_proof) {
+      return toast.error("Mandatory documents missing! Please ensure 10th Marks, Photograph, and Aadhaar (ID Proof) are marked as ready.");
     }
 
     setSubmitting(true);
@@ -346,22 +392,32 @@ function AdmissionDeskPage() {
           dob: formData.dob || null,
           gender: formData.gender,
           category: formData.category,
+          religion: formData.religion,
+          marital_status: formData.marital_status,
+          employment_status: formData.employment_status,
           aadhar_number: formData.aadhar_number,
+          abc_id: formData.abc_id,
+          deb_id: formData.deb_id,
           phone: formData.phone,
           location: formData.location || "Online Intake",
           address: formData.address,
+          city: formData.city,
+          district: formData.district,
           state: formData.state,
           pincode: formData.pincode,
           edu_10_board: formData.edu_10_board,
           edu_10_year: formData.edu_10_year ? parseInt(formData.edu_10_year) : null,
+          edu_10_marks: formData.edu_10_marks,
           edu_10_percentage: formData.edu_10_percentage ? parseFloat(formData.edu_10_percentage) : null,
           edu_10_result: formData.edu_10_result,
           edu_12_board: formData.edu_12_board,
           edu_12_year: formData.edu_12_year ? parseInt(formData.edu_12_year) : null,
+          edu_12_marks: formData.edu_12_marks,
           edu_12_percentage: formData.edu_12_percentage ? parseFloat(formData.edu_12_percentage) : null,
           edu_12_result: formData.edu_12_result,
           edu_degree_university: formData.edu_degree_university,
           edu_degree_year: formData.edu_degree_year ? parseInt(formData.edu_degree_year) : null,
+          edu_degree_marks: formData.edu_degree_marks,
           edu_degree_percentage: formData.edu_degree_percentage ? parseFloat(formData.edu_degree_percentage) : null,
           edu_degree_result: formData.edu_degree_result,
           doc_photo: formData.doc_photo,
@@ -395,16 +451,34 @@ function AdmissionDeskPage() {
         father_name: formData.father_name,
         mother_name: formData.mother_name,
         dob: formData.dob,
+        gender: formData.gender,
+        category: formData.category,
+        religion: formData.religion,
+        marital_status: formData.marital_status,
+        employment_status: formData.employment_status,
+        abc_id: formData.abc_id,
+        deb_id: formData.deb_id,
         location: formData.location,
+        address: formData.address,
+        city: formData.city,
+        district: formData.district,
+        state: formData.state,
+        pincode: formData.pincode,
         ten_board: formData.edu_10_board,
         ten_year: formData.edu_10_year,
+        ten_marks: formData.edu_10_marks,
         ten_percent: formData.edu_10_percentage,
+        ten_result: formData.edu_10_result,
         twelve_board: formData.edu_12_board,
         twelve_year: formData.edu_12_year,
+        twelve_marks: formData.edu_12_marks,
         twelve_percent: formData.edu_12_percentage,
+        twelve_result: formData.edu_12_result,
         degree_uni: formData.edu_degree_university,
         degree_year: formData.edu_degree_year,
+        degree_marks: formData.edu_degree_marks,
         degree_percent: formData.edu_degree_percentage,
+        degree_result: formData.edu_degree_result,
       };
 
       const response = await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
@@ -698,7 +772,7 @@ function AdmissionDeskPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="font-bold uppercase tracking-wider text-xs block">City / Village</Label>
+                  <Label htmlFor="location" className="font-bold uppercase tracking-wider text-xs block">City / Village (Display)</Label>
                   <Input 
                     id="location"
                     name="city"
@@ -706,6 +780,94 @@ function AdmissionDeskPage() {
                     value={formData.location} 
                     onChange={(e) => updateField("location", e.target.value)} 
                     className="rounded-none border-2 border-foreground bg-transparent"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city" className="font-bold uppercase tracking-wider text-xs block">City</Label>
+                  <Input 
+                    id="city"
+                    value={formData.city} 
+                    onChange={(e) => {
+                      updateField("city", e.target.value);
+                      if (!formData.location) {
+                        updateField("location", e.target.value);
+                      }
+                    }} 
+                    className="rounded-none border-2 border-foreground bg-transparent"
+                    placeholder="e.g. Belagavi"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="district" className="font-bold uppercase tracking-wider text-xs block">District</Label>
+                  <Input 
+                    id="district"
+                    value={formData.district} 
+                    onChange={(e) => updateField("district", e.target.value)} 
+                    className="rounded-none border-2 border-foreground bg-transparent"
+                    placeholder="e.g. Belagavi"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="religion" className="font-bold uppercase tracking-wider text-xs block">Religion</Label>
+                  <Input 
+                    id="religion"
+                    value={formData.religion} 
+                    onChange={(e) => updateField("religion", e.target.value)} 
+                    className="rounded-none border-2 border-foreground bg-transparent"
+                    placeholder="e.g. Hindu, Muslim, Christian"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="marital_status" className="font-bold uppercase tracking-wider text-xs block">Marital Status</Label>
+                  <Select value={formData.marital_status} onValueChange={(val) => updateField("marital_status", val)}>
+                    <SelectTrigger id="marital_status" className="rounded-none border-2 border-foreground bg-transparent font-sans">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+                      {MARITAL_STATUSES.map((ms) => (
+                        <SelectItem key={ms} value={ms} className="hover:bg-foreground hover:text-background">{ms}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="employment_status" className="font-bold uppercase tracking-wider text-xs block">Employment Status</Label>
+                  <Select value={formData.employment_status} onValueChange={(val) => updateField("employment_status", val)}>
+                    <SelectTrigger id="employment_status" className="rounded-none border-2 border-foreground bg-transparent font-sans">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+                      {EMPLOYMENT_STATUSES.map((es) => (
+                        <SelectItem key={es} value={es} className="hover:bg-foreground hover:text-background">{es}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="abc_id" className="font-bold uppercase tracking-wider text-xs block">ABC ID</Label>
+                  <Input 
+                    id="abc_id"
+                    value={formData.abc_id} 
+                    onChange={(e) => updateField("abc_id", e.target.value)} 
+                    className="rounded-none border-2 border-foreground bg-transparent"
+                    placeholder="Academic Bank of Credits ID"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="deb_id" className="font-bold uppercase tracking-wider text-xs block">DEB ID</Label>
+                  <Input 
+                    id="deb_id"
+                    value={formData.deb_id} 
+                    onChange={(e) => updateField("deb_id", e.target.value)} 
+                    className="rounded-none border-2 border-foreground bg-transparent"
+                    placeholder="Distance Education Bureau ID"
                   />
                 </div>
               </div>
@@ -760,7 +922,7 @@ function AdmissionDeskPage() {
               {/* 10th Standard */}
               <div className="space-y-4">
                 <h4 className="font-headline text-xl border-b border-foreground/20 pb-1">10th Standard / Secondary</h4>
-                <div className="grid md:grid-cols-4 gap-4">
+                <div className="grid md:grid-cols-5 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Board Name</Label>
                     <Input value={formData.edu_10_board} onChange={(e) => updateField("edu_10_board", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
@@ -768,6 +930,10 @@ function AdmissionDeskPage() {
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Passing Year</Label>
                     <Input type="number" value={formData.edu_10_year} onChange={(e) => updateField("edu_10_year", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs uppercase font-bold">Marks</Label>
+                    <Input value={formData.edu_10_marks} onChange={(e) => updateField("edu_10_marks", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" placeholder="e.g. 450/500" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Percentage (%)</Label>
@@ -788,7 +954,7 @@ function AdmissionDeskPage() {
               {/* 12th Standard */}
               <div className="space-y-4">
                 <h4 className="font-headline text-xl border-b border-foreground/20 pb-1">12th Standard / Higher Secondary</h4>
-                <div className="grid md:grid-cols-4 gap-4">
+                <div className="grid md:grid-cols-5 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Board/University</Label>
                     <Input value={formData.edu_12_board} onChange={(e) => updateField("edu_12_board", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
@@ -796,6 +962,10 @@ function AdmissionDeskPage() {
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Passing Year</Label>
                     <Input type="number" value={formData.edu_12_year} onChange={(e) => updateField("edu_12_year", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs uppercase font-bold">Marks</Label>
+                    <Input value={formData.edu_12_marks} onChange={(e) => updateField("edu_12_marks", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" placeholder="e.g. 520/600" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs uppercase font-bold">Percentage (%)</Label>
@@ -817,7 +987,7 @@ function AdmissionDeskPage() {
               {(formData.program === "MBA" || formData.program === "BBA") && (
                 <div className="space-y-4">
                   <h4 className="font-headline text-xl border-b border-foreground/20 pb-1">Undergraduate Degree (Mandatory for MBA)</h4>
-                  <div className="grid md:grid-cols-4 gap-4">
+                  <div className="grid md:grid-cols-5 gap-4">
                     <div className="space-y-1">
                       <Label className="text-xs uppercase font-bold">University</Label>
                       <Input value={formData.edu_degree_university} onChange={(e) => updateField("edu_degree_university", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
@@ -825,6 +995,10 @@ function AdmissionDeskPage() {
                     <div className="space-y-1">
                       <Label className="text-xs uppercase font-bold">Passing Year</Label>
                       <Input type="number" value={formData.edu_degree_year} onChange={(e) => updateField("edu_degree_year", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs uppercase font-bold">Marks</Label>
+                      <Input value={formData.edu_degree_marks} onChange={(e) => updateField("edu_degree_marks", e.target.value)} className="rounded-none border-2 border-foreground bg-transparent" placeholder="e.g. 1800/2400" />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs uppercase font-bold">Percentage (%)</Label>
@@ -962,8 +1136,12 @@ function AdmissionDeskPage() {
               {step === 6 && (
                 <Button 
                   onClick={handleSubmit}
-                  disabled={submitting}
-                  className="rounded-none bg-[#6b3e1a] text-white border-2 border-foreground py-2 font-bold uppercase tracking-wider text-xs shadow-[4px_4px_0px_0px_#1a1410]"
+                  disabled={submitting || !formData.doc_marksheet_10 || !formData.doc_photo || !formData.doc_id_proof}
+                  className={`rounded-none border-2 border-foreground py-2 font-bold uppercase tracking-wider text-xs shadow-[4px_4px_0px_0px_#1a1410] ${
+                    submitting || !formData.doc_marksheet_10 || !formData.doc_photo || !formData.doc_id_proof
+                      ? "bg-gray-400 cursor-not-allowed" 
+                      : "bg-[#6b3e1a] text-white"
+                  }`}
                 >
                   {submitting ? "Submitting Application..." : "Final Submit →"}
                 </Button>
