@@ -76,6 +76,7 @@ function ManagerPage() {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="flex flex-wrap w-full h-auto bg-transparent gap-2 p-0 justify-start">
             <TabsTrigger value="overview" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><TrendingUp className="w-4 h-4 mr-1.5" /> Overview</TabsTrigger>
+            <TabsTrigger value="enquiries" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Inbox className="w-4 h-4 mr-1.5" /> Inbound Enquiries</TabsTrigger>
             <TabsTrigger value="students" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Users className="w-4 h-4 mr-1.5" /> Leads & Students</TabsTrigger>
             {role === "admin" && (
               <TabsTrigger value="payments" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Receipt className="w-4 h-4 mr-1.5" /> Fees & Collections</TabsTrigger>
@@ -89,6 +90,7 @@ function ManagerPage() {
           </TabsList>
 
           <TabsContent value="overview" className="pt-6"><OverviewTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
+          <TabsContent value="enquiries" className="pt-6"><EnquiriesTab role={role ?? ""} userId={user.id} /></TabsContent>
           <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           {role === "admin" && (
             <TabsContent value="payments" className="pt-6"><PaymentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
