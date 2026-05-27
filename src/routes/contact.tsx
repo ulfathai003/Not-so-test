@@ -47,38 +47,36 @@ function ContactPage() {
     setLoading(true);
 
     try {
-      // Submit form directly to user email using FormSubmit.co's free AJAX endpoint
-      const response = await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          university,
-          course,
-          courseDescription,
-          message,
-          _subject: `New Admission Inquiry from ${name}`
-        })
+      // STEP 1 of workflow: persist enquiry to CRM so it lands in Prashant Bhai's Inbound Enquiries tab.
+      const courseLabel = [university, course].filter(Boolean).join(" · ");
+      const { error: dbErr } = await supabase.from("enquiries").insert({
+        full_name: name,
+        phone,
+        email: email || null,
+        course_interested: courseLabel || course || null,
+        course_description: [courseDescription, message].filter(Boolean).join("\n\n") || null,
+        source: "website",
       });
+      if (dbErr) throw dbErr;
 
-      const result = await response.json();
-      if (result.success) {
-        toast.success("Message sent! A counselor will reach out within a day.");
-        setName(user?.user_metadata?.full_name || studentData?.full_name || "");
-        setEmail(user?.email || "");
-        setPhone(studentData?.phone || "");
-        setUniversity("");
-        setCourse("");
-        setCourseDescription("");
-        setMessage("");
-      } else {
-        throw new Error(result.message || "Failed to submit form");
-      }
+      // Best-effort email notification (non-blocking failure)
+      fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name, email, phone, university, course, courseDescription, message,
+          _subject: `New Admission Inquiry from ${name}`,
+        }),
+      }).catch(() => {});
+
+      toast.success("Enquiry received. Our counselling desk will reach out within one working day.");
+      setName(user?.user_metadata?.full_name || studentData?.full_name || "");
+      setEmail(user?.email || "");
+      setPhone(studentData?.phone || "");
+      setUniversity("");
+      setCourse("");
+      setCourseDescription("");
+      setMessage("");
     } catch (err: any) {
       toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
