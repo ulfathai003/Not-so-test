@@ -44,6 +44,95 @@ export type Database = {
         }
         Relationships: []
       }
+      enquiries: {
+        Row: {
+          assigned_at: string | null
+          assigned_to: string | null
+          converted_student_id: string | null
+          course_description: string | null
+          course_interested: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
+          converted_student_id?: string | null
+          course_description?: string | null
+          course_interested?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
+          converted_student_id?: string | null
+          course_description?: string | null
+          course_interested?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      enquiry_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          created_by: string | null
+          enquiry_id: string
+          id: string
+          next_action_date: string | null
+          notes: string | null
+        }
+        Insert: {
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          enquiry_id: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          enquiry_id?: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enquiry_activities_enquiry_id_fkey"
+            columns: ["enquiry_id"]
+            isOneToOne: false
+            referencedRelation: "enquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -92,9 +181,11 @@ export type Database = {
           payment_date: string
           payment_mode: string | null
           receipt_number: string | null
+          screenshot_url: string | null
           student_id: string
           transaction_ref: string | null
           updated_at: string
+          upi_id: string | null
         }
         Insert: {
           amount: number
@@ -104,9 +195,11 @@ export type Database = {
           payment_date?: string
           payment_mode?: string | null
           receipt_number?: string | null
+          screenshot_url?: string | null
           student_id: string
           transaction_ref?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Update: {
           amount?: number
@@ -116,9 +209,11 @@ export type Database = {
           payment_date?: string
           payment_mode?: string | null
           receipt_number?: string | null
+          screenshot_url?: string | null
           student_id?: string
           transaction_ref?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Relationships: [
           {
@@ -207,6 +302,9 @@ export type Database = {
           abc_id: string | null
           address: string | null
           admission_session: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           batch_year: number
           category: string | null
           city: string | null
@@ -218,11 +316,14 @@ export type Database = {
           deb_id: string | null
           district: string | null
           dob: string | null
+          doc_aadhaar_url: string | null
           doc_id_proof: boolean | null
           doc_marksheet_10: boolean | null
+          doc_marksheet_10_url: string | null
           doc_marksheet_12: boolean | null
           doc_marksheet_degree: boolean | null
           doc_photo: boolean | null
+          doc_photo_url: string | null
           doc_signature: boolean | null
           duration_years: number | null
           edu_10_board: string | null
@@ -269,6 +370,8 @@ export type Database = {
           state: string | null
           status: Database["public"]["Enums"]["student_status"]
           study_mode: string | null
+          submitted_by: string | null
+          temp_enrollment_id: string | null
           total_fee: number | null
           total_semesters: number | null
           university: string
@@ -279,6 +382,9 @@ export type Database = {
           abc_id?: string | null
           address?: string | null
           admission_session?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           batch_year: number
           category?: string | null
           city?: string | null
@@ -290,11 +396,14 @@ export type Database = {
           deb_id?: string | null
           district?: string | null
           dob?: string | null
+          doc_aadhaar_url?: string | null
           doc_id_proof?: boolean | null
           doc_marksheet_10?: boolean | null
+          doc_marksheet_10_url?: string | null
           doc_marksheet_12?: boolean | null
           doc_marksheet_degree?: boolean | null
           doc_photo?: boolean | null
+          doc_photo_url?: string | null
           doc_signature?: boolean | null
           duration_years?: number | null
           edu_10_board?: string | null
@@ -341,6 +450,8 @@ export type Database = {
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           study_mode?: string | null
+          submitted_by?: string | null
+          temp_enrollment_id?: string | null
           total_fee?: number | null
           total_semesters?: number | null
           university: string
@@ -351,6 +462,9 @@ export type Database = {
           abc_id?: string | null
           address?: string | null
           admission_session?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           batch_year?: number
           category?: string | null
           city?: string | null
@@ -362,11 +476,14 @@ export type Database = {
           deb_id?: string | null
           district?: string | null
           dob?: string | null
+          doc_aadhaar_url?: string | null
           doc_id_proof?: boolean | null
           doc_marksheet_10?: boolean | null
+          doc_marksheet_10_url?: string | null
           doc_marksheet_12?: boolean | null
           doc_marksheet_degree?: boolean | null
           doc_photo?: boolean | null
+          doc_photo_url?: string | null
           doc_signature?: boolean | null
           duration_years?: number | null
           edu_10_board?: string | null
@@ -413,6 +530,8 @@ export type Database = {
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           study_mode?: string | null
+          submitted_by?: string | null
+          temp_enrollment_id?: string | null
           total_fee?: number | null
           total_semesters?: number | null
           university?: string
