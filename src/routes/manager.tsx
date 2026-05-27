@@ -767,7 +767,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
               { key: "doc_photo", label: "Passport Photo" },
-              { key: "doc_id_proof", label: "Govt ID Proof" },
+              { key: "doc_id_proof", label: "Aadhaar Card" },
               { key: "doc_marksheet_10", label: "10th Marksheet" },
               { key: "doc_marksheet_12", label: "12th Marksheet" },
               { key: "doc_marksheet_degree", label: "Degree Marksheet" },
