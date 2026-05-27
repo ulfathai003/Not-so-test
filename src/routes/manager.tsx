@@ -1162,3 +1162,261 @@ function AccessTab() {
     </div>
   );
 }
+
+/* ----------------------- INBOUND ENQUIRIES (Workflow Steps 1–4) ----------------------- */
+
+type Enquiry = {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  course_interested: string | null;
+  course_description: string | null;
+  source: string;
+  status: string;
+  assigned_to: string | null;
+  assigned_at: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+type Activity = {
+  id: string;
+  enquiry_id: string;
+  activity_type: string;
+  notes: string | null;
+  next_action_date: string | null;
+  created_at: string;
+};
+
+type Teammate = { user_id: string; email: string; role: string };
+
+function EnquiriesTab({ role, userId }: { role: string; userId: string }) {
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [teammates, setTeammates] = useState<Teammate[]>([]);
+  const [active, setActive] = useState<Enquiry | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [nextDate, setNextDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const isAdmin = role === "admin";
+
+  async function load() {
+    const { data } = await supabase
+      .from("enquiries" as any)
+      .select("*")
+      .order("created_at", { ascending: false });
+    setEnquiries((data as any) ?? []);
+  }
+
+  async function loadTeammates() {
+    if (!isAdmin) return;
+    const { data: invs } = await supabase
+      .from("access_invites")
+      .select("email, role, activated_at")
+      .not("activated_at", "is", null);
+    // We need user_ids for active teammates. Look them up via user_roles + profiles indirectly.
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["staff", "admin"]);
+    // Best-effort: present role rows with placeholder emails. Pair by email when possible.
+    const list: Teammate[] = (roles ?? []).map((r: any) => {
+      const match = (invs ?? []).find((i: any) => i.role === r.role);
+      return { user_id: r.user_id, email: match?.email ?? r.user_id.slice(0, 8), role: r.role };
+    });
+    setTeammates(list);
+  }
+
+  async function openEnquiry(e: Enquiry) {
+    setActive(e);
+    const { data } = await supabase
+      .from("enquiry_activities" as any)
+      .select("*")
+      .eq("enquiry_id", e.id)
+      .order("created_at", { ascending: false });
+    setActivities((data as any) ?? []);
+  }
+
+  async function assign(enqId: string, toUserId: string) {
+    const { error } = await supabase
+      .from("enquiries" as any)
+      .update({ assigned_to: toUserId, assigned_at: new Date().toISOString(), status: "assigned" })
+      .eq("id", enqId);
+    if (error) return toast.error(error.message);
+    toast.success("Lead allocated");
+    load();
+  }
+
+  async function updateStatus(enqId: string, status: string) {
+    const { error } = await supabase.from("enquiries" as any).update({ status }).eq("id", enqId);
+    if (error) return toast.error(error.message);
+    toast.success(`Status → ${status}`);
+    load();
+    if (active?.id === enqId) setActive({ ...active, status });
+  }
+
+  async function addActivity() {
+    if (!active || !noteText.trim()) return;
+    const { error } = await supabase.from("enquiry_activities" as any).insert({
+      enquiry_id: active.id,
+      activity_type: "note",
+      notes: noteText.trim(),
+      next_action_date: nextDate || null,
+      created_by: userId,
+    });
+    if (error) return toast.error(error.message);
+    setNoteText("");
+    setNextDate("");
+    openEnquiry(active);
+    toast.success("Follow-up logged");
+  }
+
+  useEffect(() => { load(); loadTeammates(); }, [role]);
+
+  const filtered = statusFilter === "all" ? enquiries : enquiries.filter(e => e.status === statusFilter);
+
+  return (
+    <div className="space-y-6">
+      <div className="border-2 border-foreground p-4 bg-[#fbf6e7]">
+        <p className="news-kicker text-xs">Step 1 → Step 4 of the workflow</p>
+        <h3 className="font-headline text-2xl mt-1">
+          {isAdmin ? "All inbound website enquiries" : "Leads allocated to you"}
+        </h3>
+        <p className="font-serif-news text-sm italic text-[#6b3e1a] mt-1">
+          {isAdmin
+            ? "Review enquiries from the website. Allocate each to a counsellor and track follow-ups."
+            : "Call the prospect, log follow-up notes, and move the status forward. Master sees everything you log."}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        {["all", "new", "assigned", "contacted", "converted", "lost"].map(s => (
+          <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
+            onClick={() => setStatusFilter(s)}
+            className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px]">
+            {s}
+          </Button>
+        ))}
+        <span className="text-xs font-serif-news italic text-[#6b3e1a] ml-auto">{filtered.length} enquiry/enquiries</span>
+      </div>
+
+      <div className="overflow-x-auto border-2 border-foreground">
+        <table className="w-full text-sm">
+          <thead className="bg-foreground text-background font-sans uppercase tracking-widest text-[10px]">
+            <tr>
+              <th className="text-left p-3">Name</th>
+              <th className="text-left p-3">Phone</th>
+              <th className="text-left p-3">Course</th>
+              <th className="text-left p-3">Status</th>
+              <th className="text-left p-3">Assigned</th>
+              <th className="text-left p-3">Received</th>
+              <th className="p-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} className="p-8 text-center text-muted-foreground font-serif-news italic">No enquiries yet. Submissions from the website Contact form land here.</td></tr>
+            )}
+            {filtered.map(e => (
+              <tr key={e.id} className="border-t border-foreground/30 hover:bg-foreground/5">
+                <td className="p-3 font-bold">{e.full_name}</td>
+                <td className="p-3 font-mono text-xs">{e.phone}</td>
+                <td className="p-3 text-xs">{e.course_interested || "—"}</td>
+                <td className="p-3">
+                  <Badge variant="outline" className="rounded-none border-2 border-foreground font-bold uppercase tracking-widest text-[10px]">{e.status}</Badge>
+                </td>
+                <td className="p-3 text-xs text-muted-foreground">
+                  {e.assigned_to ? (teammates.find(t => t.user_id === e.assigned_to)?.email || "Allocated") : "—"}
+                </td>
+                <td className="p-3 text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString()}</td>
+                <td className="p-3 text-right">
+                  <Button size="sm" variant="outline" onClick={() => openEnquiry(e)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px]">
+                    <MessageSquare className="w-3 h-3 mr-1" /> Open
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        {active && (
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground shadow-[8px_8px_0px_0px_#1a1410] rounded-none">
+            <DialogHeader>
+              <DialogTitle className="font-headline text-3xl uppercase tracking-tight">{active.full_name}</DialogTitle>
+              <DialogDescription className="font-serif-news italic">
+                {active.phone} · {active.email || "no email"} · received {new Date(active.created_at).toLocaleString()}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5">
+              <div className="border-2 border-foreground p-3 bg-background/40">
+                <p className="news-kicker text-xs">Course interest</p>
+                <p className="font-serif-news text-sm mt-1">{active.course_interested || "—"}</p>
+                {active.course_description && (
+                  <p className="font-serif-news text-xs mt-2 italic text-[#6b3e1a] whitespace-pre-line">{active.course_description}</p>
+                )}
+              </div>
+
+              {isAdmin && (
+                <div className="border-2 border-foreground p-3">
+                  <p className="news-kicker text-xs mb-2"><UserCheck className="inline w-3 h-3 mr-1" /> Allocate to counsellor</p>
+                  <Select value={active.assigned_to || ""} onValueChange={(v) => assign(active.id, v)}>
+                    <SelectTrigger className="rounded-none border-2 border-foreground bg-transparent">
+                      <SelectValue placeholder="Select teammate" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#fbf6e7] border-2 border-foreground rounded-none">
+                      {teammates.map(t => (
+                        <SelectItem key={t.user_id} value={t.user_id}>{t.email} ({t.role})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {["new", "assigned", "contacted", "converted", "lost"].map(s => (
+                  <Button key={s} size="sm" variant={active.status === s ? "default" : "outline"}
+                    onClick={() => updateStatus(active.id, s)}
+                    className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px]">
+                    {s}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="border-2 border-foreground p-3">
+                <p className="news-kicker text-xs mb-2">Log a follow-up</p>
+                <Textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Call notes, fee negotiation, next steps…" rows={3} className="rounded-none border-2 border-foreground bg-transparent" maxLength={1000} />
+                <div className="flex gap-2 mt-2 items-center">
+                  <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} className="rounded-none border-2 border-foreground bg-transparent w-auto" />
+                  <Button onClick={addActivity} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] ml-auto">
+                    <Plus className="w-3 h-3 mr-1" /> Add note
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <p className="news-kicker text-xs mb-2">Activity log</p>
+                <div className="space-y-2">
+                  {activities.length === 0 && <p className="font-serif-news italic text-sm text-[#6b3e1a]">No activity yet.</p>}
+                  {activities.map(a => (
+                    <div key={a.id} className="border border-foreground/40 p-2 bg-background/30">
+                      <p className="font-serif-news text-sm whitespace-pre-line">{a.notes}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-[#6b3e1a] mt-1">
+                        {new Date(a.created_at).toLocaleString()}
+                        {a.next_action_date && ` · next: ${a.next_action_date}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
+    </div>
+  );
+}
