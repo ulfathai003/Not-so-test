@@ -78,6 +78,7 @@ function ManagerPage() {
             <TabsTrigger value="overview" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><TrendingUp className="w-4 h-4 mr-1.5" /> Overview</TabsTrigger>
             <TabsTrigger value="enquiries" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Inbox className="w-4 h-4 mr-1.5" /> Inbound Enquiries</TabsTrigger>
             <TabsTrigger value="students" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Users className="w-4 h-4 mr-1.5" /> Leads & Students</TabsTrigger>
+            <TabsTrigger value="approvals" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><ClipboardCheck className="w-4 h-4 mr-1.5" /> {role === "admin" ? "Approvals (Master)" : "My Submissions"}</TabsTrigger>
             {role === "admin" && (
               <TabsTrigger value="payments" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Receipt className="w-4 h-4 mr-1.5" /> Fees & Collections</TabsTrigger>
             )}
@@ -91,7 +92,8 @@ function ManagerPage() {
 
           <TabsContent value="overview" className="pt-6"><OverviewTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           <TabsContent value="enquiries" className="pt-6"><EnquiriesTab role={role ?? ""} userId={user.id} /></TabsContent>
-          <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} userId={user.id} /></TabsContent>
+          <TabsContent value="approvals" className="pt-6"><ApprovalsTab role={role ?? ""} userId={user.id} /></TabsContent>
           {role === "admin" && (
             <TabsContent value="payments" className="pt-6"><PaymentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           )}
