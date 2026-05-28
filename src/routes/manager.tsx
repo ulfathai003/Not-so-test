@@ -433,7 +433,7 @@ function Th({ children, className }: { children: React.ReactNode; className?: st
 
 /* ----------------------- STUDENTS DIRECTORY ----------------------- */
 
-function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
+function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: string; userId: string }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -442,11 +442,8 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
   const [filterStatus, setFilterStatus] = useState("all");
 
   async function load() {
-    let query = supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (role === "center") {
-      query = query.eq("counsellor_name", userEmail);
-    }
-    const { data } = await query;
+    // RLS already restricts center to their submissions and admin to all
+    const { data } = await supabase.from("students").select("*").order("created_at", { ascending: false });
     if (data) setStudents(data);
   }
 
