@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings, Inbox, UserCheck, MessageSquare } from "lucide-react";
+import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings, Inbox, UserCheck, MessageSquare, ClipboardCheck, Hash, Clock, FileCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,6 +78,7 @@ function ManagerPage() {
             <TabsTrigger value="overview" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><TrendingUp className="w-4 h-4 mr-1.5" /> Overview</TabsTrigger>
             <TabsTrigger value="enquiries" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Inbox className="w-4 h-4 mr-1.5" /> Inbound Enquiries</TabsTrigger>
             <TabsTrigger value="students" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Users className="w-4 h-4 mr-1.5" /> Leads & Students</TabsTrigger>
+            <TabsTrigger value="approvals" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><ClipboardCheck className="w-4 h-4 mr-1.5" /> {role === "admin" ? "Approvals (Master)" : "My Submissions"}</TabsTrigger>
             {role === "admin" && (
               <TabsTrigger value="payments" className="border-2 border-foreground rounded-none data-[state=active]:bg-foreground data-[state=active]:text-background font-sans font-bold uppercase tracking-widest text-[10px] py-3"><Receipt className="w-4 h-4 mr-1.5" /> Fees & Collections</TabsTrigger>
             )}
@@ -91,7 +92,8 @@ function ManagerPage() {
 
           <TabsContent value="overview" className="pt-6"><OverviewTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           <TabsContent value="enquiries" className="pt-6"><EnquiriesTab role={role ?? ""} userId={user.id} /></TabsContent>
-          <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab role={role ?? ""} userEmail={user.email ?? ""} userId={user.id} /></TabsContent>
+          <TabsContent value="approvals" className="pt-6"><ApprovalsTab role={role ?? ""} userId={user.id} /></TabsContent>
           {role === "admin" && (
             <TabsContent value="payments" className="pt-6"><PaymentsTab role={role ?? ""} userEmail={user.email ?? ""} /></TabsContent>
           )}
@@ -431,7 +433,7 @@ function Th({ children, className }: { children: React.ReactNode; className?: st
 
 /* ----------------------- STUDENTS DIRECTORY ----------------------- */
 
-function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
+function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: string; userId: string }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -440,11 +442,8 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
   const [filterStatus, setFilterStatus] = useState("all");
 
   async function load() {
-    let query = supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (role === "center") {
-      query = query.eq("counsellor_name", userEmail);
-    }
-    const { data } = await query;
+    // RLS already restricts center to their submissions and admin to all
+    const { data } = await supabase.from("students").select("*").order("created_at", { ascending: false });
     if (data) setStudents(data);
   }
 
@@ -514,13 +513,33 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
             </tr>
           </thead>
           <tbody className="font-serif-news text-sm">
-            {filtered.map((s) => (
+            {filtered.map((s) => {
+              const isCenter = role === "center";
+              const showFinal = !isCenter || !!s.enrollment_number;
+              const approvalBadge = s.approval_status === "approved"
+                ? "bg-green-100 text-green-900 border-green-900"
+                : s.approval_status === "rejected"
+                ? "bg-red-100 text-red-900 border-red-900"
+                : "bg-yellow-100 text-yellow-900 border-yellow-900";
+              return (
               <tr key={s.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
                 <td className="p-4">
                   <div className="font-bold">{s.full_name}</div>
                   <div className="text-xs text-muted-foreground">{s.email}</div>
                   <div className="text-xs text-muted-foreground">{s.phone || "No phone"}</div>
-                  {s.enrollment_number && <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#6b3e1a] mt-0.5">#{s.enrollment_number}</div>}
+                  {s.temp_enrollment_id && (
+                    <div className="text-[10px] font-mono font-bold mt-1 inline-flex items-center gap-1 border border-foreground/40 px-1.5 py-0.5 bg-[#fbf6e7]">
+                      <Hash className="w-2.5 h-2.5" /> {s.temp_enrollment_id}
+                    </div>
+                  )}
+                  {showFinal && s.enrollment_number && (
+                    <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-green-900 mt-1 inline-flex items-center gap-1 border-2 border-green-900 px-1.5 py-0.5 ml-1 bg-green-50">
+                      <FileCheck2 className="w-2.5 h-2.5" /> Final: {s.enrollment_number}
+                    </div>
+                  )}
+                  {isCenter && !s.enrollment_number && (
+                    <div className="text-[9px] italic text-[#6b3e1a] mt-1">Final enrollment pending Master approval</div>
+                  )}
                 </td>
                 <td className="p-4">
                   <div className="font-bold">{s.program}{s.specialization ? ` — ${s.specialization}` : ""}</div>
@@ -539,18 +558,22 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
                   ) : <span className="text-muted-foreground text-xs italic">—</span>}
                   {s.total_fee && <div className="text-xs text-muted-foreground mt-0.5">{inr(s.total_fee)}</div>}
                 </td>
-                <td className="p-4">
-                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
+                <td className="p-4 space-y-1">
+                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background block w-fit">
                     {s.status}
+                  </Badge>
+                  <Badge variant="outline" className={`border-2 rounded-none font-sans font-bold uppercase tracking-widest text-[9px] block w-fit ${approvalBadge}`}>
+                    {s.approval_status || "pending"}
                   </Badge>
                 </td>
                 <td className="p-4 text-right">
                   <Button size="sm" variant="outline" onClick={() => { setEditingStudent(s); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background">
-                    <Pencil className="w-3 h-3 mr-1" /> Edit
+                    <Pencil className="w-3 h-3 mr-1" /> {role === "admin" ? "Edit" : "View"}
                   </Button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-muted-foreground italic">No students match your filters.</td>
@@ -563,6 +586,8 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <StudentEditorDialog
           student={editingStudent}
+          role={role}
+          userId={userId}
           onClose={() => { setEditorOpen(false); load(); }}
         />
       </Dialog>
@@ -570,7 +595,7 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
   );
 }
 
-function StudentEditorDialog({ student, onClose }: { student: Student | null; onClose: () => void }) {
+function StudentEditorDialog({ student, onClose, role, userId }: { student: Student | null; onClose: () => void; role: string; userId: string }) {
   const emptyForm: Partial<Student> = {
     full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
     dob: "", gender: "", category: "", religion: "", marital_status: "", employment_status: "",
@@ -603,19 +628,37 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
   const fdoc = (field: keyof Student) => () =>
     setForm(prev => ({ ...prev, [field]: !prev[field] }));
 
+  const isCenter = role === "center";
+  const isAdmin = role === "admin";
+  const readOnly = !!student && !isAdmin && !isCenter; // staff = view only
+  const lockFinalEnrollment = !isAdmin; // only Master can set the final enrollment number
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const payload = { ...form, location: form.city || form.state || form.location || "Not specified" };
+      const payload: any = { ...form, location: form.city || form.state || form.location || "Not specified" };
       if (student?.id) {
+        // Centers must not edit the final enrollment number even when updating
+        if (lockFinalEnrollment) delete payload.enrollment_number;
+        if (!isAdmin) {
+          delete payload.approval_status;
+          delete payload.approved_by;
+          delete payload.approved_at;
+        }
         const { error } = await supabase.from("students").update(payload).eq("id", student.id);
         if (error) throw error;
         toast.success("Student record updated");
       } else {
+        // New submission — Center / Staff route goes through Master approval
+        if (isCenter) {
+          payload.submitted_by = userId;
+          payload.approval_status = "pending";
+          delete payload.enrollment_number; // assigned later by Master
+        }
         const { error } = await supabase.from("students").insert([payload as TablesInsert<"students">]);
         if (error) throw error;
-        toast.success("New student archived");
+        toast.success(isCenter ? "Submitted to Master for approval" : "New student archived");
       }
       onClose();
     } catch (err: any) {
@@ -643,12 +686,19 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
     <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground shadow-[8px_8px_0px_0px_#1a1410] rounded-none p-0">
       <div className="bg-foreground text-background p-4 sticky top-0 z-20 shadow-[0_4px_0_0_#1a1410]">
         <DialogTitle className="font-headline text-2xl uppercase tracking-tight">
-          {student ? `Editing: ${student.full_name}` : "New Student Registry"}
+          {student ? `${isAdmin ? "Editing" : "Viewing"}: ${student.full_name}` : (isCenter ? "Center: New Admission Submission" : "New Student Registry")}
         </DialogTitle>
         <DialogDescription className="text-background/60 font-serif-news text-xs italic mt-0.5">
-          {student ? `Enrollment: ${student.enrollment_number || "Not assigned"}` : "Complete all required fields to archive a new student."}
+          {student
+            ? <span>Temp ID: <span className="font-mono">{student.temp_enrollment_id || "—"}</span> · Final: <span className="font-mono">{student.enrollment_number || (isCenter ? "Pending Master approval" : "Not assigned")}</span> · Status: {student.approval_status || "pending"}</span>
+            : (isCenter ? "Fill all 12 admission fields. A Temporary ID is auto-generated and sent to Master (Prashant Bhai) for approval." : "Complete all required fields to archive a new student.")}
         </DialogDescription>
       </div>
+      {isCenter && (
+        <div className="px-4 py-2 bg-yellow-100 border-b-2 border-foreground text-xs font-serif-news text-[#6b3e1a]">
+          <Clock className="inline w-3 h-3 mr-1" /> Center workflow (Steps 1–12): submit details → Master verifies → final enrollment number assigned → admission completed.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="p-6 space-y-10">
 
@@ -723,7 +773,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
             <Field label="Admission Session"><SelWrap field="admission_session" options={["January", "July"]} /></Field>
             <Field label="Study Mode"><SelWrap field="study_mode" options={["Online", "Distance", "Hybrid"]} /></Field>
             <Field label="Medium"><SelWrap field="medium_of_instruction" options={["English", "Hindi", "Bilingual"]} /></Field>
-            <Field label="Enrollment No."><Input value={form.enrollment_number || ""} onChange={f("enrollment_number")} className={cls} /></Field>
+            <Field label={lockFinalEnrollment ? "Enrollment No. (Master assigns)" : "Enrollment No."}><Input value={form.enrollment_number || ""} onChange={f("enrollment_number")} disabled={lockFinalEnrollment} placeholder={lockFinalEnrollment ? "Pending Master approval" : ""} className={cls} /></Field>
             <Field label="Course Code"><Input value={form.course_code || ""} onChange={f("course_code")} className={cls} /></Field>
             <Field label="Course Name"><Input value={form.course_name || ""} onChange={f("course_name")} className={cls} /></Field>
             <Field label="Duration (Years)"><Input type="number" value={form.duration_years || ""} onChange={fn("duration_years")} className={cls} /></Field>
@@ -1417,6 +1467,145 @@ function EnquiriesTab({ role, userId }: { role: string; userId: string }) {
           </DialogContent>
         )}
       </Dialog>
+    </div>
+  );
+}
+
+/* ----------------------- APPROVALS (Workflow Steps 6 → 12) ----------------------- */
+
+function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
+  const [rows, setRows] = useState<Student[]>([]);
+  const [enrollMap, setEnrollMap] = useState<Record<string, string>>({});
+  const isAdmin = role === "admin";
+
+  async function load() {
+    // RLS handles scoping: admin sees all, center sees own, staff sees assigned.
+    const { data } = await supabase
+      .from("students")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setRows(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function approve(s: Student) {
+    const num = (enrollMap[s.id] || "").trim();
+    if (!num) return toast.error("Enter the final university enrollment number");
+    const { error } = await supabase.from("students").update({
+      enrollment_number: num,
+      approval_status: "approved",
+      approved_by: userId,
+      approved_at: new Date().toISOString(),
+      status: "active",
+    }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success(`Approved · enrollment ${num} assigned`);
+    load();
+  }
+
+  async function reject(s: Student) {
+    if (!confirm(`Reject submission for ${s.full_name}?`)) return;
+    const { error } = await supabase.from("students").update({ approval_status: "rejected" }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Submission rejected");
+    load();
+  }
+
+  const STEPS = [
+    "Lead", "Counselled", "Docs collected", "Payment uploaded",
+    "Submitted to Master", "Master verifying", "Temp ID issued",
+    "Final enrollment assigned", "Visible to Center", "Admission completed",
+  ];
+
+  function stageIndex(s: Student): number {
+    if (s.approval_status === "approved" && s.enrollment_number) return 9;
+    if (s.approval_status === "approved") return 7;
+    if (s.approval_status === "pending" && s.temp_enrollment_id) return 6;
+    return 4;
+  }
+
+  const pending = rows.filter(r => r.approval_status === "pending");
+  const approved = rows.filter(r => r.approval_status === "approved");
+  const rejected = rows.filter(r => r.approval_status === "rejected");
+
+  return (
+    <div className="space-y-6">
+      <div className="border-2 border-foreground p-4 bg-[#fbf6e7]">
+        <p className="news-kicker text-xs">12-Step Admission Workflow</p>
+        <h3 className="font-headline text-2xl mt-1">
+          {isAdmin ? "Pending submissions from Centers" : "Your admission submissions"}
+        </h3>
+        <p className="font-serif-news text-sm italic text-[#6b3e1a] mt-1">
+          {isAdmin
+            ? "Verify each Center submission, then assign the final university enrollment number to complete the admission."
+            : "Each submission auto-generates a Temporary ID. Master (Prashant Bhai) verifies and replaces it with the final university enrollment number."}
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="border-2 border-foreground bg-yellow-50 p-4"><p className="news-kicker text-xs">Pending</p><p className="font-headline text-3xl">{pending.length}</p></div>
+        <div className="border-2 border-foreground bg-green-50 p-4"><p className="news-kicker text-xs">Approved</p><p className="font-headline text-3xl">{approved.length}</p></div>
+        <div className="border-2 border-foreground bg-red-50 p-4"><p className="news-kicker text-xs">Rejected</p><p className="font-headline text-3xl">{rejected.length}</p></div>
+      </div>
+
+      <div className="space-y-4">
+        {rows.length === 0 && (
+          <div className="border-2 border-foreground p-8 text-center font-serif-news italic text-[#6b3e1a]">
+            No submissions yet.
+          </div>
+        )}
+        {rows.map(s => {
+          const stage = stageIndex(s);
+          return (
+            <div key={s.id} className="border-2 border-foreground bg-[#fbf6e7] p-4 space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold font-headline text-lg">{s.full_name}</div>
+                  <div className="text-xs text-muted-foreground">{s.email} · {s.phone}</div>
+                  <div className="text-xs mt-1">{s.program} {s.specialization} · {s.university}</div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-mono">
+                    <span className="border border-foreground/40 px-2 py-0.5 bg-background"><Hash className="inline w-2.5 h-2.5 mr-1" />Temp: {s.temp_enrollment_id || "—"}</span>
+                    <span className={`border-2 px-2 py-0.5 ${s.enrollment_number ? "border-green-900 bg-green-50 text-green-900" : "border-foreground/40 bg-background text-muted-foreground"}`}>
+                      <FileCheck2 className="inline w-2.5 h-2.5 mr-1" />Final: {s.enrollment_number || "Pending"}
+                    </span>
+                    <Badge variant="outline" className="rounded-none border-2 border-foreground font-bold uppercase tracking-widest text-[9px]">{s.approval_status || "pending"}</Badge>
+                  </div>
+                </div>
+                {isAdmin && s.approval_status === "pending" && (
+                  <div className="flex flex-col gap-2 min-w-[260px]">
+                    <Input
+                      placeholder="Final university enrollment number"
+                      value={enrollMap[s.id] || ""}
+                      onChange={e => setEnrollMap(m => ({ ...m, [s.id]: e.target.value }))}
+                      className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={() => approve(s)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background flex-1">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Approve & Assign
+                      </Button>
+                      <Button onClick={() => reject(s)} variant="outline" className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 12-step tracker */}
+              <div className="border-t border-foreground/30 pt-3">
+                <div className="flex flex-wrap gap-1">
+                  {STEPS.map((label, i) => (
+                    <div key={i} className={`flex-1 min-w-[80px] text-[9px] uppercase tracking-widest font-sans font-bold p-1.5 border ${i <= stage ? "bg-foreground text-background border-foreground" : "bg-background text-muted-foreground border-foreground/30"}`}>
+                      <span className="block text-[8px] opacity-70">Step {i + 1}</span>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
