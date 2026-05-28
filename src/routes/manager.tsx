@@ -628,19 +628,37 @@ function StudentEditorDialog({ student, onClose, role, userId }: { student: Stud
   const fdoc = (field: keyof Student) => () =>
     setForm(prev => ({ ...prev, [field]: !prev[field] }));
 
+  const isCenter = role === "center";
+  const isAdmin = role === "admin";
+  const readOnly = !!student && !isAdmin && !isCenter; // staff = view only
+  const lockFinalEnrollment = !isAdmin; // only Master can set the final enrollment number
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const payload = { ...form, location: form.city || form.state || form.location || "Not specified" };
+      const payload: any = { ...form, location: form.city || form.state || form.location || "Not specified" };
       if (student?.id) {
+        // Centers must not edit the final enrollment number even when updating
+        if (lockFinalEnrollment) delete payload.enrollment_number;
+        if (!isAdmin) {
+          delete payload.approval_status;
+          delete payload.approved_by;
+          delete payload.approved_at;
+        }
         const { error } = await supabase.from("students").update(payload).eq("id", student.id);
         if (error) throw error;
         toast.success("Student record updated");
       } else {
+        // New submission — Center / Staff route goes through Master approval
+        if (isCenter) {
+          payload.submitted_by = userId;
+          payload.approval_status = "pending";
+          delete payload.enrollment_number; // assigned later by Master
+        }
         const { error } = await supabase.from("students").insert([payload as TablesInsert<"students">]);
         if (error) throw error;
-        toast.success("New student archived");
+        toast.success(isCenter ? "Submitted to Master for approval" : "New student archived");
       }
       onClose();
     } catch (err: any) {
