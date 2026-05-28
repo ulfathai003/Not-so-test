@@ -1470,3 +1470,142 @@ function EnquiriesTab({ role, userId }: { role: string; userId: string }) {
     </div>
   );
 }
+
+/* ----------------------- APPROVALS (Workflow Steps 6 → 12) ----------------------- */
+
+function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
+  const [rows, setRows] = useState<Student[]>([]);
+  const [enrollMap, setEnrollMap] = useState<Record<string, string>>({});
+  const isAdmin = role === "admin";
+
+  async function load() {
+    // RLS handles scoping: admin sees all, center sees own, staff sees assigned.
+    const { data } = await supabase
+      .from("students")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setRows(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function approve(s: Student) {
+    const num = (enrollMap[s.id] || "").trim();
+    if (!num) return toast.error("Enter the final university enrollment number");
+    const { error } = await supabase.from("students").update({
+      enrollment_number: num,
+      approval_status: "approved",
+      approved_by: userId,
+      approved_at: new Date().toISOString(),
+      status: "active",
+    }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success(`Approved · enrollment ${num} assigned`);
+    load();
+  }
+
+  async function reject(s: Student) {
+    if (!confirm(`Reject submission for ${s.full_name}?`)) return;
+    const { error } = await supabase.from("students").update({ approval_status: "rejected" }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Submission rejected");
+    load();
+  }
+
+  const STEPS = [
+    "Lead", "Counselled", "Docs collected", "Payment uploaded",
+    "Submitted to Master", "Master verifying", "Temp ID issued",
+    "Final enrollment assigned", "Visible to Center", "Admission completed",
+  ];
+
+  function stageIndex(s: Student): number {
+    if (s.approval_status === "approved" && s.enrollment_number) return 9;
+    if (s.approval_status === "approved") return 7;
+    if (s.approval_status === "pending" && s.temp_enrollment_id) return 6;
+    return 4;
+  }
+
+  const pending = rows.filter(r => r.approval_status === "pending");
+  const approved = rows.filter(r => r.approval_status === "approved");
+  const rejected = rows.filter(r => r.approval_status === "rejected");
+
+  return (
+    <div className="space-y-6">
+      <div className="border-2 border-foreground p-4 bg-[#fbf6e7]">
+        <p className="news-kicker text-xs">12-Step Admission Workflow</p>
+        <h3 className="font-headline text-2xl mt-1">
+          {isAdmin ? "Pending submissions from Centers" : "Your admission submissions"}
+        </h3>
+        <p className="font-serif-news text-sm italic text-[#6b3e1a] mt-1">
+          {isAdmin
+            ? "Verify each Center submission, then assign the final university enrollment number to complete the admission."
+            : "Each submission auto-generates a Temporary ID. Master (Prashant Bhai) verifies and replaces it with the final university enrollment number."}
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="border-2 border-foreground bg-yellow-50 p-4"><p className="news-kicker text-xs">Pending</p><p className="font-headline text-3xl">{pending.length}</p></div>
+        <div className="border-2 border-foreground bg-green-50 p-4"><p className="news-kicker text-xs">Approved</p><p className="font-headline text-3xl">{approved.length}</p></div>
+        <div className="border-2 border-foreground bg-red-50 p-4"><p className="news-kicker text-xs">Rejected</p><p className="font-headline text-3xl">{rejected.length}</p></div>
+      </div>
+
+      <div className="space-y-4">
+        {rows.length === 0 && (
+          <div className="border-2 border-foreground p-8 text-center font-serif-news italic text-[#6b3e1a]">
+            No submissions yet.
+          </div>
+        )}
+        {rows.map(s => {
+          const stage = stageIndex(s);
+          return (
+            <div key={s.id} className="border-2 border-foreground bg-[#fbf6e7] p-4 space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold font-headline text-lg">{s.full_name}</div>
+                  <div className="text-xs text-muted-foreground">{s.email} · {s.phone}</div>
+                  <div className="text-xs mt-1">{s.program} {s.specialization} · {s.university}</div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-mono">
+                    <span className="border border-foreground/40 px-2 py-0.5 bg-background"><Hash className="inline w-2.5 h-2.5 mr-1" />Temp: {s.temp_enrollment_id || "—"}</span>
+                    <span className={`border-2 px-2 py-0.5 ${s.enrollment_number ? "border-green-900 bg-green-50 text-green-900" : "border-foreground/40 bg-background text-muted-foreground"}`}>
+                      <FileCheck2 className="inline w-2.5 h-2.5 mr-1" />Final: {s.enrollment_number || "Pending"}
+                    </span>
+                    <Badge variant="outline" className="rounded-none border-2 border-foreground font-bold uppercase tracking-widest text-[9px]">{s.approval_status || "pending"}</Badge>
+                  </div>
+                </div>
+                {isAdmin && s.approval_status === "pending" && (
+                  <div className="flex flex-col gap-2 min-w-[260px]">
+                    <Input
+                      placeholder="Final university enrollment number"
+                      value={enrollMap[s.id] || ""}
+                      onChange={e => setEnrollMap(m => ({ ...m, [s.id]: e.target.value }))}
+                      className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={() => approve(s)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background flex-1">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Approve & Assign
+                      </Button>
+                      <Button onClick={() => reject(s)} variant="outline" className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 12-step tracker */}
+              <div className="border-t border-foreground/30 pt-3">
+                <div className="flex flex-wrap gap-1">
+                  {STEPS.map((label, i) => (
+                    <div key={i} className={`flex-1 min-w-[80px] text-[9px] uppercase tracking-widest font-sans font-bold p-1.5 border ${i <= stage ? "bg-foreground text-background border-foreground" : "bg-background text-muted-foreground border-foreground/30"}`}>
+                      <span className="block text-[8px] opacity-70">Step {i + 1}</span>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
