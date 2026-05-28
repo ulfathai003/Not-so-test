@@ -686,12 +686,19 @@ function StudentEditorDialog({ student, onClose, role, userId }: { student: Stud
     <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-[#fbf6e7] border-4 border-foreground shadow-[8px_8px_0px_0px_#1a1410] rounded-none p-0">
       <div className="bg-foreground text-background p-4 sticky top-0 z-20 shadow-[0_4px_0_0_#1a1410]">
         <DialogTitle className="font-headline text-2xl uppercase tracking-tight">
-          {student ? `Editing: ${student.full_name}` : "New Student Registry"}
+          {student ? `${isAdmin ? "Editing" : "Viewing"}: ${student.full_name}` : (isCenter ? "Center: New Admission Submission" : "New Student Registry")}
         </DialogTitle>
         <DialogDescription className="text-background/60 font-serif-news text-xs italic mt-0.5">
-          {student ? `Enrollment: ${student.enrollment_number || "Not assigned"}` : "Complete all required fields to archive a new student."}
+          {student
+            ? <span>Temp ID: <span className="font-mono">{student.temp_enrollment_id || "—"}</span> · Final: <span className="font-mono">{student.enrollment_number || (isCenter ? "Pending Master approval" : "Not assigned")}</span> · Status: {student.approval_status || "pending"}</span>
+            : (isCenter ? "Fill all 12 admission fields. A Temporary ID is auto-generated and sent to Master (Prashant Bhai) for approval." : "Complete all required fields to archive a new student.")}
         </DialogDescription>
       </div>
+      {isCenter && (
+        <div className="px-4 py-2 bg-yellow-100 border-b-2 border-foreground text-xs font-serif-news text-[#6b3e1a]">
+          <Clock className="inline w-3 h-3 mr-1" /> Center workflow (Steps 1–12): submit details → Master verifies → final enrollment number assigned → admission completed.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="p-6 space-y-10">
 
