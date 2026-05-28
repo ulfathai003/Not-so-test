@@ -773,7 +773,7 @@ function StudentEditorDialog({ student, onClose, role, userId }: { student: Stud
             <Field label="Admission Session"><SelWrap field="admission_session" options={["January", "July"]} /></Field>
             <Field label="Study Mode"><SelWrap field="study_mode" options={["Online", "Distance", "Hybrid"]} /></Field>
             <Field label="Medium"><SelWrap field="medium_of_instruction" options={["English", "Hindi", "Bilingual"]} /></Field>
-            <Field label="Enrollment No."><Input value={form.enrollment_number || ""} onChange={f("enrollment_number")} className={cls} /></Field>
+            <Field label={lockFinalEnrollment ? "Enrollment No. (Master assigns)" : "Enrollment No."}><Input value={form.enrollment_number || ""} onChange={f("enrollment_number")} disabled={lockFinalEnrollment} placeholder={lockFinalEnrollment ? "Pending Master approval" : ""} className={cls} /></Field>
             <Field label="Course Code"><Input value={form.course_code || ""} onChange={f("course_code")} className={cls} /></Field>
             <Field label="Course Name"><Input value={form.course_name || ""} onChange={f("course_name")} className={cls} /></Field>
             <Field label="Duration (Years)"><Input type="number" value={form.duration_years || ""} onChange={fn("duration_years")} className={cls} /></Field>
