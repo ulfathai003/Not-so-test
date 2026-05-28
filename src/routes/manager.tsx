@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings, Inbox, UserCheck, MessageSquare } from "lucide-react";
+import { GraduationCap, LogOut, Plus, ShieldCheck, Receipt, TrendingUp, Calendar, Trash2, Upload, IndianRupee, ArrowLeft, Pencil, Briefcase, Building, Users, CheckCircle, Settings, Inbox, UserCheck, MessageSquare, ClipboardCheck, Hash, Clock, FileCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
