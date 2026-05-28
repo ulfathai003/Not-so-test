@@ -513,13 +513,33 @@ function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: str
             </tr>
           </thead>
           <tbody className="font-serif-news text-sm">
-            {filtered.map((s) => (
+            {filtered.map((s) => {
+              const isCenter = role === "center";
+              const showFinal = !isCenter || !!s.enrollment_number;
+              const approvalBadge = s.approval_status === "approved"
+                ? "bg-green-100 text-green-900 border-green-900"
+                : s.approval_status === "rejected"
+                ? "bg-red-100 text-red-900 border-red-900"
+                : "bg-yellow-100 text-yellow-900 border-yellow-900";
+              return (
               <tr key={s.id} className="border-b-2 border-foreground/20 hover:bg-black/5 transition-colors">
                 <td className="p-4">
                   <div className="font-bold">{s.full_name}</div>
                   <div className="text-xs text-muted-foreground">{s.email}</div>
                   <div className="text-xs text-muted-foreground">{s.phone || "No phone"}</div>
-                  {s.enrollment_number && <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#6b3e1a] mt-0.5">#{s.enrollment_number}</div>}
+                  {s.temp_enrollment_id && (
+                    <div className="text-[10px] font-mono font-bold mt-1 inline-flex items-center gap-1 border border-foreground/40 px-1.5 py-0.5 bg-[#fbf6e7]">
+                      <Hash className="w-2.5 h-2.5" /> {s.temp_enrollment_id}
+                    </div>
+                  )}
+                  {showFinal && s.enrollment_number && (
+                    <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-green-900 mt-1 inline-flex items-center gap-1 border-2 border-green-900 px-1.5 py-0.5 ml-1 bg-green-50">
+                      <FileCheck2 className="w-2.5 h-2.5" /> Final: {s.enrollment_number}
+                    </div>
+                  )}
+                  {isCenter && !s.enrollment_number && (
+                    <div className="text-[9px] italic text-[#6b3e1a] mt-1">Final enrollment pending Master approval</div>
+                  )}
                 </td>
                 <td className="p-4">
                   <div className="font-bold">{s.program}{s.specialization ? ` — ${s.specialization}` : ""}</div>
@@ -538,18 +558,22 @@ function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: str
                   ) : <span className="text-muted-foreground text-xs italic">—</span>}
                   {s.total_fee && <div className="text-xs text-muted-foreground mt-0.5">{inr(s.total_fee)}</div>}
                 </td>
-                <td className="p-4">
-                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background">
+                <td className="p-4 space-y-1">
+                  <Badge variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px] bg-background block w-fit">
                     {s.status}
+                  </Badge>
+                  <Badge variant="outline" className={`border-2 rounded-none font-sans font-bold uppercase tracking-widest text-[9px] block w-fit ${approvalBadge}`}>
+                    {s.approval_status || "pending"}
                   </Badge>
                 </td>
                 <td className="p-4 text-right">
                   <Button size="sm" variant="outline" onClick={() => { setEditingStudent(s); setEditorOpen(true); }} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] hover:bg-foreground hover:text-background">
-                    <Pencil className="w-3 h-3 mr-1" /> Edit
+                    <Pencil className="w-3 h-3 mr-1" /> {role === "admin" ? "Edit" : "View"}
                   </Button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-muted-foreground italic">No students match your filters.</td>
