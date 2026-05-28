@@ -586,6 +586,8 @@ function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: str
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <StudentEditorDialog
           student={editingStudent}
+          role={role}
+          userId={userId}
           onClose={() => { setEditorOpen(false); load(); }}
         />
       </Dialog>
@@ -593,7 +595,7 @@ function StudentsTab({ role, userEmail, userId }: { role: string; userEmail: str
   );
 }
 
-function StudentEditorDialog({ student, onClose }: { student: Student | null; onClose: () => void }) {
+function StudentEditorDialog({ student, onClose, role, userId }: { student: Student | null; onClose: () => void; role: string; userId: string }) {
   const emptyForm: Partial<Student> = {
     full_name: "", email: "", phone: "", address: "", city: "", district: "", state: "", pincode: "",
     dob: "", gender: "", category: "", religion: "", marital_status: "", employment_status: "",
