@@ -1497,7 +1497,7 @@ function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
         .select("*")
         .in("student_id", list.map(s => s.id));
       const grouped: Record<string, Payment[]> = {};
-      (pays ?? []).forEach(p => {
+      (pays ?? []).forEach((p: Payment) => {
         (grouped[p.student_id] ||= []).push(p);
       });
       setPayments(grouped);
