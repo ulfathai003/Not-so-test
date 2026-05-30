@@ -1495,7 +1495,7 @@ function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
       const { data: pays } = await supabase
         .from("fee_payments")
         .select("*")
-        .in("student_id", list.map(s => s.id));
+        .in("student_id", list.map((s: Student) => s.id));
       const grouped: Record<string, Payment[]> = {};
       (pays ?? []).forEach((p: Payment) => {
         (grouped[p.student_id] ||= []).push(p);
@@ -1517,7 +1517,10 @@ function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
   }
 
   function setDraft(id: string, patch: Partial<ApprovalDraft>) {
-    setDrafts(d => ({ ...d, [id]: { totalFee: "", enrollment: "", rejectReason: "", ...(d[id] || {}), ...patch } }));
+    setDrafts(d => {
+      const existing: ApprovalDraft = d[id] || { totalFee: "", enrollment: "", rejectReason: "" };
+      return { ...d, [id]: { ...existing, ...patch } };
+    });
   }
 
   async function approve(s: Student) {
