@@ -1473,41 +1473,94 @@ function EnquiriesTab({ role, userId }: { role: string; userId: string }) {
 
 /* ----------------------- APPROVALS (Workflow Steps 6 → 12) ----------------------- */
 
+type ApprovalDraft = { totalFee: string; enrollment: string; rejectReason: string };
+
 function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
   const [rows, setRows] = useState<Student[]>([]);
-  const [enrollMap, setEnrollMap] = useState<Record<string, string>>({});
+  const [payments, setPayments] = useState<Record<string, Payment[]>>({});
+  const [drafts, setDrafts] = useState<Record<string, ApprovalDraft>>({});
+  const [signed, setSigned] = useState<Record<string, string>>({});
+  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const isAdmin = role === "admin";
 
   async function load() {
-    // RLS handles scoping: admin sees all, center sees own, staff sees assigned.
-    const { data } = await supabase
+    const { data: students } = await supabase
       .from("students")
       .select("*")
       .order("created_at", { ascending: false });
-    setRows(data ?? []);
+    const list = students ?? [];
+    setRows(list);
+
+    if (list.length) {
+      const { data: pays } = await supabase
+        .from("fee_payments")
+        .select("*")
+        .in("student_id", list.map((s: Student) => s.id));
+      const grouped: Record<string, Payment[]> = {};
+      (pays ?? []).forEach((p: Payment) => {
+        (grouped[p.student_id] ||= []).push(p);
+      });
+      setPayments(grouped);
+    }
   }
   useEffect(() => { load(); }, []);
 
+  async function sign(bucket: string, path: string | null | undefined) {
+    if (!path) return toast.error("No file uploaded");
+    const key = `${bucket}:${path}`;
+    if (signed[key]) return window.open(signed[key], "_blank");
+    const cleaned = path.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/[^/]+\/[^/]+\//, "");
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(cleaned, 600);
+    if (error || !data) return toast.error(error?.message || "Could not open file");
+    setSigned(s => ({ ...s, [key]: data.signedUrl }));
+    window.open(data.signedUrl, "_blank");
+  }
+
+  function setDraft(id: string, patch: Partial<ApprovalDraft>) {
+    setDrafts(d => {
+      const existing: ApprovalDraft = d[id] || { totalFee: "", enrollment: "", rejectReason: "" };
+      return { ...d, [id]: { ...existing, ...patch } };
+    });
+  }
+
   async function approve(s: Student) {
-    const num = (enrollMap[s.id] || "").trim();
+    const d = drafts[s.id] || { totalFee: "", enrollment: "", rejectReason: "" };
+    const num = d.enrollment.trim();
     if (!num) return toast.error("Enter the final university enrollment number");
-    const { error } = await supabase.from("students").update({
+    const totalFee = d.totalFee ? Number(d.totalFee) : s.total_fee ?? null;
+    if (d.totalFee && (isNaN(Number(d.totalFee)) || Number(d.totalFee) < 0)) return toast.error("Invalid fee amount");
+
+    const patch: any = {
       enrollment_number: num,
       approval_status: "approved",
       approved_by: userId,
       approved_at: new Date().toISOString(),
       status: "active",
-    }).eq("id", s.id);
+    };
+    if (totalFee !== null) patch.total_fee = totalFee;
+
+    const { error } = await supabase.from("students").update(patch).eq("id", s.id);
     if (error) return toast.error(error.message);
     toast.success(`Approved · enrollment ${num} assigned`);
     load();
   }
 
   async function reject(s: Student) {
-    if (!confirm(`Reject submission for ${s.full_name}?`)) return;
-    const { error } = await supabase.from("students").update({ approval_status: "rejected" }).eq("id", s.id);
+    const reason = (drafts[s.id]?.rejectReason || "").trim();
+    if (!reason) return toast.error("Enter a rejection reason so the center can fix it");
+    const { error } = await supabase.from("students").update({
+      approval_status: "rejected",
+      notes: `[Rejected ${new Date().toLocaleDateString()}] ${reason}\n\n${s.notes ?? ""}`.trim(),
+    }).eq("id", s.id);
     if (error) return toast.error(error.message);
-    toast.success("Submission rejected");
+    toast.success("Submission rejected — center will be notified");
+    load();
+  }
+
+  async function revertToPending(s: Student) {
+    const { error } = await supabase.from("students").update({ approval_status: "pending" }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Moved back to pending review");
     load();
   }
 
@@ -1527,69 +1580,186 @@ function ApprovalsTab({ role, userId }: { role: string; userId: string }) {
   const pending = rows.filter(r => r.approval_status === "pending");
   const approved = rows.filter(r => r.approval_status === "approved");
   const rejected = rows.filter(r => r.approval_status === "rejected");
+  const visible = filter === "all" ? rows : filter === "pending" ? pending : filter === "approved" ? approved : rejected;
 
   return (
     <div className="space-y-6">
       <div className="border-2 border-foreground p-4 bg-[#fbf6e7]">
-        <p className="news-kicker text-xs">12-Step Admission Workflow</p>
+        <p className="news-kicker text-xs">Step 8 · Master Approval Desk</p>
         <h3 className="font-headline text-2xl mt-1">
-          {isAdmin ? "Pending submissions from Centers" : "Your admission submissions"}
+          {isAdmin ? "Review Center submissions & assign final enrollment" : "Your admission submissions"}
         </h3>
         <p className="font-serif-news text-sm italic text-[#6b3e1a] mt-1">
           {isAdmin
-            ? "Verify each Center submission, then assign the final university enrollment number to complete the admission."
+            ? "Verify documents and payment proof, set fee structure, then approve with the final university enrollment number. Reject with a reason if the center must resubmit."
             : "Each submission auto-generates a Temporary ID. Master (Prashant Bhai) verifies and replaces it with the final university enrollment number."}
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-3">
-        <div className="border-2 border-foreground bg-yellow-50 p-4"><p className="news-kicker text-xs">Pending</p><p className="font-headline text-3xl">{pending.length}</p></div>
-        <div className="border-2 border-foreground bg-green-50 p-4"><p className="news-kicker text-xs">Approved</p><p className="font-headline text-3xl">{approved.length}</p></div>
-        <div className="border-2 border-foreground bg-red-50 p-4"><p className="news-kicker text-xs">Rejected</p><p className="font-headline text-3xl">{rejected.length}</p></div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { k: "pending", label: "Pending", val: pending.length, cls: "bg-yellow-50" },
+          { k: "approved", label: "Approved", val: approved.length, cls: "bg-green-50" },
+          { k: "rejected", label: "Rejected", val: rejected.length, cls: "bg-red-50" },
+          { k: "all", label: "All", val: rows.length, cls: "bg-[#fbf6e7]" },
+        ].map(b => (
+          <button
+            key={b.k}
+            onClick={() => setFilter(b.k as any)}
+            className={`border-2 border-foreground p-4 text-left transition ${b.cls} ${filter === b.k ? "ring-2 ring-foreground ring-offset-2" : "opacity-70 hover:opacity-100"}`}
+          >
+            <p className="news-kicker text-xs">{b.label}</p>
+            <p className="font-headline text-3xl">{b.val}</p>
+          </button>
+        ))}
       </div>
 
       <div className="space-y-4">
-        {rows.length === 0 && (
+        {visible.length === 0 && (
           <div className="border-2 border-foreground p-8 text-center font-serif-news italic text-[#6b3e1a]">
-            No submissions yet.
+            No {filter === "all" ? "" : filter} submissions.
           </div>
         )}
-        {rows.map(s => {
+        {visible.map(s => {
           const stage = stageIndex(s);
+          const draft = drafts[s.id] || { totalFee: "", enrollment: "", rejectReason: "" };
+          const studentPayments = payments[s.id] || [];
+          const docs: Array<{ label: string; bucket: string; url: string | null | undefined }> = [
+            { label: "Photo", bucket: "student-docs", url: s.doc_photo_url },
+            { label: "Aadhaar Card", bucket: "student-docs", url: s.doc_aadhaar_url },
+            { label: "10th Marksheet", bucket: "student-docs", url: s.doc_marksheet_10_url },
+          ];
+          const flagDocs = [
+            { label: "Signature", on: s.doc_signature },
+            { label: "12th Marksheet", on: s.doc_marksheet_12 },
+            { label: "Degree Marksheet", on: s.doc_marksheet_degree },
+          ];
           return (
-            <div key={s.id} className="border-2 border-foreground bg-[#fbf6e7] p-4 space-y-3">
+            <div key={s.id} className="border-2 border-foreground bg-[#fbf6e7] p-4 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <div className="font-bold font-headline text-lg">{s.full_name}</div>
                   <div className="text-xs text-muted-foreground">{s.email} · {s.phone}</div>
-                  <div className="text-xs mt-1">{s.program} {s.specialization} · {s.university}</div>
+                  <div className="text-xs mt-1">{s.program} {s.specialization} · {s.university} · Batch {s.batch_year}</div>
                   <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-mono">
                     <span className="border border-foreground/40 px-2 py-0.5 bg-background"><Hash className="inline w-2.5 h-2.5 mr-1" />Temp: {s.temp_enrollment_id || "—"}</span>
                     <span className={`border-2 px-2 py-0.5 ${s.enrollment_number ? "border-green-900 bg-green-50 text-green-900" : "border-foreground/40 bg-background text-muted-foreground"}`}>
                       <FileCheck2 className="inline w-2.5 h-2.5 mr-1" />Final: {s.enrollment_number || "Pending"}
                     </span>
-                    <Badge variant="outline" className="rounded-none border-2 border-foreground font-bold uppercase tracking-widest text-[9px]">{s.approval_status || "pending"}</Badge>
+                    <Badge variant="outline" className={`rounded-none border-2 border-foreground font-bold uppercase tracking-widest text-[9px] ${
+                      s.approval_status === "approved" ? "bg-green-50 text-green-900" :
+                      s.approval_status === "rejected" ? "bg-red-50 text-red-900" : "bg-yellow-50"
+                    }`}>{s.approval_status || "pending"}</Badge>
                   </div>
                 </div>
-                {isAdmin && s.approval_status === "pending" && (
-                  <div className="flex flex-col gap-2 min-w-[260px]">
-                    <Input
-                      placeholder="Final university enrollment number"
-                      value={enrollMap[s.id] || ""}
-                      onChange={e => setEnrollMap(m => ({ ...m, [s.id]: e.target.value }))}
-                      className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0"
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={() => approve(s)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background flex-1">
-                        <CheckCircle className="w-3 h-3 mr-1" /> Approve & Assign
-                      </Button>
-                      <Button onClick={() => reject(s)} variant="outline" className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive">
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+              </div>
+
+              {/* Documents + Payments grid */}
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="border-2 border-foreground bg-background p-3">
+                  <p className="news-kicker text-xs mb-2">Documents</p>
+                  <div className="space-y-1.5">
+                    {docs.map(d => (
+                      <div key={d.label} className="flex items-center justify-between text-xs gap-2">
+                        <span className="truncate">{d.label}</span>
+                        {d.url ? (
+                          <Button size="sm" variant="outline" onClick={() => sign(d.bucket, d.url)} className="h-6 rounded-none border border-foreground text-[10px] uppercase tracking-widest">View</Button>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Missing</span>
+                        )}
+                      </div>
+                    ))}
+                    {flagDocs.map(d => (
+                      <div key={d.label} className="flex items-center justify-between text-xs gap-2 text-muted-foreground">
+                        <span className="truncate">{d.label}</span>
+                        <span className={`text-[10px] uppercase tracking-widest ${d.on ? "text-green-900" : ""}`}>{d.on ? "Marked ✓" : "Pending"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-2 border-foreground bg-background p-3">
+                  <p className="news-kicker text-xs mb-2">Payment proofs ({studentPayments.length})</p>
+                  {studentPayments.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">No payments recorded yet.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {studentPayments.map(p => (
+                        <div key={p.id} className="flex items-center justify-between text-xs gap-2">
+                          <span className="truncate">
+                            {inr(Number(p.amount))} · {p.payment_mode || "—"}
+                            {p.transaction_ref ? <span className="font-mono text-[10px] text-muted-foreground"> · {p.transaction_ref}</span> : null}
+                          </span>
+                          {p.screenshot_url ? (
+                            <Button size="sm" variant="outline" onClick={() => sign("payment-proofs", p.screenshot_url)} className="h-6 rounded-none border border-foreground text-[10px] uppercase tracking-widest">Receipt</Button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">No proof</span>
+                          )}
+                        </div>
+                      ))}
+                      <div className="border-t border-foreground/30 pt-1.5 mt-1.5 text-[11px] font-mono flex justify-between">
+                        <span>Total paid</span>
+                        <span>{inr(studentPayments.reduce((a, p) => a + Number(p.amount), 0))}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Admin action panel */}
+              {isAdmin && s.approval_status === "pending" && (
+                <div className="border-2 border-foreground bg-background p-3 space-y-3">
+                  <p className="news-kicker text-xs">Master action</p>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-widest">Total fee (₹)</Label>
+                      <Input
+                        type="number"
+                        placeholder={s.total_fee ? String(s.total_fee) : "e.g. 45000"}
+                        value={draft.totalFee}
+                        onChange={e => setDraft(s.id, { totalFee: e.target.value })}
+                        className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0 mt-1"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Current: {s.total_fee ? inr(Number(s.total_fee)) : "Not set"} · Paid: {inr(Number(s.fee_paid ?? 0))}</p>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-widest">Final university enrollment №</Label>
+                      <Input
+                        placeholder="e.g. SMU/2026/04567"
+                        value={draft.enrollment}
+                        onChange={e => setDraft(s.id, { enrollment: e.target.value })}
+                        className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0 mt-1 font-mono"
+                      />
                     </div>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-widest">Rejection reason (only if rejecting)</Label>
+                    <Textarea
+                      rows={2}
+                      placeholder="e.g. Aadhaar image unclear, please re-upload"
+                      value={draft.rejectReason}
+                      onChange={e => setDraft(s.id, { rejectReason: e.target.value })}
+                      className="rounded-none border-2 border-foreground bg-transparent focus-visible:ring-0 mt-1"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => approve(s)} className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] bg-foreground text-background">
+                      <CheckCircle className="w-3 h-3 mr-1" /> Approve & Assign Enrollment
+                    </Button>
+                    <Button onClick={() => reject(s)} variant="outline" className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px] text-destructive">
+                      <Trash2 className="w-3 h-3 mr-1" /> Reject with reason
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {isAdmin && s.approval_status !== "pending" && (
+                <div className="flex justify-end">
+                  <Button onClick={() => revertToPending(s)} variant="outline" size="sm" className="rounded-none border-2 border-foreground font-sans font-bold uppercase tracking-widest text-[10px]">
+                    <Clock className="w-3 h-3 mr-1" /> Move back to pending
+                  </Button>
+                </div>
+              )}
 
               {/* 12-step tracker */}
               <div className="border-t border-foreground/30 pt-3">
