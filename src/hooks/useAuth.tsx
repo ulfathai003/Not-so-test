@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "center" | "staff" | "student";
+export type AppRole = "admin" | "center" | "staff";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,38 +21,14 @@ export function useAuth() {
       
       const roles = (roleData ?? []).map((r: any) => r.role as AppRole);
       
-      if (roles.includes("admin") || email === "ulfathai003@gmail.com") {
+      if (email === "ulfathai003@gmail.com" || roles.includes("admin")) {
         setRole("admin");
-        setStudentStatus(null);
-        setStudentData(null);
       } else if (roles.includes("center")) {
         setRole("center");
-        setStudentStatus(null);
-        setStudentData(null);
       } else if (roles.includes("staff")) {
         setRole("staff");
-        setStudentStatus(null);
-        setStudentData(null);
       } else {
-        setRole("student");
-        if (email) {
-          const { data: student } = await supabase
-            .from("students")
-            .select("*")
-            .eq("email", email.trim().toLowerCase())
-            .maybeSingle();
-          
-          if (student) {
-            setStudentStatus(student.status);
-            setStudentData(student);
-          } else {
-            setStudentStatus(null);
-            setStudentData(null);
-          }
-        } else {
-          setStudentStatus(null);
-          setStudentData(null);
-        }
+        setRole(null); // No auto-student role anymore
       }
     } catch (err) {
       console.error("Error fetching role & status:", err);
