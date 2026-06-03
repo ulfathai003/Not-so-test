@@ -85,9 +85,9 @@ function ManagerPage() {
             )}
           </TabsList>
 
-          <TabsContent value="overview" className="pt-6"><OverviewTab role={role || ""} userEmail={user?.email || ""} /></TabsContent>
-          <TabsContent value="students" className="pt-6"><StudentsTab role={role || ""} userEmail={user?.email || ""} /></TabsContent>
-          <TabsContent value="payments" className="pt-6"><PaymentsTab role={role || ""} userEmail={user?.email || ""} /></TabsContent>
+          <TabsContent value="overview" className="pt-6"><OverviewTab role={role} userEmail={user.email || ""} /></TabsContent>
+          <TabsContent value="students" className="pt-6"><StudentsTab role={role} userEmail={user.email || ""} /></TabsContent>
+          <TabsContent value="payments" className="pt-6"><PaymentsTab role={role} userEmail={user.email || ""} /></TabsContent>
           {role === "admin" && (
             <>
               <TabsContent value="enquiries" className="pt-6"><EnquiriesTab /></TabsContent>
@@ -668,7 +668,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
               <Input value={form.university || ""} onChange={e => setForm({ ...form, university: e.target.value })} required className="rounded-none border-2 border-foreground" />
             </Field>
             <Field label="Program" required>
-              <Select value={form.program || ""} onValueChange={v => setForm({ ...form, program: v as any })}>
+              <Select value={form.program} onValueChange={v => setForm({ ...form, program: v })}>
                 <SelectTrigger className="rounded-none border-2 border-foreground uppercase font-bold text-[10px]">
                   <SelectValue />
                 </SelectTrigger>

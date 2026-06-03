@@ -1,12 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
 
 export type AppRole = "admin" | "center" | "staff";
 
 export function useAuth() {
-  const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
@@ -38,26 +36,6 @@ export function useAuth() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    if (!loading && user) {
-      const path = window.location.pathname;
-      const isPublic = [
-        "/", 
-        "/login", 
-        "/signup", 
-        "/contact", 
-        "/programs", 
-        "/universities"
-      ].includes(path);
-
-      if (isPublic) {
-        if (role === "admin") navigate("/admin");
-        else if (role === "center") navigate("/center");
-        else if (role === "staff") navigate("/staff");
-      }
-    }
-  }, [user, role, loading, navigate]);
 
   const refetchStudent = useCallback(async () => {
     if (user) {

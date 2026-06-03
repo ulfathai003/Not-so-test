@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UniversitiesRouteImport } from './routes/universities'
-import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProgramsRouteImport } from './routes/programs'
@@ -18,20 +17,13 @@ import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CenterRouteImport } from './routes/center'
 import { Route as AdmissionDeskRouteImport } from './routes/admission-desk'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
 const UniversitiesRoute = UniversitiesRouteImport.update({
   id: '/universities',
   path: '/universities',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StaffRoute = StaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -69,19 +61,9 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CenterRoute = CenterRouteImport.update({
-  id: '/center',
-  path: '/center',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdmissionDeskRoute = AdmissionDeskRouteImport.update({
   id: '/admission-desk',
   path: '/admission-desk',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -98,9 +80,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
-  '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -108,15 +88,12 @@ export interface FileRoutesByFullPath {
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
-  '/staff': typeof StaffRoute
   '/universities': typeof UniversitiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
-  '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -124,16 +101,13 @@ export interface FileRoutesByTo {
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
-  '/staff': typeof StaffRoute
   '/universities': typeof UniversitiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
-  '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -141,7 +115,6 @@ export interface FileRoutesById {
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
-  '/staff': typeof StaffRoute
   '/universities': typeof UniversitiesRoute
 }
 export interface FileRouteTypes {
@@ -149,9 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/admin'
     | '/admission-desk'
-    | '/center'
     | '/contact'
     | '/dashboard'
     | '/login'
@@ -159,15 +130,12 @@ export interface FileRouteTypes {
     | '/programs'
     | '/setup'
     | '/signup'
-    | '/staff'
     | '/universities'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/admission-desk'
-    | '/center'
     | '/contact'
     | '/dashboard'
     | '/login'
@@ -175,15 +143,12 @@ export interface FileRouteTypes {
     | '/programs'
     | '/setup'
     | '/signup'
-    | '/staff'
     | '/universities'
   id:
     | '__root__'
     | '/'
     | '/about'
-    | '/admin'
     | '/admission-desk'
-    | '/center'
     | '/contact'
     | '/dashboard'
     | '/login'
@@ -191,16 +156,13 @@ export interface FileRouteTypes {
     | '/programs'
     | '/setup'
     | '/signup'
-    | '/staff'
     | '/universities'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
   AdmissionDeskRoute: typeof AdmissionDeskRoute
-  CenterRoute: typeof CenterRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
@@ -208,7 +170,6 @@ export interface RootRouteChildren {
   ProgramsRoute: typeof ProgramsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
-  StaffRoute: typeof StaffRoute
   UniversitiesRoute: typeof UniversitiesRoute
 }
 
@@ -219,13 +180,6 @@ declare module '@tanstack/react-router' {
       path: '/universities'
       fullPath: '/universities'
       preLoaderRoute: typeof UniversitiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/staff': {
-      id: '/staff'
-      path: '/staff'
-      fullPath: '/staff'
-      preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -277,25 +231,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/center': {
-      id: '/center'
-      path: '/center'
-      fullPath: '/center'
-      preLoaderRoute: typeof CenterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admission-desk': {
       id: '/admission-desk'
       path: '/admission-desk'
       fullPath: '/admission-desk'
       preLoaderRoute: typeof AdmissionDeskRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -318,9 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
   AdmissionDeskRoute: AdmissionDeskRoute,
-  CenterRoute: CenterRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
@@ -328,7 +266,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProgramsRoute: ProgramsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
-  StaffRoute: StaffRoute,
   UniversitiesRoute: UniversitiesRoute,
 }
 export const routeTree = rootRouteImport

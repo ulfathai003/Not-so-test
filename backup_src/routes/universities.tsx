@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
@@ -96,7 +96,7 @@ function UniversitiesPage() {
           {universities.map((u) => (
             <div 
               key={u.id} 
-              onClick={() => navigate({ to: `/programs`, search: { university: u.id } as any })}
+              onClick={() => navigate(`/programs?university=${u.id}`)}
               className="news-card border border-foreground p-5 flex flex-col justify-between cursor-pointer hover:bg-[#fbf6e7] transition-colors"
             >
               <div>

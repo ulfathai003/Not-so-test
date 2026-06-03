@@ -59,7 +59,7 @@ function DashboardPage() {
     );
   }
 
-  const isProspect = (role as string) === "student" && studentStatus !== "active" && studentStatus !== "graduated";
+  const isProspect = role === "student" && studentStatus !== "active" && studentStatus !== "graduated";
 
   return (
     <div className="min-h-screen news-paper flex flex-col">
