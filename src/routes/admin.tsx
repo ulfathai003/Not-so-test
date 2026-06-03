@@ -1,12 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, UserCog, Mail, Receipt, TrendingUp, ShieldAlert, Settings, LogOut, CheckCircle, ArrowUpRight, BarChart4 } from "lucide-react";
+import { LayoutDashboard, Users, UserCog, Mail, Receipt, TrendingUp, ShieldAlert, Settings, LogOut, CheckCircle, ArrowUpRight, BarChart4, Building, ShieldCheck, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/admin")({
   component: AdminMasterDashboard,
@@ -15,6 +23,8 @@ export const Route = createFileRoute("/admin")({
 function AdminMasterDashboard() {
   const { user, role, loading, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
   useEffect(() => {
     if (!loading && (!user || role !== "admin")) {
@@ -25,7 +35,7 @@ function AdminMasterDashboard() {
   if (loading || role !== "admin") return <div className="grid place-items-center min-h-screen font-black uppercase italic text-red-600">Validating Super-Admin Authority...</div>;
 
   return (
-    <div className="min-h-screen bg-[#fffdfa] text-black selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-[#fffdfa] text-black selection:bg-red-600 selection:text-white font-sans">
       {/* Super Admin Header */}
       <header className="bg-white border-b-8 border-red-600 p-4 sticky top-0 z-50">
         <div className="container mx-auto flex justify-between items-center">
@@ -33,8 +43,35 @@ function AdminMasterDashboard() {
             <ShieldAlert className="w-8 h-8 text-red-600" /> Administrative Command
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black uppercase bg-red-100 px-2 py-1 border border-red-600 text-red-600">MASTER: {user?.email}</span>
-            <Button variant="outline" size="sm" onClick={signOut} className="border-2 border-black rounded-none font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all">
+            <div className="flex flex-col items-end mr-2">
+              <span className="text-[10px] font-black uppercase text-red-600">Master Level Access</span>
+              <span className="text-[10px] font-bold opacity-60">{user?.email}</span>
+            </div>
+
+            {isMaster && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="border-2 border-black rounded-none font-black uppercase text-[10px] bg-yellow-400 hover:bg-yellow-500 shadow-[2px_2px_0px_0px_#000] h-9">
+                    Portal Switcher <ChevronDown className="ml-2 w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="rounded-none border-2 border-black bg-white font-bold uppercase text-[10px] w-48">
+                  <DropdownMenuLabel className="bg-slate-100 italic">Jump To Portal</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-black" />
+                  <DropdownMenuItem onClick={() => navigate({ to: "/admin" })} className="cursor-pointer bg-red-50 hover:bg-red-100 flex items-center p-3">
+                    <ShieldCheck className="w-4 h-4 mr-2 text-red-600" /> Admin Command
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/center" })} className="cursor-pointer hover:bg-black hover:text-white flex items-center p-3">
+                    <Building className="w-4 h-4 mr-2 text-yellow-600" /> Center Desk
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/staff" })} className="cursor-pointer hover:bg-blue-100 flex items-center p-3">
+                    <Users className="w-4 h-4 mr-2 text-blue-600" /> Staff Pipeline
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <Button variant="outline" size="sm" onClick={signOut} className="border-2 border-black rounded-none font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all h-9">
               <LogOut className="w-4 h-4 mr-2" /> Exit Command
             </Button>
           </div>

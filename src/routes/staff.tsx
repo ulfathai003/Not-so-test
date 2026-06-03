@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GraduationCap, LogOut, PhoneCall, MessageSquare, History, CheckCheck, IndianRupee, Pencil } from "lucide-react";
+import { GraduationCap, LogOut, PhoneCall, MessageSquare, History, CheckCheck, IndianRupee, Pencil, ChevronDown, ShieldCheck, Building, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/staff")({
   component: StaffDashboard,
@@ -22,6 +30,8 @@ function StaffDashboard() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
+
+  const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
   useEffect(() => {
     if (!loading && (!user || role !== "staff")) {
@@ -46,19 +56,43 @@ function StaffDashboard() {
     (l.phone || "").includes(search)
   );
 
-  if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen font-bold uppercase italic">Validating Counselor Access...</div>;
+  if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen font-bold uppercase italic bg-slate-50">Validating Counselor Access...</div>;
 
   return (
-    <div className="min-h-screen bg-[#f0f9ff] text-slate-900">
+    <div className="min-h-screen bg-[#f0f9ff] text-slate-900 font-sans">
       {/* Staff Header */}
       <header className="bg-white border-b-4 border-blue-900 p-4 sticky top-0 z-50">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2 font-black text-2xl uppercase tracking-tighter text-blue-900">
+          <div className="flex items-center gap-2 font-black text-2xl uppercase tracking-tighter text-blue-900 italic">
             <PhoneCall className="w-6 h-6" /> Counselor Desk
           </div>
           <div className="flex items-center gap-4">
-            <Badge className="bg-blue-900 text-white rounded-none hidden md:block">{user?.email}</Badge>
-            <Button variant="ghost" onClick={signOut} className="font-bold uppercase text-[10px] hover:bg-red-50 text-red-600">
+            <span className="text-[10px] font-bold uppercase hidden md:block text-slate-400 mr-2">{user?.email}</span>
+            
+            {isMaster && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-2 border-black rounded-none font-black uppercase text-[10px] bg-yellow-400 hover:bg-yellow-500 shadow-[2px_2px_0px_0px_#000] h-8">
+                    Portal Switcher <ChevronDown className="ml-1 w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="rounded-none border-2 border-black bg-white font-bold uppercase text-[10px] w-48">
+                  <DropdownMenuLabel className="bg-slate-100 italic">Global Authority View</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-black" />
+                  <DropdownMenuItem onClick={() => navigate({ to: "/admin" })} className="cursor-pointer hover:bg-red-50 flex items-center p-3">
+                    <ShieldCheck className="w-4 h-4 mr-2 text-red-600" /> Admin Command
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/center" })} className="cursor-pointer hover:bg-yellow-50 flex items-center p-3">
+                    <Building className="w-4 h-4 mr-2 text-yellow-600" /> Center Desk
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/staff" })} className="cursor-pointer bg-blue-900 text-white flex items-center p-3">
+                    <Users className="w-4 h-4 mr-2 text-blue-300" /> Staff Pipeline
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <Button variant="ghost" onClick={signOut} className="font-bold uppercase text-[10px] h-8 hover:bg-red-50 text-red-600">
               <LogOut className="w-3 h-3 mr-2" /> Logout
             </Button>
           </div>
@@ -67,8 +101,8 @@ function StaffDashboard() {
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-10">
-          <h1 className="text-5xl font-black uppercase tracking-tighter text-blue-950">Active Lead Pipeline</h1>
-          <p className="text-blue-700 font-bold uppercase text-[10px] tracking-widest mt-2 bg-blue-100 inline-block px-2 py-0.5">Assigned to you by Prashant Bhai</p>
+          <h1 className="text-5xl font-black uppercase tracking-tighter text-blue-950 italic">Active Lead Pipeline</h1>
+          <p className="text-blue-700 font-bold uppercase text-[10px] tracking-widest mt-2 bg-blue-100 inline-block px-2 py-0.5 border border-blue-900/10">Assigned to you by Prashant Bhai</p>
         </div>
 
         <div className="mb-6 flex gap-4">
@@ -135,7 +169,7 @@ function InteractionDialog({ lead, onSaved }: { lead: Student, onSaved: () => vo
     const { error } = await supabase
       .from("students")
       .update({ 
-        notes: form.notes + `\n[FOLLOWUP ${new Date().toLocaleDateString()}]: ${form.fee_negotiation}`,
+        notes: (lead.notes || "") + `\n[FOLLOWUP ${new Date().toLocaleDateString()}]: ${form.fee_negotiation}`,
         updated_at: new Date().toISOString()
       })
       .eq("id", lead.id);
@@ -164,13 +198,13 @@ function InteractionDialog({ lead, onSaved }: { lead: Student, onSaved: () => vo
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-blue-700">Next Follow-up Date</label>
-            <Input type="date" className="h-10 rounded-none border-2 border-blue-900" />
+            <input type="date" className="h-10 rounded-none border-2 border-blue-900 px-3 bg-white font-bold" />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-blue-700">Negotiated Fee (Optional)</label>
             <div className="relative">
               <IndianRupee className="absolute left-3 top-2.5 w-4 h-4 text-blue-900" />
-              <Input type="number" placeholder="0.00" className="pl-10 h-10 rounded-none border-2 border-blue-900" />
+              <input type="number" placeholder="0.00" className="pl-10 h-10 w-full rounded-none border-2 border-blue-900 bg-white font-bold" />
             </div>
           </div>
         </div>

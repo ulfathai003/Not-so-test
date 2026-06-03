@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GraduationCap, LogOut, Plus, Upload, UserPlus, ClipboardList, CheckCircle } from "lucide-react";
+import { GraduationCap, LogOut, Plus, Upload, UserPlus, ClipboardList, CheckCircle, ChevronDown, ShieldCheck, Building, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,6 +8,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/center")({
   component: CenterDashboard,
@@ -20,6 +28,8 @@ function CenterDashboard() {
   const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [open, setOpen] = useState(false);
+
+  const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
   useEffect(() => {
     if (!loading && (!user || role !== "center")) {
@@ -39,7 +49,7 @@ function CenterDashboard() {
     if (data) setStudents(data);
   }
 
-  if (loading || role !== "center") return <div className="grid place-items-center min-h-screen">Loading Center Portal...</div>;
+  if (loading || role !== "center") return <div className="grid place-items-center min-h-screen font-black uppercase italic bg-slate-50">Loading Center Portal...</div>;
 
   return (
     <div className="min-h-screen bg-[#f4f4f4] font-sans">
@@ -51,8 +61,32 @@ function CenterDashboard() {
             EduConnect Partner
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs font-bold uppercase hidden md:block">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={signOut} className="border-2 border-black rounded-none font-bold uppercase text-[10px]">
+            <span className="text-[10px] font-bold uppercase hidden md:block text-muted-foreground mr-2">{user?.email}</span>
+            
+            {isMaster && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-2 border-black rounded-none font-black uppercase text-[10px] bg-yellow-400 hover:bg-yellow-500 shadow-[2px_2px_0px_0px_#000] h-8">
+                    Portal Switcher <ChevronDown className="ml-1 w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="rounded-none border-2 border-black bg-white font-bold uppercase text-[10px] w-48">
+                  <DropdownMenuLabel className="bg-slate-100 italic">Multi-Role View</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-black" />
+                  <DropdownMenuItem onClick={() => navigate({ to: "/admin" })} className="cursor-pointer hover:bg-red-50 flex items-center p-3">
+                    <ShieldCheck className="w-4 h-4 mr-2 text-red-600" /> Admin Command
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/center" })} className="cursor-pointer bg-black text-white flex items-center p-3">
+                    <Building className="w-4 h-4 mr-2 text-yellow-400" /> Center Desk
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/staff" })} className="cursor-pointer hover:bg-blue-100 flex items-center p-3">
+                    <Users className="w-4 h-4 mr-2 text-blue-600" /> Staff Pipeline
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <Button variant="outline" size="sm" onClick={signOut} className="border-2 border-black rounded-none font-bold uppercase text-[10px] h-8 hover:bg-red-600 hover:text-white transition-all">
               <LogOut className="w-3 h-3 mr-2" /> Logout
             </Button>
           </div>
@@ -73,7 +107,6 @@ function CenterDashboard() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-4 border-black p-0">
-               {/* Reusing existing logic but isolated */}
                <div className="p-6 bg-black text-white">
                  <h2 className="text-2xl font-black uppercase italic">Create Admission Record</h2>
                </div>
@@ -147,7 +180,7 @@ function AdmissionForm({ onClose, centerEmail }: { onClose: () => void, centerEm
       return toast.error("All mandatory documents must be checked (uploaded)");
     }
     setBusy(true);
-    const { error } = await supabase.from("students").insert([{ ...form, status: "active" }]); // Admission is usually pending initially but status handled by RLS/Trigger
+    const { error } = await supabase.from("students").insert([{ ...form, status: "active" }]); 
     setBusy(false);
     if (error) toast.error(error.message);
     else {
