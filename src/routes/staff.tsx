@@ -10,6 +10,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { CrmShell, type CrmNavItem } from "@/components/crm/CrmShell";
+
+const STAFF_NAV: CrmNavItem[] = [
+  { value: "leads", label: "My Leads", icon: PhoneCall },
+];
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,62 +64,32 @@ function StaffDashboard() {
   if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen font-bold uppercase italic bg-slate-50">Validating Counselor Access...</div>;
 
   return (
-    <div className="min-h-screen bg-[#f0f9ff] text-slate-900 font-sans">
-      {/* Staff Header */}
-      <header className="bg-white border-b-4 border-blue-900 p-4 sticky top-0 z-50">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2 font-black text-2xl uppercase tracking-tighter text-blue-900 italic">
-            <PhoneCall className="w-6 h-6" /> Counselor Desk
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-bold uppercase hidden md:block text-slate-400 mr-2">{user?.email}</span>
-            
-            {isMaster && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-2 border-black rounded-none font-black uppercase text-[10px] bg-yellow-400 hover:bg-yellow-500 shadow-[2px_2px_0px_0px_#000] h-8">
-                    Portal Switcher <ChevronDown className="ml-1 w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="rounded-none border-2 border-black bg-white font-bold uppercase text-[10px] w-48">
-                  <DropdownMenuLabel className="bg-slate-100 italic">Global Authority View</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-black" />
-                  <DropdownMenuItem onClick={() => navigate({ to: "/admin" })} className="cursor-pointer hover:bg-red-50 flex items-center p-3">
-                    <ShieldCheck className="w-4 h-4 mr-2 text-red-600" /> Admin Command
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/center" })} className="cursor-pointer hover:bg-yellow-50 flex items-center p-3">
-                    <Building className="w-4 h-4 mr-2 text-yellow-600" /> Center Desk
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/staff" })} className="cursor-pointer bg-blue-900 text-white flex items-center p-3">
-                    <Users className="w-4 h-4 mr-2 text-blue-300" /> Staff Pipeline
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+    <CrmShell
+      brand="Staff Pipeline"
+      roleLabel="Staff"
+      email={user?.email || ""}
+      nav={STAFF_NAV}
+      active="leads"
+      onSelect={() => {}}
+      isMaster={isMaster}
+      currentPortal="/staff"
+      onSignOut={signOut}
+    >
+      <div className="mb-8">
+        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-blue-950 italic">Active Lead Pipeline</h2>
+        <p className="text-blue-700 font-bold uppercase text-[10px] tracking-widest mt-2 bg-blue-100 inline-block px-2 py-0.5 border border-blue-900/10">Assigned to you by Prashant Bhai</p>
+      </div>
 
-            <Button variant="ghost" onClick={signOut} className="font-bold uppercase text-[10px] h-8 hover:bg-red-50 text-red-600">
-              <LogOut className="w-3 h-3 mr-2" /> Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+      <div className="mb-6 flex gap-4">
+        <Input
+          placeholder="Search leads by name or phone..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="h-14 border-2 border-blue-900 rounded-none bg-white font-bold"
+        />
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-10">
-          <h1 className="text-5xl font-black uppercase tracking-tighter text-blue-950 italic">Active Lead Pipeline</h1>
-          <p className="text-blue-700 font-bold uppercase text-[10px] tracking-widest mt-2 bg-blue-100 inline-block px-2 py-0.5 border border-blue-900/10">Assigned to you by Prashant Bhai</p>
-        </div>
-
-        <div className="mb-6 flex gap-4">
-          <Input 
-            placeholder="Search leads by name or phone..." 
-            value={search} 
-            onChange={e => setSearch(e.target.value)}
-            className="h-14 border-2 border-blue-900 rounded-none bg-white font-bold"
-          />
-        </div>
-
-        <div className="grid gap-4">
+      <div className="grid gap-4">
           {filtered.length === 0 ? (
             <div className="p-20 text-center bg-white border-4 border-dashed border-blue-200">
               <p className="font-black uppercase text-blue-300 italic">No assigned leads currently active.</p>
@@ -155,8 +130,7 @@ function StaffDashboard() {
             </div>
           ))}
         </div>
-      </main>
-    </div>
+    </CrmShell>
   );
 }
 

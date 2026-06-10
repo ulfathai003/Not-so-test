@@ -8,6 +8,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { CrmShell, type CrmNavItem } from "@/components/crm/CrmShell";
+
+const CENTER_NAV: CrmNavItem[] = [
+  { value: "admissions", label: "My Admissions", icon: ClipboardList },
+];
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,75 +56,44 @@ function CenterDashboard() {
 
   if (loading || role !== "center") return <div className="grid place-items-center min-h-screen font-black uppercase italic bg-slate-50">Loading Center Portal...</div>;
 
+  const newStudentBtn = (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-black text-white rounded-none border-2 border-black hover:bg-white hover:text-black transition-all font-black uppercase italic px-4 md:px-6 h-10 shadow-[3px_3px_0px_0px_#000] text-[11px]">
+          <UserPlus className="mr-2 w-4 h-4" /> New Student
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-4 border-black p-0">
+        <div className="p-6 bg-black text-white">
+          <h2 className="text-2xl font-black uppercase italic">Create Admission Record</h2>
+        </div>
+        <AdmissionForm onClose={() => { setOpen(false); load(); }} centerEmail={user?.email || ""} />
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <div className="min-h-screen bg-[#f4f4f4] font-sans">
-      {/* Center Navbar */}
-      <header className="bg-white border-b-2 border-black p-4 sticky top-0 z-50">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2 font-bold text-xl uppercase tracking-tighter italic">
-            <span className="bg-black text-white p-1"><GraduationCap /></span>
-            EduConnect Partner
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-bold uppercase hidden md:block text-muted-foreground mr-2">{user?.email}</span>
-            
-            {isMaster && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-2 border-black rounded-none font-black uppercase text-[10px] bg-yellow-400 hover:bg-yellow-500 shadow-[2px_2px_0px_0px_#000] h-8">
-                    Portal Switcher <ChevronDown className="ml-1 w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="rounded-none border-2 border-black bg-white font-bold uppercase text-[10px] w-48">
-                  <DropdownMenuLabel className="bg-slate-100 italic">Multi-Role View</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-black" />
-                  <DropdownMenuItem onClick={() => navigate({ to: "/admin" })} className="cursor-pointer hover:bg-red-50 flex items-center p-3">
-                    <ShieldCheck className="w-4 h-4 mr-2 text-red-600" /> Admin Command
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/center" })} className="cursor-pointer bg-black text-white flex items-center p-3">
-                    <Building className="w-4 h-4 mr-2 text-yellow-400" /> Center Desk
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/staff" })} className="cursor-pointer hover:bg-blue-100 flex items-center p-3">
-                    <Users className="w-4 h-4 mr-2 text-blue-600" /> Staff Pipeline
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+    <CrmShell
+      brand="Center Desk"
+      roleLabel="Center"
+      email={user?.email || ""}
+      nav={CENTER_NAV}
+      active="admissions"
+      onSelect={() => {}}
+      isMaster={isMaster}
+      currentPortal="/center"
+      onSignOut={signOut}
+      actions={newStudentBtn}
+    >
+      <div className="mb-6">
+        <p className="text-muted-foreground font-medium uppercase text-xs">Regional Center Dashboard · Your admissions</p>
+      </div>
 
-            <Button variant="outline" size="sm" onClick={signOut} className="border-2 border-black rounded-none font-bold uppercase text-[10px] h-8 hover:bg-red-600 hover:text-white transition-all">
-              <LogOut className="w-3 h-3 mr-2" /> Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl font-black uppercase italic tracking-tighter">Admission Desk</h1>
-            <p className="text-muted-foreground font-medium uppercase text-xs mt-1">Regional Center Dashboard</p>
-          </div>
-          
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-black text-white rounded-none border-2 border-black hover:bg-white hover:text-black transition-all font-black uppercase italic px-8 h-12 shadow-[4px_4px_0px_0px_#000]">
-                <UserPlus className="mr-2" /> New Student Entry
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-4 border-black p-0">
-               <div className="p-6 bg-black text-white">
-                 <h2 className="text-2xl font-black uppercase italic">Create Admission Record</h2>
-               </div>
-               <AdmissionForm onClose={() => { setOpen(false); load(); }} centerEmail={user?.email || ""} />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid gap-6">
-          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6">
-            <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-              <ClipboardList className="w-5 h-5" /> Recent Submissions
-            </h3>
+      <div className="grid gap-6">
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6">
+          <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5" /> Recent Submissions
+          </h3>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -162,8 +136,7 @@ function CenterDashboard() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </CrmShell>
   );
 }
 
