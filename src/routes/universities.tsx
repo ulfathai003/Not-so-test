@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { useState } from "react";
-import { ChevronRight, ArrowLeft, GraduationCap, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, GraduationCap, ShieldCheck } from "lucide-react";
+import { universities } from "@/lib/catalog";
 
 export const Route = createFileRoute("/universities")({
+  validateSearch: (search: Record<string, unknown>): { u?: string } =>
+    typeof search.u === "string" ? { u: search.u } : {},
   head: () => ({
     meta: [
       { title: "University Directory | EduConnect Times" },
@@ -15,78 +16,18 @@ export const Route = createFileRoute("/universities")({
   component: UniversitiesPage,
 });
 
-const universities = [
-  { 
-    id: "jain",
-    name: "Jain (Deemed-to-be) University", 
-    city: "Bengaluru", 
-    description: "Jain University is a hub for learning in every sense of the word. A regular recipient of NAAC A++ accreditation, it offers a world-class environment for online management and computer application studies.",
-    courses: ["Online MBA", "Online MCA", "Online BBA", "Online B.Com"],
-    affiliation: "UGC-DEB, AICTE Approved",
-    ranking: "#68 NIRF Ranking",
-    highlight: "Industry-aligned specializations and top-tier placement support."
-  },
-  { 
-    id: "manipal",
-    name: "Manipal University", 
-    city: "Manipal", 
-    description: "Manipal Academy of Higher Education (MAHE) is an Institution of Eminence. Their online vertical brings the same academic rigour and prestige to your home screen.",
-    courses: ["Online MBA", "Online MCA", "Online BBA", "Online B.Com", "Online BCA"],
-    affiliation: "UGC-DEB Approved",
-    ranking: "A++ Grade by NAAC",
-    highlight: "Access to a global alumni network of over 300,000 professionals."
-  },
-  { 
-    id: "amity",
-    name: "Amity University", 
-    city: "Noida", 
-    description: "Amity University Online is devoted to creating a transformative learning environment. With a presence in London, Dubai, and Singapore, they offer a truly global perspective.",
-    courses: ["Online MBA", "Online BBA", "Online BCA", "Online MCA", "Online BA"],
-    affiliation: "UGC-DEB, WASC (USA) Accredited",
-    ranking: "Top 3% Globally",
-    highlight: "Live interactive sessions with global faculty."
-  },
-  { 
-    id: "nmims",
-    name: "NMIMS", 
-    city: "Mumbai", 
-    description: "Narsee Monjee Institute of Management Studies is India's premier destination for management education. Their distance programs are powered by the same legendary faculty.",
-    courses: ["Online MBA", "Post Graduate Diploma", "Online BBA"],
-    affiliation: "UGC-DEB Approved",
-    ranking: "Category 1 Autonomy",
-    highlight: "Career services that have served over 12,000 learners."
-  },
-  { 
-    id: "sikkim-board",
-    name: "Sikkim Board (SBSE)", 
-    city: "Gangtok", 
-    description: "The Sikkim Board of Secondary Education (SBSE) provides a recognized and flexible path for students to complete their Class 10 and 12 certifications. It is an ideal board for those returning to education after a gap.",
-    courses: ["Secondary (10th)", "Senior Secondary (12th)"],
-    affiliation: "State Government of Sikkim",
-    ranking: "Government Recognised",
-    highlight: "Simplified examination patterns and widespread validity for higher studies."
-  },
-  { 
-    id: "lpu",
-    name: "LPU (Lovely Professional University)", 
-    city: "Phagwara", 
-    description: "LPU Online is known for its technological edge. They offer one of the most sophisticated Learning Management Systems (LMS) in the country, ensuring a seamless student experience.",
-    courses: ["Online MBA", "Online MCA", "Online BBA", "Online BCA"],
-    affiliation: "UGC-DEB, NAAC A++",
-    ranking: "Top Private University",
-    highlight: "Innovative pedagogy and weekend live masterclasses."
-  },
-];
-
 function UniversitiesPage() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selectedUni = universities.find(u => u.id === selectedId);
+  const navigate = useNavigate();
+  const { u } = Route.useSearch();
+  const selectedUni = universities.find((x) => x.id === u);
+
+  const open = (id?: string) => navigate({ to: "/universities", search: { u: id } });
 
   return (
     <div className="min-h-screen flex flex-col news-paper">
       <SiteHeader />
       <main className="container mx-auto px-4 py-10 flex-1">
-        
+
         {!selectedUni ? (
           <>
             {/* Directory View */}
@@ -101,19 +42,38 @@ function UniversitiesPage() {
               <div className="news-divider-double mt-6" />
             </section>
 
-            <section className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 news-rule py-10">
-              {universities.map((u) => (
-                <div 
-                  key={u.id} 
-                  onClick={() => setSelectedId(u.id)}
+            {/* University dropdown — jumps straight to the chosen university */}
+            <section className="mt-8 max-w-md mx-auto">
+              <select
+                className="w-full rounded-none border-2 border-foreground bg-white font-serif-news text-sm uppercase tracking-wider px-3 py-2.5 cursor-pointer shadow-[4px_4px_0px_0px_#1a1410]"
+                defaultValue=""
+                aria-label="Go to university"
+                onChange={(e) => e.target.value && open(e.target.value)}
+              >
+                <option value="" disabled>
+                  Select a University →
+                </option>
+                {universities.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+            </section>
+
+            <section className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 news-rule py-10">
+              {universities.map((x) => (
+                <div
+                  key={x.id}
+                  onClick={() => open(x.id)}
                   className="news-card border-2 border-foreground p-6 flex flex-col justify-between cursor-pointer group hover:bg-[#fbf6e7] transition-all hover:-translate-y-1 shadow-[4px_4px_0px_0px_#000]"
                 >
                   <div>
-                    <h3 className="font-headline text-2xl group-hover:underline underline-offset-4">{u.name}</h3>
-                    <p className="text-[10px] font-black uppercase text-foreground/50 mt-1">{u.city} · {u.affiliation}</p>
+                    <h3 className="font-headline text-2xl group-hover:underline underline-offset-4">{x.name}</h3>
+                    <p className="text-[10px] font-black uppercase text-foreground/50 mt-1">{x.city} · {x.affiliation}</p>
                     <div className="news-divider my-4" />
                     <p className="font-serif-news text-sm leading-relaxed line-clamp-3">
-                      {u.description}
+                      {x.description}
                     </p>
                   </div>
                   <div className="mt-6 flex justify-between items-center bg-foreground text-background px-4 py-2">
@@ -127,8 +87,8 @@ function UniversitiesPage() {
         ) : (
           /* Dedicated University Page View */
           <section className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <button 
-              onClick={() => setSelectedId(null)}
+            <button
+              onClick={() => open(undefined)}
               className="flex items-center gap-2 font-serif-news text-sm uppercase tracking-widest mb-8 hover:underline"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Directory
@@ -171,9 +131,9 @@ function UniversitiesPage() {
                        <p className="font-serif-news text-sm">{selectedUni.affiliation}</p>
                     </div>
                     <div className="mt-6 flex gap-3">
-                       <Link 
-                        to="/contact" 
-                        state={{ university: selectedUni.name }}
+                       <Link
+                        to="/contact"
+                        state={{ university: selectedUni.name } as any}
                         className="flex-1 bg-foreground text-background text-center py-3 font-serif-news uppercase tracking-widest text-xs hover:opacity-90"
                        >
                          Apply to {selectedUni.id === 'sikkim-board' ? 'Board' : 'Uni'}

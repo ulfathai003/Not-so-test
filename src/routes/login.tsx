@@ -44,7 +44,9 @@ Education Details
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"email" | "mobile">("email");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -52,9 +54,26 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    const checkEmail = email.trim().toLowerCase();
-
     try {
+      let checkEmail = email.trim().toLowerCase();
+
+      if (mode === "mobile") {
+        // Resolve the registered email behind this mobile number
+        const rpc = (supabase as any).rpc;
+        if (typeof rpc !== "function") {
+          setLoading(false);
+          return toast.error("Mobile sign-in is unavailable right now. Please sign in with email.");
+        }
+        const { data, error: rpcError } = await rpc.call(supabase, "email_for_phone", {
+          p_phone: mobile.trim(),
+        });
+        if (rpcError || !data) {
+          setLoading(false);
+          return toast.error("No account found for this mobile number. Try email sign-in.");
+        }
+        checkEmail = String(data).toLowerCase();
+      }
+
       // Perform Supabase authentication
       const { error } = await supabase.auth.signInWithPassword({ email: checkEmail, password });
       setLoading(false);
@@ -93,20 +112,55 @@ function LoginPage() {
             <p className="font-serif-news text-xs italic mt-1 text-[#6b3e1a]">Access the credentials desk & student records</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="font-sans font-bold uppercase tracking-wider text-xs block">Email Address</Label>
-            <Input 
-              id="email" 
-              name="email"
-              type="email" 
-              autoComplete="email" 
-              required 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
-              placeholder="e.g. name@example.com"
-            />
+          {/* Email / Mobile toggle */}
+          <div className="grid grid-cols-2 border-2 border-foreground">
+            {([["email", "Email"], ["mobile", "Mobile"]] as const).map(([m, lbl]) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`py-2 font-sans font-bold uppercase tracking-wider text-xs transition-colors ${
+                  mode === m ? "bg-foreground text-background" : "bg-transparent text-foreground hover:bg-foreground/10"
+                }`}
+              >
+                {lbl}
+              </button>
+            ))}
           </div>
+
+          {mode === "email" ? (
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-sans font-bold uppercase tracking-wider text-xs block">Email Address</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+                placeholder="e.g. name@example.com"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="mobile" className="font-sans font-bold uppercase tracking-wider text-xs block">Mobile Number</Label>
+              <Input
+                id="mobile"
+                name="mobile"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                required
+                minLength={10}
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+                placeholder="e.g. 9876543210"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="password" className="font-sans font-bold uppercase tracking-wider text-xs block">Password</Label>

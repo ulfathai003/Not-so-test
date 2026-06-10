@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { QuickJump } from "@/components/site/QuickJump";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -81,6 +82,12 @@ function HomePage() {
           </div>
         </section>
 
+        {/* QUICK NAVIGATION DESK — jump straight to a university or board */}
+        <section className="mt-12 border-y-4 border-foreground py-8 px-4 bg-[#fbf6e7]">
+          <p className="news-kicker text-center mb-4">Quick Navigation Desk</p>
+          <QuickJump />
+        </section>
+
         {/* DISTANCE EDUCATION FOR WHO? - MANDATORY MOM SECTION */}
         <section className="mt-20 border-t-8 border-b-8 border-foreground py-12 px-6 md:px-12 bg-[#fbf6e7] shadow-[12px_12px_0px_0px_#000]">
            <div className="max-w-4xl mx-auto">
@@ -140,7 +147,7 @@ function HomePage() {
                 a streamlined, government-recognized path to your secondary and senior secondary certifications. 
                 Ideal for working adults and those returning to the academic fold.
               </p>
-              <Link to="/universities" className="bg-foreground text-background px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest hover:opacity-90">
+              <Link to="/boards" className="bg-foreground text-background px-6 py-2.5 font-serif-news text-sm uppercase tracking-widest hover:opacity-90">
                  View Board Information →
               </Link>
            </div>

@@ -52,9 +52,9 @@ export function useAuth() {
       ].includes(path);
 
       if (isPublic) {
-        if (role === "admin") navigate("/admin");
-        else if (role === "center") navigate("/center");
-        else if (role === "staff") navigate("/staff");
+        if (role === "admin") navigate({ to: "/admin" });
+        else if (role === "center") navigate({ to: "/center" });
+        else if (role === "staff") navigate({ to: "/staff" });
       }
     }
   }, [user, role, loading, navigate]);

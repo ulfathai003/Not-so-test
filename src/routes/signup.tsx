@@ -16,6 +16,7 @@ function SignupPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +33,7 @@ function SignupPage() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: { full_name: fullName },
+          data: { full_name: fullName, phone: phone.trim() || undefined },
         },
       });
       setLoading(false);
@@ -93,6 +94,22 @@ function SignupPage() {
               onChange={(e) => setEmail(e.target.value)} 
               className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
               placeholder="e.g. jane.doe@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="font-sans font-bold uppercase tracking-wider text-xs block">Mobile Number</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              minLength={10}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="rounded-none border-2 border-foreground bg-transparent text-[#1a1410] focus:ring-0 focus:border-foreground font-sans px-3 py-2 text-sm"
+              placeholder="e.g. 9876543210 (enables mobile sign-in)"
             />
           </div>
 

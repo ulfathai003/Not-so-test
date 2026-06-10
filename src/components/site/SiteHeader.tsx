@@ -7,6 +7,7 @@ const links = [
   { to: "/", label: "Front Page" },
   { to: "/programs", label: "Programs" },
   { to: "/universities", label: "Universities" },
+  { to: "/boards", label: "Boards" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
 ] as const;
@@ -110,8 +111,9 @@ export function SiteHeader() {
             )}
           </div>
 
+          {/* hamburger — always visible, on every breakpoint */}
           <button
-            className="md:hidden p-2 -mr-2"
+            className="p-2 -mr-2 border-2 border-foreground hover:bg-foreground hover:text-background transition-colors"
             onClick={() => setOpen((o) => !o)}
             aria-label="Toggle menu"
           >
@@ -120,9 +122,9 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Hamburger menu panel — available on all screen sizes */}
       {open && (
-        <div className="md:hidden border-t border-foreground/40">
+        <div className="border-t border-foreground/40">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2 font-serif-news">
             {links.map((l) => (
               <Link key={l.to} to={l.to} className="py-2 text-sm uppercase tracking-wider" onClick={() => setOpen(false)}>

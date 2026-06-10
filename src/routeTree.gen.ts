@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CenterRouteImport } from './routes/center'
+import { Route as BoardsRouteImport } from './routes/boards'
 import { Route as AdmissionDeskRouteImport } from './routes/admission-desk'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
@@ -74,6 +75,11 @@ const CenterRoute = CenterRouteImport.update({
   path: '/center',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BoardsRoute = BoardsRouteImport.update({
+  id: '/boards',
+  path: '/boards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdmissionDeskRoute = AdmissionDeskRouteImport.update({
   id: '/admission-desk',
   path: '/admission-desk',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/boards'
     | '/center'
     | '/contact'
     | '/dashboard'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/boards'
     | '/center'
     | '/contact'
     | '/dashboard'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/boards'
     | '/center'
     | '/contact'
     | '/dashboard'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   AdmissionDeskRoute: typeof AdmissionDeskRoute
+  BoardsRoute: typeof BoardsRoute
   CenterRoute: typeof CenterRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CenterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boards': {
+      id: '/boards'
+      path: '/boards'
+      fullPath: '/boards'
+      preLoaderRoute: typeof BoardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admission-desk': {
       id: '/admission-desk'
       path: '/admission-desk'
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   AdmissionDeskRoute: AdmissionDeskRoute,
+  BoardsRoute: BoardsRoute,
   CenterRoute: CenterRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
