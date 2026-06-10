@@ -54,18 +54,18 @@ function CenterDashboard() {
     if (data) setStudents(data);
   }
 
-  if (loading || role !== "center") return <div className="grid place-items-center min-h-screen font-black uppercase italic bg-slate-50">Loading Center Portal...</div>;
+  if (loading || role !== "center") return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Loading Center Portal…</div>;
 
   const newStudentBtn = (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-black text-white rounded-none border-2 border-black hover:bg-white hover:text-black transition-all font-black uppercase italic px-4 md:px-6 h-10 shadow-[3px_3px_0px_0px_#000] text-[11px]">
+        <Button className="bg-foreground text-background rounded-none border-2 border-foreground hover:bg-background hover:text-foreground transition-all font-serif-news uppercase tracking-widest px-4 md:px-6 h-10 shadow-[3px_3px_0px_0px_#1a1410] text-[11px]">
           <UserPlus className="mr-2 w-4 h-4" /> New Student
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-4 border-black p-0">
-        <div className="p-6 bg-black text-white">
-          <h2 className="text-2xl font-black uppercase italic">Create Admission Record</h2>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-2 border-foreground p-0 news-paper">
+        <div className="p-6 bg-foreground text-background">
+          <h2 className="font-headline text-2xl">Create Admission Record</h2>
         </div>
         <AdmissionForm onClose={() => { setOpen(false); load(); }} centerEmail={user?.email || ""} />
       </DialogContent>
@@ -86,48 +86,48 @@ function CenterDashboard() {
       actions={newStudentBtn}
     >
       <div className="mb-6">
-        <p className="text-muted-foreground font-medium uppercase text-xs">Regional Center Dashboard · Your admissions</p>
+        <p className="news-kicker">Regional Center Dashboard · Your admissions</p>
       </div>
 
       <div className="grid gap-6">
-        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6">
-          <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
+        <div className="news-card shadow-[6px_6px_0px_0px_#1a1410] p-6">
+          <h3 className="font-headline text-xl mb-4 flex items-center gap-2">
             <ClipboardList className="w-5 h-5" /> Recent Submissions
           </h3>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b-4 border-black text-xs uppercase font-black">
+                  <tr className="border-b-2 border-foreground text-xs uppercase font-serif-news tracking-wider">
                     <th className="pb-3">Student Name</th>
                     <th className="pb-3">Program</th>
                     <th className="pb-3">Doc Status</th>
                     <th className="pb-3 text-right">Admission Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-black/10">
+                <tbody className="divide-y divide-foreground/10">
                   {students.length === 0 ? (
-                    <tr><td colSpan={4} className="py-10 text-center font-bold text-muted-foreground uppercase text-xs italic">No admissions entered yet.</td></tr>
+                    <tr><td colSpan={4} className="py-10 text-center font-serif-news text-foreground/40 uppercase text-xs tracking-widest">No admissions entered yet.</td></tr>
                   ) : students.map((s) => (
-                    <tr key={s.id} className="group hover:bg-black/[0.02]">
+                    <tr key={s.id} className="group hover:bg-foreground/[0.03]">
                       <td className="py-4">
-                        <div className="font-black uppercase text-sm">{s.full_name}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground">{s.email}</div>
+                        <div className="font-headline text-sm">{s.full_name}</div>
+                        <div className="text-[10px] font-serif-news text-foreground/50">{s.email}</div>
                       </td>
-                      <td className="py-4 font-bold text-xs uppercase">{s.program}</td>
+                      <td className="py-4 font-serif-news text-xs uppercase">{s.program}</td>
                       <td className="py-4">
                         <div className="flex gap-1">
-                          {s.doc_photo && <Badge className="bg-green-100 text-green-800 rounded-none text-[8px] border border-green-800">PHOTO</Badge>}
-                          {s.doc_id_proof && <Badge className="bg-green-100 text-green-800 rounded-none text-[8px] border border-green-800">ID</Badge>}
-                          {s.doc_marksheet_10 && <Badge className="bg-green-100 text-green-800 rounded-none text-[8px] border border-green-800">10TH</Badge>}
+                          {s.doc_photo && <Badge className="bg-transparent text-foreground rounded-none text-[8px] border border-foreground">PHOTO</Badge>}
+                          {s.doc_id_proof && <Badge className="bg-transparent text-foreground rounded-none text-[8px] border border-foreground">ID</Badge>}
+                          {s.doc_marksheet_10 && <Badge className="bg-transparent text-foreground rounded-none text-[8px] border border-foreground">10TH</Badge>}
                         </div>
                       </td>
                       <td className="py-4 text-right">
-                        <Badge className={`rounded-none font-black uppercase text-[10px] py-1 border-2 border-black ${s.status === 'active' ? 'bg-green-400 text-black' : 'bg-yellow-300 text-black'}`}>
+                        <Badge className={`rounded-none font-serif-news uppercase text-[10px] py-1 border-2 border-foreground ${s.status === 'active' ? 'bg-foreground text-background' : 'bg-transparent text-foreground'}`}>
                           {s.status === 'active' ? <CheckCircle className="w-3 h-3 mr-1 inline" /> : null}
                           {s.status === 'active' ? 'Approved' : 'Pending Approval'}
                         </Badge>
-                        {s.enrollment_number && <div className="text-[9px] font-black mt-1">ID: {s.enrollment_number}</div>}
+                        {s.enrollment_number && <div className="text-[9px] font-serif-news mt-1">ID: {s.enrollment_number}</div>}
                       </td>
                     </tr>
                   ))}

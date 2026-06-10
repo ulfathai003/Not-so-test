@@ -61,7 +61,7 @@ function StaffDashboard() {
     (l.phone || "").includes(search)
   );
 
-  if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen font-bold uppercase italic bg-slate-50">Validating Counselor Access...</div>;
+  if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Validating Counsellor Access…</div>;
 
   return (
     <CrmShell
@@ -76,8 +76,8 @@ function StaffDashboard() {
       onSignOut={signOut}
     >
       <div className="mb-8">
-        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-blue-950 italic">Active Lead Pipeline</h2>
-        <p className="text-blue-700 font-bold uppercase text-[10px] tracking-widest mt-2 bg-blue-100 inline-block px-2 py-0.5 border border-blue-900/10">Assigned to you by Prashant Bhai</p>
+        <p className="news-kicker">Assigned to you by Prashant Bhai</p>
+        <h2 className="font-headline text-3xl md:text-4xl tracking-tight mt-1">Active Lead Pipeline</h2>
       </div>
 
       <div className="mb-6 flex gap-4">
@@ -85,29 +85,29 @@ function StaffDashboard() {
           placeholder="Search leads by name or phone..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="h-14 border-2 border-blue-900 rounded-none bg-white font-bold"
+          className="h-14 border-2 border-foreground rounded-none bg-white font-serif-news"
         />
       </div>
 
       <div className="grid gap-4">
           {filtered.length === 0 ? (
-            <div className="p-20 text-center bg-white border-4 border-dashed border-blue-200">
-              <p className="font-black uppercase text-blue-300 italic">No assigned leads currently active.</p>
+            <div className="p-20 text-center news-card border border-dashed border-foreground/30">
+              <p className="font-serif-news uppercase tracking-widest text-foreground/30 text-sm">No assigned leads currently active.</p>
             </div>
           ) : filtered.map(lead => (
-            <div key={lead.id} className="bg-white border-4 border-blue-900 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shadow-[8px_8px_0px_0px_rgba(30,58,138,1)]">
+            <div key={lead.id} className="news-card p-6 flex flex-col md:flex-row justify-between items-center gap-6 shadow-[6px_6px_0px_0px_#1a1410]">
               <div className="flex-1">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-2xl font-black uppercase italic tracking-tight">{lead.full_name}</h3>
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-800 rounded-none text-[10px] uppercase font-bold">{lead.program}</Badge>
+                  <h3 className="font-headline text-2xl tracking-tight">{lead.full_name}</h3>
+                  <Badge className="bg-foreground text-background rounded-none text-[10px] uppercase font-bold">{lead.program}</Badge>
                 </div>
-                <div className="flex flex-wrap gap-4 mt-2 text-sm font-bold text-slate-500 uppercase">
+                <div className="flex flex-wrap gap-4 mt-2 text-sm font-serif-news text-[#6b3e1a] uppercase">
                   <span className="flex items-center gap-1"><PhoneCall className="w-3 h-3" /> {lead.phone}</span>
-                  <span className="flex items-center gap-1 lowercase font-medium italic">{lead.email}</span>
+                  <span className="flex items-center gap-1 lowercase italic">{lead.email}</span>
                 </div>
                 {lead.notes && (
-                  <div className="mt-4 p-3 bg-slate-50 border-l-4 border-blue-400 text-xs font-medium text-slate-600">
-                    <span className="font-bold block mb-1">MOM / Last Note:</span>
+                  <div className="mt-4 p-3 bg-white border-l-4 border-foreground text-xs font-serif-news text-foreground/70">
+                    <span className="font-bold block mb-1 uppercase">MOM / Last Note:</span>
                     {lead.notes}
                   </div>
                 )}
@@ -116,14 +116,14 @@ function StaffDashboard() {
               <div className="flex gap-3 shrink-0">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="h-12 bg-blue-900 text-white rounded-none border-2 border-blue-900 hover:bg-white hover:text-blue-900 font-black uppercase text-xs italic px-6 transition-all">
+                    <Button className="h-12 bg-foreground text-background rounded-none border-2 border-foreground hover:bg-background hover:text-foreground font-serif-news uppercase tracking-widest text-xs px-6 transition-all">
                       <MessageSquare className="w-4 h-4 mr-2" /> Log Interaction
                     </Button>
                   </DialogTrigger>
                   <InteractionDialog lead={lead} onSaved={() => { loadLeads(); }} />
                 </Dialog>
-                
-                <Button variant="outline" className="h-12 border-2 border-blue-900 rounded-none font-black uppercase text-xs italic px-6 hover:bg-blue-50">
+
+                <Button variant="outline" className="h-12 border-2 border-foreground rounded-none font-serif-news uppercase tracking-widest text-xs px-6 hover:bg-foreground hover:text-background">
                   <History className="w-4 h-4 mr-2" /> History
                 </Button>
               </div>

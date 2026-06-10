@@ -30,7 +30,7 @@ function AdminMasterDashboard() {
   }, [user, role, loading]);
 
   if (loading || role !== "admin")
-    return <div className="grid place-items-center min-h-screen font-black uppercase italic text-red-600">Validating Super-Admin Authority...</div>;
+    return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Validating Admin Access…</div>;
 
   return (
     <CrmShell
@@ -44,9 +44,9 @@ function AdminMasterDashboard() {
       currentPortal="/admin"
       onSignOut={signOut}
     >
-      <div className="mb-8 border-l-8 border-red-600 pl-5 py-1">
-        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">The War Room</h2>
-        <p className="text-red-600 font-black uppercase text-[10px] tracking-[0.2em] mt-1">EduConnect Management System · Prashant Bhai Access Only</p>
+      <div className="mb-8 border-l-4 border-foreground pl-5 py-1">
+        <p className="news-kicker">EduConnect Management System · Prashant Bhai Access</p>
+        <h2 className="font-headline text-4xl md:text-5xl tracking-tight leading-none mt-1">The Command Desk</h2>
       </div>
 
       {active === "financials" && (
@@ -54,53 +54,53 @@ function AdminMasterDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <StatsCard label="Total Booked" value="₹12.4L" icon={BarChart4} />
             <StatsCard label="Net Collected" value="₹8.1L" icon={Receipt} />
-            <StatsCard label="Unpaid Balance" value="₹4.3L" icon={ArrowUpRight} trend="danger" />
+            <StatsCard label="Unpaid Balance" value="₹4.3L" icon={ArrowUpRight} />
           </div>
-          <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_#ef4444]">
-            <h3 className="text-2xl font-black uppercase italic mb-6">Global Student Roster</h3>
-            <p className="font-bold text-xs uppercase text-muted-foreground italic mb-10">Centralized view of all records from all staff and centers.</p>
-            <div className="flex items-center gap-4 py-20 justify-center border-4 border-dashed border-red-100">
-              <p className="font-black uppercase italic text-red-200 text-5xl md:text-6xl opacity-20">SYSTEM LIVE</p>
+          <div className="news-card p-8 shadow-[8px_8px_0px_0px_#1a1410]">
+            <h3 className="font-headline text-2xl mb-2">Global Student Roster</h3>
+            <p className="font-serif-news text-sm italic mb-10 text-[#6b3e1a]">Centralized view of all records from all staff and centers.</p>
+            <div className="flex items-center gap-4 py-20 justify-center border border-dashed border-foreground/30">
+              <p className="font-headline text-5xl md:text-6xl opacity-10">System Live</p>
             </div>
           </div>
         </div>
       )}
 
       {active === "enquiries" && (
-        <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_#ef4444]">
-          <h3 className="text-2xl font-black uppercase italic mb-6">Inbound Pipeline</h3>
-          <p className="text-sm font-bold uppercase mb-8">Decide how to route incoming traffic.</p>
-          <div className="border-t-4 border-black">
-            <div className="py-20 text-center font-black uppercase text-slate-300 italic">No unassigned inquiries at this moment.</div>
+        <div className="news-card p-8 shadow-[8px_8px_0px_0px_#1a1410]">
+          <h3 className="font-headline text-2xl mb-2">Inbound Pipeline</h3>
+          <p className="font-serif-news text-sm italic mb-8 text-[#6b3e1a]">Decide how to route incoming traffic.</p>
+          <div className="news-divider pt-1">
+            <div className="py-20 text-center font-serif-news uppercase tracking-widest text-foreground/30 text-sm">No unassigned inquiries at this moment.</div>
           </div>
         </div>
       )}
 
       {active === "centers" && (
         <div className="grid md:grid-cols-2 gap-10">
-          <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_#000]">
-            <h3 className="text-2xl font-black uppercase italic mb-6">Team Management</h3>
+          <div className="news-card p-8 shadow-[8px_8px_0px_0px_#1a1410]">
+            <h3 className="font-headline text-2xl mb-6">Team Management</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-slate-50 border-2 border-black font-bold uppercase text-xs">
+              <div className="flex items-center justify-between p-4 border border-foreground font-serif-news uppercase text-xs">
                 <span>Counsellor A (Staff)</span>
-                <Badge className="bg-blue-600 rounded-none">12 Assets</Badge>
+                <Badge className="bg-foreground text-background rounded-none">12 Assets</Badge>
               </div>
-              <div className="flex items-center justify-between p-4 bg-slate-50 border-2 border-black font-bold uppercase text-xs">
+              <div className="flex items-center justify-between p-4 border border-foreground font-serif-news uppercase text-xs">
                 <span>Regional Center (Partner)</span>
-                <Badge className="bg-yellow-500 rounded-none">44 Admissions</Badge>
+                <Badge className="bg-foreground text-background rounded-none">44 Admissions</Badge>
               </div>
             </div>
           </div>
-          <div className="bg-red-50 border-4 border-red-600 p-8 shadow-[12px_12px_0px_0px_#ef4444]">
-            <h3 className="text-2xl font-black uppercase italic mb-4 text-red-600">Access Key Generation</h3>
-            <p className="text-xs font-bold uppercase mb-6 text-red-900/60 leading-relaxed">Invite a new center or staff member to the system. They will only have access to their specific role portal.</p>
+          <div className="news-card p-8 shadow-[8px_8px_0px_0px_#1a1410]">
+            <h3 className="font-headline text-2xl mb-2">Access Key Generation</h3>
+            <p className="font-serif-news text-xs italic mb-6 text-[#6b3e1a] leading-relaxed">Invite a new center or staff member. They will only have access to their specific role portal.</p>
             <div className="space-y-4">
-              <input placeholder="ENTER EMAIL ADDRESS" className="w-full h-14 px-4 bg-white border-4 border-black rounded-none outline-none font-black uppercase focus:bg-white" />
-              <select className="w-full h-14 px-4 bg-white border-4 border-black rounded-none outline-none font-black uppercase appearance-none">
-                <option>CENTER ACCESS</option>
-                <option>STAFF ACCESS</option>
+              <input placeholder="Enter email address" className="w-full h-12 px-4 bg-white border-2 border-foreground rounded-none outline-none font-serif-news" />
+              <select className="w-full h-12 px-4 bg-white border-2 border-foreground rounded-none outline-none font-serif-news uppercase appearance-none">
+                <option>Center Access</option>
+                <option>Staff Access</option>
               </select>
-              <Button className="w-full h-14 bg-red-600 text-white rounded-none border-4 border-black font-black uppercase text-xl shadow-[6px_6px_0px_0px_#000]">Issue Access Key</Button>
+              <Button className="w-full h-12 bg-foreground text-background rounded-none border-2 border-foreground font-serif-news uppercase tracking-widest text-sm shadow-[4px_4px_0px_0px_#1a1410] hover:bg-background hover:text-foreground">Issue Access Key</Button>
             </div>
           </div>
         </div>
@@ -109,14 +109,14 @@ function AdminMasterDashboard() {
   );
 }
 
-function StatsCard({ label, value, icon: Icon, trend }: { label: string; value: string; icon: any; trend?: "success" | "danger" }) {
+function StatsCard({ label, value, icon: Icon }: { label: string; value: string; icon: any; trend?: "success" | "danger" }) {
   return (
-    <div className={`bg-white border-4 border-black p-6 shadow-[10px_10px_0px_0px_#000] flex flex-col justify-between h-[180px] ${trend === 'danger' ? 'bg-red-50' : ''}`}>
+    <div className="news-card p-6 shadow-[6px_6px_0px_0px_#1a1410] flex flex-col justify-between h-[170px]">
       <div className="flex justify-between items-start">
-        <div className="font-black uppercase text-[10px] tracking-widest text-slate-500">{label}</div>
-        <div className="bg-black text-white p-1.5"><Icon className="w-5 h-5" /></div>
+        <div className="news-kicker !text-[0.6rem]">{label}</div>
+        <div className="bg-foreground text-background p-1.5"><Icon className="w-5 h-5" /></div>
       </div>
-      <div className={`text-5xl font-black uppercase italic leading-none ${trend === 'danger' ? 'text-red-600' : ''}`}>{value}</div>
+      <div className="font-headline text-5xl leading-none">{value}</div>
     </div>
   );
 }
