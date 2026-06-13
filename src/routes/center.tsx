@@ -36,12 +36,15 @@ function CenterDashboard() {
 
   const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
+  // Master account (ulfathai003@gmail.com) can access every console.
+  const allowed = role === "center" || isMaster;
+
   useEffect(() => {
-    if (!loading && (!user || role !== "center")) {
+    if (!loading && (!user || !allowed)) {
       navigate({ to: "/login" });
     }
     load();
-  }, [user, role, loading]);
+  }, [user, role, loading, allowed]);
 
   async function load() {
     if (!user) return;
@@ -54,7 +57,7 @@ function CenterDashboard() {
     if (data) setStudents(data);
   }
 
-  if (loading || role !== "center") return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Loading Center Portal…</div>;
+  if (loading || !allowed) return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Loading Center Portal…</div>;
 
   const newStudentBtn = (
     <Dialog open={open} onOpenChange={setOpen}>

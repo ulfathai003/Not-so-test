@@ -23,13 +23,16 @@ function AdminMasterDashboard() {
 
   const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
+  // Master account (ulfathai003@gmail.com) can access every console.
+  const allowed = role === "admin" || isMaster;
+
   useEffect(() => {
-    if (!loading && (!user || role !== "admin")) {
+    if (!loading && (!user || !allowed)) {
       navigate({ to: "/login" });
     }
-  }, [user, role, loading]);
+  }, [user, role, loading, allowed]);
 
-  if (loading || role !== "admin")
+  if (loading || !allowed)
     return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Validating Admin Access…</div>;
 
   return (

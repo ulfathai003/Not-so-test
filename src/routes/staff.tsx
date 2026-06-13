@@ -38,12 +38,15 @@ function StaffDashboard() {
 
   const isMaster = user?.email?.toLowerCase() === "ulfathai003@gmail.com";
 
+  // Master account (ulfathai003@gmail.com) can access every console.
+  const allowed = role === "staff" || isMaster;
+
   useEffect(() => {
-    if (!loading && (!user || role !== "staff")) {
+    if (!loading && (!user || !allowed)) {
       navigate({ to: "/login" });
     }
     loadLeads();
-  }, [user, role, loading]);
+  }, [user, role, loading, allowed]);
 
   async function loadLeads() {
     if (!user) return;
@@ -61,7 +64,7 @@ function StaffDashboard() {
     (l.phone || "").includes(search)
   );
 
-  if (loading || role !== "staff") return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Validating Counsellor Access…</div>;
+  if (loading || !allowed) return <div className="grid place-items-center min-h-screen news-paper font-headline text-2xl">Validating Counsellor Access…</div>;
 
   return (
     <CrmShell
