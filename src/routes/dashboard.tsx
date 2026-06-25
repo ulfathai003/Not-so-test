@@ -177,7 +177,7 @@ function ProspectDashboard({
               <div class="field"><div class="label">Specialization</div><div class="val">${data.specialization || "GENERAL"}</div></div>
             </div>
             <div class="fineprint">
-              This document certifies a temporary slot reservation. Please submit documents for counsellor review. Support line: ulfathai003@gmail.com.
+              This document certifies a temporary slot reservation. Please submit documents for counsellor review. Support: admissions@joinonlineeducation.com | +91 80 4000 0000.
             </div>
           </div>
           <script>window.print();</script>
@@ -294,7 +294,7 @@ function ProspectDashboard({
             </div>
             <div>
               <strong className="block text-foreground">Direct Desk Helpline:</strong>
-              Email our Lead admissions director at <a href="mailto:ulfathai003@gmail.com" className="underline font-bold text-foreground">ulfathai003@gmail.com</a>.
+              Email our admissions team at <a href="mailto:admissions@joinonlineeducation.com" className="underline font-bold text-foreground">admissions@joinonlineeducation.com</a>.
             </div>
           </div>
         </div>
@@ -332,7 +332,7 @@ function CounselorChatWidget({ fullName, email }: { fullName: string; email: str
 
     try {
       // Send directly to ulfathai003@gmail.com using FormSubmit AJAX
-      await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
+      await fetch("https://formsubmit.co/ajax/joinonlineeducation@gmail.com", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
@@ -345,12 +345,12 @@ function CounselorChatWidget({ fullName, email }: { fullName: string; email: str
 
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Your message has been sent directly to my desk inbox (ulfathai003@gmail.com). I will get back to you shortly!" }
+        { sender: "bot", text: "Your message has been sent to our admissions desk (admissions@joinonlineeducation.com). We will get back to you shortly!" }
       ]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Connection error. Please email me directly at ulfathai003@gmail.com." }
+        { sender: "bot", text: "Connection error. Please email us directly at admissions@joinonlineeducation.com." }
       ]);
     } finally {
       setSending(false);
@@ -776,8 +776,8 @@ function SettingsView() {
         <table className="w-full text-left font-serif-news text-sm">
           <thead className="bg-[#f4ecd8] border-b border-foreground/30"><tr><Th>Name</Th><Th>Email</Th><Th>Phone</Th><Th>Role</Th><Th className="text-right">Action</Th></tr></thead>
           <tbody>
-            <tr className="border-t border-foreground/10"><td className="p-4 font-bold">Prashant Bhai</td><td className="p-4 font-bold">ulfathai003@gmail.com</td><td className="p-4">—</td><td className="p-4 font-bold uppercase text-xs">Master Super Admin</td><td className="p-4"></td></tr>
-            {members.filter((m) => m.email !== "ulfathai003@gmail.com").map((m) => (
+            <tr className="border-t border-foreground/10"><td className="p-4 font-bold">JoinOnline Admin</td><td className="p-4 font-bold">joinonlineeducation@gmail.com</td><td className="p-4">—</td><td className="p-4 font-bold uppercase text-xs">Master Super Admin</td><td className="p-4"></td></tr>
+            {members.filter((m) => m.email !== "joinonlineeducation@gmail.com").map((m) => (
               <tr key={m.id} className="border-t border-foreground/10">
                 <td className="p-4 font-bold">{m.name || "—"}</td>
                 <td className="p-4">{m.email}</td>
