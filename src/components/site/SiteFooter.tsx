@@ -5,7 +5,7 @@ export function SiteFooter() {
     <footer className="news-paper border-t-[3px] border-double border-foreground">
       <div className="container mx-auto px-4 py-10">
         <div className="text-center mb-8">
-          <h3 className="font-headline text-3xl">The EduConnect Times</h3>
+          <h3 className="font-headline text-3xl">JoinOnline Education</h3>
           <p className="news-byline mt-1">Published Daily · Bengaluru · Est. 2016</p>
         </div>
         <div className="news-divider-double pt-6 grid gap-8 md:grid-cols-4 font-serif-news text-sm">
@@ -42,7 +42,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="news-divider mt-8 pt-4 text-center text-xs font-serif-news uppercase tracking-widest">
-          © {new Date().getFullYear()} EduConnect Times · All Rights Reserved
+          © {new Date().getFullYear()} JoinOnline Education · All Rights Reserved
         </div>
       </div>
     </footer>

@@ -20,8 +20,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
+import { z } from "zod";
+
+const dashboardSearchSchema = z.object({
+  view: z.string().optional().catch("overview"),
+});
+
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard | EduConnect Times" }] }),
+  validateSearch: (search) => dashboardSearchSchema.parse(search),
+  head: () => ({ meta: [{ title: "Dashboard | JoinOnline Education" }] }),
   component: DashboardPage,
 });
 
@@ -43,9 +50,13 @@ const PAYMENT_STATUSES = ["Paid", "Partial", "Pending", "Overdue"];
 const PAYMENT_MODES = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
 const LEAD_SOURCES = ["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair"];
 
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 function DashboardPage() {
   const { user, role, studentStatus, studentData, loading, signOut, refetchStudent } = useAuth();
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const currentView = (search as any).view || "overview";
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -62,60 +73,17 @@ function DashboardPage() {
   const isProspect = (role as string) === "student" && studentStatus !== "active" && studentStatus !== "graduated";
 
   return (
-    <div className="min-h-screen news-paper flex flex-col">
-      {/* Editorial Header */}
-      <header className="border-b-4 border-foreground py-4 px-4 bg-[#fbf6e7]">
-        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <Link to="/" className="font-headline text-3xl uppercase tracking-tight block hover:opacity-85">
-              EduConnect Times
-            </Link>
-            <div className="text-[10px] uppercase tracking-widest font-sans font-bold text-[#6b3e1a] mt-0.5">
-              Vol. CXIV · Official Admissions Desk · Bengaluru
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {(role === "admin" || role === "center") && (
-              <Link to="/manager">
-                <Button size="sm" className="rounded-none border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/5 font-sans font-bold uppercase tracking-wider text-xs">
-                  {role === "admin" ? "Super Admin Console" : "Center Manager"}
-                </Button>
-              </Link>
-            )}
-            
-            <span className="font-serif-news text-xs italic bg-foreground/5 px-3 py-1.5 border border-foreground/30 text-[#1a1410]">
-              User: <span className="font-sans font-bold uppercase tracking-wider">{role}</span>
-              {studentStatus && (
-                <> · Status: <span className="font-sans font-bold uppercase tracking-wider text-[#6b3e1a]">{studentStatus}</span></>
-              )}
-            </span>
-            
-            <span className="hidden md:inline text-xs font-sans font-bold text-foreground">{user.email}</span>
-            
-            <Button 
-              size="sm" 
-              className="rounded-none bg-foreground text-background border-2 border-foreground hover:bg-transparent hover:text-foreground font-sans font-bold uppercase tracking-wider text-xs px-3 py-1.5"
-              onClick={signOut}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 flex-1">
-        {role === "admin" ? (
-          <AdminPanel />
-        ) : role === "center" ? (
-          <AdminPanel isCenter />
+    <DashboardLayout>
+      <div className="space-y-8">
+        {(role === "super_admin" || role === "admin" || role === "center" || role === "staff") ? (
+          <RoleDashboard view={currentView} role={role as string} userEmail={user.email!} />
         ) : isProspect ? (
           <ProspectDashboard studentStatus={studentStatus} studentData={studentData} refetchStudent={refetchStudent} email={user.email!} />
         ) : (
           <StudentPanel email={user.email!} />
         )}
-      </main>
-      
+      </div>
+
       {/* Floating Counselor Chat Widget */}
       {isProspect && (
         <CounselorChatWidget 
@@ -123,7 +91,7 @@ function DashboardPage() {
           email={user.email!} 
         />
       )}
-    </div>
+    </DashboardLayout>
   );
 }
 
@@ -144,7 +112,7 @@ function ProspectDashboard({
   const [draftData, setDraftData] = useState<any>(null);
 
   useEffect(() => {
-    const draft = localStorage.getItem("educonnect_admissions_draft");
+    const draft = localStorage.getItem("joinonline_admissions_draft");
     if (draft) {
       setHasDraft(true);
       try {
@@ -174,7 +142,7 @@ function ProspectDashboard({
     printWindow.document.write(`
       <html>
         <head>
-          <title>EduConnect Times - Official Desk Voucher</title>
+          <title>JoinOnline Education - Official Desk Voucher</title>
           <style>
             body { font-family: 'Georgia', serif; background-color: #fbf6e7; color: #1a1410; padding: 40px; }
             .receipt { border: 4px double #1a1410; padding: 30px; max-width: 650px; margin: 0 auto; background: #fff; }
@@ -192,39 +160,21 @@ function ProspectDashboard({
         <body>
           <div class="receipt">
             <div class="header">
-              <div class="title">EduConnect Times</div>
+              <div class="title">JoinOnline Education</div>
               <div class="subtitle">Official Admissions Desk Voucher · Batch of 2026</div>
             </div>
             
             <div class="status-box">
               Application Status: ${studentStatus === "inactive" ? "PENDING COUNSELLOR REVIEW" : "DRAFT MODE"}
             </div>
-
+            
             <div class="field-grid">
-              <div class="field">
-                <div class="label">Applicant Name</div>
-                <div class="val">${data.full_name || "Applicant Draft"}</div>
-              </div>
-              <div class="field">
-                <div class="label">Registered Email</div>
-                <div class="val">${email}</div>
-              </div>
-              <div class="field">
-                <div class="label">Program</div>
-                <div class="val">${data.program || "Not Selected"}</div>
-              </div>
-              <div class="field">
-                <div class="label">University</div>
-                <div class="val">${data.university || "Not Selected"}</div>
-              </div>
-              <div class="field">
-                <div class="label">Aadhar Number</div>
-                <div class="val">${data.aadhar_number || "Not Provided"}</div>
-              </div>
-              <div class="field">
-                <div class="label">Phone Number</div>
-                <div class="val">${data.phone || "Not Provided"}</div>
-              </div>
+              <div class="field"><div class="label">Date of Issue</div><div class="val">${new Date().toLocaleDateString()}</div></div>
+              <div class="field"><div class="label">Applicant Email</div><div class="val">${email}</div></div>
+              <div class="field"><div class="label">Full Name</div><div class="val">${data.full_name || "PENDING"}</div></div>
+              <div class="field"><div class="label">University Choice</div><div class="val">${data.university || "PENDING"}</div></div>
+              <div class="field"><div class="label">Program Selected</div><div class="val">${data.program || "PENDING"}</div></div>
+              <div class="field"><div class="label">Specialization</div><div class="val">${data.specialization || "GENERAL"}</div></div>
             </div>
             <div class="fineprint">
               This document certifies a temporary slot reservation. Please submit documents for counsellor review. Support line: ulfathai003@gmail.com.
@@ -358,7 +308,7 @@ function ProspectDashboard({
 function CounselorChatWidget({ fullName, email }: { fullName: string; email: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Array<{ sender: "bot" | "user"; text: string }>>([
-    { sender: "bot", text: "EduConnect Helpline · Lead Counselor Online. How can I assist you with your degree selection today?" }
+    { sender: "bot", text: "JoinOnline Helpline · Lead Counselor Online. How can I assist you with your degree selection today?" }
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -490,9 +440,362 @@ function CounselorChatWidget({ fullName, email }: { fullName: string; email: str
   );
 }
 
-/* -------------------------- ADMIN PANEL -------------------------- */
 
-function AdminPanel({ isCenter }: { isCenter?: boolean }) {
+
+
+
+/* -------------------------- ROLE DASHBOARD ROUTER -------------------------- */
+
+function RoleDashboard({ view, role, userEmail }: { view: string; role: string; userEmail: string }) {
+  const isCenter = role === "center";
+  const isStaff = role === "staff";
+
+  if (view === "overview") return <OverviewView role={role} userEmail={userEmail} />;
+  if (view === "payments" && !isStaff) return <PaymentsView role={role} userEmail={userEmail} />;
+  if (view === "settings" && !isCenter && !isStaff) return <SettingsView />;
+  // "students" and any other/unknown view fall back to the registry.
+  return <AdminPanel isCenter={isCenter} isStaff={isStaff} view={view} userEmail={userEmail} />;
+}
+
+const inr = (n: number | null | undefined) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(n ?? 0));
+
+/* -------------------------- OVERVIEW -------------------------- */
+
+function OverviewView({ role, userEmail }: { role: string; userEmail: string }) {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const isStaff = role === "staff";
+
+  useEffect(() => {
+    (async () => {
+      let studentQuery = supabase.from("students").select("*");
+      if (role === "center") studentQuery = studentQuery.eq("counsellor_name", userEmail).neq("status", "lead");
+      if (role === "staff") studentQuery = studentQuery.eq("counsellor_name", userEmail).eq("status", "lead");
+
+      const { data: s } = await studentQuery;
+      setStudents(s ?? []);
+
+      if (!isStaff) {
+        let payQuery = supabase.from("fee_payments").select("*, student:students(*)");
+        const { data: p } = await payQuery;
+        let pData = p ?? [];
+        if (role === "center") pData = pData.filter((pay: any) => pay.student?.counsellor_name === userEmail);
+        setPayments(pData);
+      }
+    })();
+  }, [role, userEmail]);
+
+  if (isStaff) {
+    const newLeads = students.filter((s) => !s.notes).length;
+    return (
+      <div className="space-y-6">
+        <div className="border-b-4 border-foreground pb-4">
+          <h1 className="font-headline text-4xl uppercase tracking-tight">Counselor Desk</h1>
+          <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">Leads assigned to you by the admissions office.</p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
+          <KPI label="Assigned Leads" value={String(students.length)} icon={Users} />
+          <KPI label="Not Yet Contacted" value={String(newLeads)} icon={Mail} />
+        </div>
+      </div>
+    );
+  }
+
+  const totalBilled = students.reduce((sum, s) => sum + Number(s.total_fee ?? 0), 0);
+  const totalCollected = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPending = Math.max(totalBilled - totalCollected, 0);
+  const overdue = students.filter((s) => Number(s.fee_pending ?? 0) > 0).length;
+  const byProgram: Record<string, number> = {};
+  students.forEach((s) => { byProgram[s.program] = (byProgram[s.program] ?? 0) + 1; });
+
+  return (
+    <div className="space-y-8">
+      <div className="border-b-4 border-foreground pb-4">
+        <h1 className="font-headline text-4xl uppercase tracking-tight">Admissions Command</h1>
+        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">A bento overview of your learners, programs and collections.</p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPI label="Total Students" value={String(students.length)} icon={Users} />
+        <KPI label="Total Billed" value={inr(totalBilled)} icon={Wallet} />
+        <KPI label="Collected" value={inr(totalCollected)} icon={CheckCircle2} />
+        <KPI label="Pending" value={inr(totalPending)} icon={ClipboardList} />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410]">
+          <h3 className="font-headline text-xl uppercase border-b border-foreground/30 pb-2 mb-4">Students by program</h3>
+          <div className="space-y-2 font-serif-news text-sm">
+            {Object.entries(byProgram).map(([p, n]) => (
+              <div key={p} className="flex justify-between border-b border-foreground/10 pb-1"><span>{p}</span><span className="font-bold">{n}</span></div>
+            ))}
+            {Object.keys(byProgram).length === 0 && <div className="text-[#6b3e1a] italic">No students yet.</div>}
+          </div>
+        </div>
+        <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410]">
+          <h3 className="font-headline text-xl uppercase border-b border-foreground/30 pb-2 mb-4">Action items</h3>
+          <div className="flex justify-between font-serif-news text-sm">
+            <span className="font-sans font-bold uppercase tracking-widest text-[10px] text-[#6b3e1a]">Students with dues</span>
+            <span className="font-bold border border-foreground px-2 py-0.5 text-xs">{overdue}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KPI({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+  return (
+    <div className="bg-[#fbf6e7] border-4 border-foreground p-5 shadow-[6px_6px_0px_0px_#1a1410] flex flex-col justify-between min-h-[140px]">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="font-sans font-bold uppercase tracking-widest text-[10px] text-[#6b3e1a]">{label}</div>
+          <div className="mt-2 font-headline text-3xl sm:text-4xl">{value}</div>
+        </div>
+        <span className="grid place-items-center w-10 h-10 border-2 border-foreground bg-foreground text-background shrink-0">
+          <Icon className="w-5 h-5" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------- PAYMENTS -------------------------- */
+
+const PAYMENT_MODE_OPTIONS = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
+
+function PaymentsView({ role, userEmail }: { role: string; userEmail: string }) {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [open, setOpen] = useState(false);
+
+  async function load() {
+    const { data: payData } = await supabase.from("fee_payments").select("*, student:students(*)").order("payment_date", { ascending: false });
+    const { data: stuData } = await supabase.from("students").select("*").order("full_name");
+    let filteredPayments = payData ?? [];
+    let filteredStudents = stuData ?? [];
+    if (role === "center") {
+      filteredPayments = filteredPayments.filter((p: any) => p.student?.counsellor_name === userEmail);
+      filteredStudents = filteredStudents.filter((s: any) => s.counsellor_name === userEmail);
+    }
+    setPayments(filteredPayments);
+    setStudents(filteredStudents);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function del(id: string) {
+    if (!confirm("Delete this payment? Student balance will be recalculated.")) return;
+    const { error } = await supabase.from("fee_payments").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Payment removed");
+    load();
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="border-b-4 border-foreground pb-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-headline text-4xl uppercase tracking-tight">Financial Ledger Desk</h1>
+          <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">Each entry auto-updates the student's paid / pending balance.</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="rounded-none bg-foreground text-background border-2 border-foreground py-2 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
+              <Plus className="w-4 h-4 mr-1 text-background" /> Record Payment
+            </Button>
+          </DialogTrigger>
+          <PaymentDialog students={students} onSaved={() => { setOpen(false); load(); }} />
+        </Dialog>
+      </div>
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
+        <table className="w-full text-left font-serif-news text-sm">
+          <thead className="bg-[#f4ecd8] border-b border-foreground/30">
+            <tr><Th>Date</Th><Th>Student</Th><Th>Amount</Th><Th>Mode</Th><Th>Receipt #</Th><Th className="text-right">Action</Th></tr>
+          </thead>
+          <tbody>
+            {payments.length === 0 ? (
+              <tr><td colSpan={6} className="p-10 text-center italic text-[#6b3e1a]">No payments recorded yet.</td></tr>
+            ) : payments.map((p) => (
+              <tr key={p.id} className="border-t border-foreground/10 hover:bg-[#f4ecd8]/40">
+                <td className="p-4">{p.payment_date}</td>
+                <td className="p-4">
+                  <div className="font-bold">{p.student?.full_name ?? "—"}</div>
+                  <div className="text-xs text-[#6b3e1a]">{p.student?.email}</div>
+                </td>
+                <td className="p-4 font-bold">{inr(Number(p.amount))}</td>
+                <td className="p-4 text-[#6b3e1a]">{p.payment_mode ?? "—"}</td>
+                <td className="p-4 text-[#6b3e1a]">{p.receipt_number ?? "—"}</td>
+                <td className="p-4 text-right">
+                  <Button size="icon" variant="ghost" onClick={() => del(p.id)} className="hover:bg-destructive/10"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function PaymentDialog({ students, onSaved }: { students: Student[]; onSaved: () => void }) {
+  const [form, setForm] = useState<any>({
+    student_id: "", amount: 0, payment_date: new Date().toISOString().slice(0, 10),
+    payment_mode: "UPI", receipt_number: "", transaction_ref: "", notes: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.student_id) return toast.error("Select a student");
+    setSaving(true);
+    const receipt = form.receipt_number || `RCP-${Date.now()}`;
+    const { error } = await supabase.from("fee_payments").insert({ ...form, receipt_number: receipt, amount: Number(form.amount) });
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Payment recorded");
+    onSaved();
+  }
+
+  return (
+    <DialogContent className="max-w-2xl bg-[#fbf6e7] border-4 border-foreground rounded-none">
+      <DialogHeader>
+        <DialogTitle className="font-headline text-2xl uppercase">Record fee payment</DialogTitle>
+        <DialogDescription className="font-serif-news text-xs italic text-[#6b3e1a]">This auto-updates the student's paid/pending balance.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 text-xs">
+        <Field label="Student" required>
+          <Select value={form.student_id} onValueChange={(v) => setForm({ ...form, student_id: v })}>
+            <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select student" /></SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">
+              {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.full_name} — {s.program}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Amount (INR)" required>
+          <Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} required />
+        </Field>
+        <Field label="Date" required>
+          <Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.payment_date} onChange={(e) => setForm({ ...form, payment_date: e.target.value })} required />
+        </Field>
+        <Field label="Mode">
+          <Select value={form.payment_mode} onValueChange={(v) => setForm({ ...form, payment_mode: v })}>
+            <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PAYMENT_MODE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+          </Select>
+        </Field>
+        <Field label="Receipt number"><Input className="rounded-none border border-foreground bg-transparent" value={form.receipt_number} onChange={(e) => setForm({ ...form, receipt_number: e.target.value })} placeholder="Auto if blank" /></Field>
+        <Field label="Transaction ref"><Input className="rounded-none border border-foreground bg-transparent" value={form.transaction_ref} onChange={(e) => setForm({ ...form, transaction_ref: e.target.value })} /></Field>
+        <DialogFooter className="sm:col-span-2">
+          <Button type="submit" disabled={saving} className="rounded-none bg-foreground text-background border-2 border-foreground py-3 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
+            {saving ? "Saving…" : "Record payment"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+/* -------------------------- SETTINGS -------------------------- */
+
+function SettingsView() {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [selectedRole, setSelectedRole] = useState("center");
+  const [busy, setBusy] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+
+  const loadMembers = async () => {
+    const { data } = await supabase.from("allowed_managers" as any).select("*").order("created_at", { ascending: false });
+    if (data) setMembers(data);
+  };
+  useEffect(() => { loadMembers(); }, []);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("allowed_managers" as any).upsert([{ 
+        email: email.toLowerCase().trim(), 
+        role: selectedRole,
+        name: name.trim(),
+        phone: phone.trim()
+      }], { onConflict: "email" });
+      if (error) throw error;
+      toast.success(`${name} can now login as ${selectedRole} using their phone number.`);
+      setEmail(""); setName(""); setPhone("");
+      loadMembers();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setBusy(false); }
+  };
+
+  const revoke = async (memberEmail: string) => {
+    if (!confirm(`Revoke access for ${memberEmail}?`)) return;
+    const { error } = await supabase.from("allowed_managers" as any).delete().eq("email", memberEmail);
+    if (error) return toast.error(error.message);
+    toast.success("Access revoked");
+    loadMembers();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="border-b-4 border-foreground pb-4">
+        <h1 className="font-headline text-4xl uppercase tracking-tight">System Configuration</h1>
+        <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">Grant admin, center or staff access by email.</p>
+      </div>
+      <div className="bg-[#fbf6e7] border-4 border-foreground p-6 shadow-[6px_6px_0px_0px_#1a1410]">
+        <h3 className="font-headline text-xl uppercase mb-4">Register Center / Staff</h3>
+        <form onSubmit={handleInvite} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase opacity-50">Full Name</label>
+            <Input placeholder="Center Name" value={name} onChange={(e) => setName(e.target.value)} required className="rounded-none border border-foreground bg-transparent" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase opacity-50">Email</label>
+            <Input placeholder="user@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="rounded-none border border-foreground bg-transparent" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase opacity-50">Phone (Password)</label>
+            <Input placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className="rounded-none border border-foreground bg-transparent" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase opacity-50">Role</label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-full rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={busy} className="h-10 rounded-none bg-foreground text-background border-2 border-foreground font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">Add Member</Button>
+        </form>
+        <p className="font-serif-news text-[10px] italic text-[#6b3e1a] mt-3 uppercase tracking-wider">Note: The phone number will be used as the default password for their account.</p>
+      </div>
+      <div className="bg-[#fbf6e7] border-4 border-foreground shadow-[6px_6px_0px_0px_#1a1410] overflow-x-auto">
+        <table className="w-full text-left font-serif-news text-sm">
+          <thead className="bg-[#f4ecd8] border-b border-foreground/30"><tr><Th>Name</Th><Th>Email</Th><Th>Phone</Th><Th>Role</Th><Th className="text-right">Action</Th></tr></thead>
+          <tbody>
+            <tr className="border-t border-foreground/10"><td className="p-4 font-bold">Prashant Bhai</td><td className="p-4 font-bold">ulfathai003@gmail.com</td><td className="p-4">—</td><td className="p-4 font-bold uppercase text-xs">Master Super Admin</td><td className="p-4"></td></tr>
+            {members.filter((m) => m.email !== "ulfathai003@gmail.com").map((m) => (
+              <tr key={m.id} className="border-t border-foreground/10">
+                <td className="p-4 font-bold">{m.name || "—"}</td>
+                <td className="p-4">{m.email}</td>
+                <td className="p-4 font-mono text-[10px]">{m.phone || "—"}</td>
+                <td className="p-4 uppercase font-bold text-xs">{m.role}</td>
+                <td className="p-4 text-right"><Button size="sm" variant="ghost" onClick={() => revoke(m.email)} className="text-destructive hover:bg-destructive/10">Revoke</Button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------- STUDENT REGISTRY -------------------------- */
+
+function AdminPanel({ isCenter, isStaff, view, userEmail }: { isCenter?: boolean; isStaff?: boolean; view: string; userEmail?: string }) {
   const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -505,13 +808,11 @@ function AdminPanel({ isCenter }: { isCenter?: boolean }) {
   async function load() {
     setLoading(true);
     let query = supabase.from("students").select("*").order("batch_year", { ascending: false }).order("full_name");
-    
+
     if (isCenter && user?.email) {
-      // Centers only see students they are assigned to (stored in counsellor_name or a new field)
-      // For now, filtering by counsellor_name matching center email or name
-      query = query.filter("counsellor_name", "eq", user.email);
+      query = query.filter("counsellor_name", "eq", user.email).neq("status", "lead");
     }
-    
+
     const { data, error } = await query;
     if (error) toast.error(error.message);
     setStudents(data ?? []);
@@ -550,10 +851,10 @@ function AdminPanel({ isCenter }: { isCenter?: boolean }) {
     <div className="space-y-6">
       <div className="border-b-4 border-foreground pb-4">
         <h1 className="font-headline text-4xl uppercase tracking-tight">
-          {isCenter ? "Center Admissions Desk" : "Admin Admissions Command"}
+          {isCenter ? "Center Admissions Desk" : "Student Registry"}
         </h1>
         <p className="font-serif-news text-sm italic mt-1 text-[#6b3e1a]">
-          {isCenter ? "Managing your assigned learners and enrollment progress." : "A bento overview of your learners, programs and universities."}
+          {isCenter ? "Managing your assigned learners and enrollment progress." : "Full applicant roster across every batch, program and partner university."}
         </p>
       </div>
 
@@ -617,10 +918,10 @@ function AdminPanel({ isCenter }: { isCenter?: boolean }) {
             <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}>
               <DialogTrigger asChild>
                 <Button className="rounded-none bg-foreground text-background border-2 border-foreground py-2 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
-                  <Plus className="w-4 h-4 mr-1 text-background" /> Add Student
+                  <Plus className="w-4 h-4 mr-1 text-background" /> {isCenter ? "New Admission" : "Add Student"}
                 </Button>
               </DialogTrigger>
-              <StudentDialog editing={editing} onSaved={() => { setDialogOpen(false); setEditing(null); load(); }} />
+              <StudentDialog editing={editing} centerEmail={isCenter ? user?.email ?? "" : undefined} onSaved={() => { setDialogOpen(false); setEditing(null); load(); }} />
             </Dialog>
           </div>
         </div>
@@ -696,17 +997,18 @@ function StatusBadge({ status }: { status: Student["status"] }) {
 
 /* -------------------------- DIALOG -------------------------- */
 
-function blankForm(): TablesInsert<"students"> {
+function blankForm(centerEmail?: string): TablesInsert<"students"> {
   return {
     full_name: "", email: "", phone: "",
     batch_year: new Date().getFullYear() + 1,
     program: "MBA", specialization: "", university: "Mangalayatan University",
-    location: "", status: "active",
+    location: "", status: centerEmail ? "inactive" : "active",
+    counsellor_name: centerEmail || undefined,
   };
 }
 
-function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved: () => void }) {
-  const [form, setForm] = useState<TablesInsert<"students">>(() => editing ?? blankForm());
+function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | null; centerEmail?: string; onSaved: () => void }) {
+  const [form, setForm] = useState<TablesInsert<"students">>(() => editing ?? blankForm(centerEmail));
   const [saving, setSaving] = useState(false);
   const [invoiceUrlInput, setInvoiceUrlInput] = useState("");
   const [generalNotesInput, setGeneralNotesInput] = useState("");
@@ -718,7 +1020,7 @@ function StudentDialog({ editing, onSaved }: { editing: Student | null; onSaved:
     const gen = notesText.replace(/\[INVOICE_URL\]:\s*[^\n]+\n?/, "").trim();
     setInvoiceUrlInput(inv);
     setGeneralNotesInput(gen);
-    setForm(editing ?? blankForm());
+    setForm(editing ?? blankForm(centerEmail));
   }, [editing]);
 
   function set<K extends keyof TablesInsert<"students">>(key: K, value: TablesInsert<"students">[K]) {

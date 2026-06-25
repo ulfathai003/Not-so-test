@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
-export type AppRole = "admin" | "center" | "staff";
+export type AppRole = "super_admin" | "admin" | "center" | "staff";
 
 export function useAuth() {
   const navigate = useNavigate();
@@ -21,16 +21,22 @@ export function useAuth() {
         .select("role")
         .eq("user_id", userId);
       
-      const roles = (roleData ?? []).map((r: any) => r.role as AppRole);
+      const roles = (roleData ?? []).map((r: any) => r.role);
+      const cleanEmail = email?.toLowerCase();
       
-      if (email === "ulfathai003@gmail.com" || roles.includes("admin")) {
+      // Super Admin (Prashant Bhai) check - usually hardcoded or special flag
+      const isSuperAdmin = cleanEmail === "ulfathai003@gmail.com" || roles.includes("super_admin");
+      
+      if (isSuperAdmin) {
+        setRole("super_admin");
+      } else if (roles.includes("admin")) {
         setRole("admin");
       } else if (roles.includes("center")) {
         setRole("center");
       } else if (roles.includes("staff")) {
         setRole("staff");
       } else {
-        setRole(null); // No auto-student role anymore
+        setRole(null);
       }
     } catch (err) {
       console.error("Error fetching role & status:", err);
@@ -52,9 +58,9 @@ export function useAuth() {
       ].includes(path);
 
       if (isPublic) {
-        if (role === "admin") navigate("/admin");
-        else if (role === "center") navigate("/center");
-        else if (role === "staff") navigate("/staff");
+        if (role === "super_admin" || role === "admin") navigate({ to: "/dashboard" });
+        else if (role === "center") navigate({ to: "/center" });
+        else if (role === "staff") navigate({ to: "/staff" });
       }
     }
   }, [user, role, loading, navigate]);

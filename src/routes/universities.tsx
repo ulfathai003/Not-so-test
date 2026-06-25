@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { GlobalFAQ } from "@/components/site/GlobalFAQ";
 import { useState } from "react";
 import { ChevronRight, ArrowLeft, GraduationCap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,40 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/universities")({
   head: () => ({
     meta: [
-      { title: "University Directory | EduConnect Times" },
-      { name: "description", content: "Detailed guide to our partner universities including Jain, Manipal, Amity, NMIMS and Sikkim Board." },
+      { title: "Top Online Universities in India 2024 | JoinOnline Education" },
+      { name: "description", content: "Compare top UGC-DEB approved online universities like Jain, Manipal, Amity, and NMIMS. Get direct admission with expert counselling in India." },
     ],
   }),
   component: UniversitiesPage,
 });
+
+const UNIVERSITY_FAQS = [
+  {
+    k: "accreditation",
+    q: "How can I verify if a university is UGC-DEB approved?",
+    a: "You can verify the status of any university on the official UGC-DEB website portal. JoinOnline Education only partners with 'Category-1' and NAAC A/A+ rated universities that have standing approval for distance and online education."
+  },
+  {
+    k: "rankings",
+    q: "Which are the top-ranked online universities in India for 2024?",
+    a: "Based on NIRF rankings and NAAC scores, Jain University, Manipal University Online, Amity Online, and NMIMS are among the top choices. Each has unique strengths in specific streams like Management, IT, or Commerce."
+  },
+  {
+    k: "campus",
+    q: "Can I visit the university campus if I am an online student?",
+    a: "Yes! Online students are bonafide students of the university. You can visit the campus, use the library, and attend convocation ceremonies just like regular students. Most of our partners like Jain and LPU have massive, world-class campuses in Bengaluru and Punjab."
+  },
+  {
+    k: "international",
+    q: "Are the degrees from these universities valid for WES evaluation?",
+    a: "Yes, degrees from NAAC A+ accredited universities like Jain and Manipal are typically cleared by WES (World Education Services) for Canada and USA immigration/higher studies. We provide assistance in document procurement for WES."
+  },
+  {
+    k: "support",
+    q: "Who will handle my queries after admission?",
+    a: "You will have a dedicated Student Relationship Manager (SRM) from the university and a support contact from JoinOnline Education. We ensure a smooth journey from enrollment to degree certificate collection."
+  }
+];
 
 const universities = [
   { 
@@ -24,7 +53,11 @@ const universities = [
     courses: ["Online MBA", "Online MCA", "Online BBA", "Online B.Com"],
     affiliation: "UGC-DEB, AICTE Approved",
     ranking: "#68 NIRF Ranking",
-    highlight: "Industry-aligned specializations and top-tier placement support."
+    highlight: "Industry-aligned specializations and top-tier placement support.",
+    faqs: [
+      { k: "jain-naac", q: "What does NAAC A++ accreditation mean for Jain University?", a: "NAAC A++ is the highest possible grade awarded by India's National Assessment and Accreditation Council. It signifies excellence in curriculum, teaching, and infrastructure, ensuring your degree is globally competitive." },
+      { k: "jain-electives", q: "Can I choose my electives in the second year at Jain Online?", a: "Yes, Jain University offers a wide array of over 30+ electives in MBA and MCA, allowing students to specialize in niche areas like Digital Marketing, Business Analytics, or FinTech." }
+    ]
   },
   { 
     id: "manipal",
@@ -34,7 +67,11 @@ const universities = [
     courses: ["Online MBA", "Online MCA", "Online BBA", "Online B.Com", "Online BCA"],
     affiliation: "UGC-DEB Approved",
     ranking: "A++ Grade by NAAC",
-    highlight: "Access to a global alumni network of over 300,000 professionals."
+    highlight: "Access to a global alumni network of over 300,000 professionals.",
+    faqs: [
+      { k: "manipal-eminence", q: "Is Manipal University Online considered an Institution of Eminence?", a: "Yes, MAHE (Manipal Academy of Higher Education) has been awarded the 'Institution of Eminence' status by the Government of India, reflecting its commitment to global standards of education." },
+      { k: "manipal-lms", q: "What platform does Manipal use for online classes?", a: "Manipal University Online uses a world-class Learning Management System (LMS) with mobile app support, allowing for seamless offline access to study materials." }
+    ]
   },
   { 
     id: "amity",
@@ -93,7 +130,7 @@ function UniversitiesPage() {
             <section className="text-center max-w-4xl mx-auto">
               <p className="news-kicker">Universities · Special Audit</p>
               <h2 className="mt-3 font-headline text-5xl md:text-7xl">
-                The Certified Directory of Partner Universities
+                The Verified Directory of Partner Universities
               </h2>
               <p className="mt-4 news-byline">
                 Total Number of Verified Institutions: {universities.length}
@@ -123,10 +160,14 @@ function UniversitiesPage() {
                 </div>
               ))}
             </section>
+
+            <div className="mt-20">
+               <GlobalFAQ faqs={UNIVERSITY_FAQS} />
+            </div>
           </>
         ) : (
           /* Dedicated University Page View */
-          <section className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <section className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 mb-20">
             <button 
               onClick={() => setSelectedId(null)}
               className="flex items-center gap-2 font-serif-news text-sm uppercase tracking-widest mb-8 hover:underline"
@@ -173,7 +214,7 @@ function UniversitiesPage() {
                     <div className="mt-6 flex gap-3">
                        <Link 
                         to="/contact" 
-                        state={{ university: selectedUni.name }}
+                        search={{ university: selectedUni.name }}
                         className="flex-1 bg-foreground text-background text-center py-3 font-serif-news uppercase tracking-widest text-xs hover:opacity-90"
                        >
                          Apply to {selectedUni.id === 'sikkim-board' ? 'Board' : 'Uni'}
@@ -181,6 +222,10 @@ function UniversitiesPage() {
                     </div>
                  </div>
               </div>
+            </div>
+            
+            <div className="mt-20">
+               <GlobalFAQ faqs={(selectedUni as any)?.faqs || UNIVERSITY_FAQS} />
             </div>
           </section>
         )}
@@ -190,3 +235,4 @@ function UniversitiesPage() {
     </div>
   );
 }
+

@@ -8,7 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in | EduConnect" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in | JoinOnline Education" },
+      { name: "description", content: "Sign in to your JoinOnline account to access the admissions desk and student records." },
+    ],
+  }),
   component: LoginPage,
 });
 
@@ -55,13 +60,45 @@ function LoginPage() {
     const checkEmail = email.trim().toLowerCase();
 
     try {
-      // Perform Supabase authentication
-      const { error } = await supabase.auth.signInWithPassword({ email: checkEmail, password });
-      setLoading(false);
+      // 1. Attempt standard login
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email: checkEmail, 
+        password 
+      });
 
-      if (error) return toast.error(error.message);
-      toast.success("Welcome back!");
-      navigate({ to: "/dashboard" });
+      if (!signInError) {
+        setLoading(false);
+        toast.success("Welcome back! Routing to your console…");
+        return;
+      }
+
+      // 2. If login fails, check if this is an 'allowed manager' attempting first login with phone
+      const { data: manager } = await supabase
+        .from("allowed_managers" as any)
+        .select("phone")
+        .eq("email", checkEmail)
+        .maybeSingle();
+
+      // If the provided password matches the recorded phone number, we perform auto-signup
+      if (manager && manager.phone && manager.phone === password.trim()) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: checkEmail,
+          password: password.trim(),
+        });
+
+        if (signUpError) {
+          setLoading(false);
+          return toast.error("Auto-registration failed: " + signUpError.message);
+        }
+
+        // SignUp usually signs in automatically too
+        setLoading(false);
+        toast.success("Account initialized! Welcome to the hub.");
+        return;
+      }
+
+      setLoading(false);
+      return toast.error(signInError.message);
     } catch (err) {
       setLoading(false);
       return toast.error("Authentication failed. Please check your network connection.");
@@ -78,7 +115,7 @@ function LoginPage() {
       {/* Editorial Masthead */}
       <div className="text-center max-w-md mb-8 w-full">
         <Link to="/" className="font-headline text-4xl sm:text-5xl hover:opacity-80 uppercase tracking-tight block">
-          EduConnect Times
+          JoinOnline Education
         </Link>
         <div className="news-divider mt-3 py-1.5 text-center text-[10px] sm:text-xs uppercase tracking-widest font-sans font-bold">
           Vol. CXIV · Special Admissions Issue · Bengaluru

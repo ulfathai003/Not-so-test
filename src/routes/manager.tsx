@@ -15,7 +15,7 @@ import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/manager")({
-  head: () => ({ meta: [{ title: "Manager Console | EduConnect" }] }),
+  head: () => ({ meta: [{ title: "Manager Console | JoinOnline Education" }] }),
   component: ManagerPage,
 });
 
@@ -57,7 +57,7 @@ function ManagerPage() {
             <span className="grid place-items-center w-8 h-8 border-2 border-foreground bg-foreground text-background shrink-0">
               <GraduationCap className="w-5 h-5" />
             </span>
-            EduConnect
+            JoinOnline
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/dashboard"><Button size="sm" variant="outline" className="border-2 border-foreground rounded-none font-sans font-bold uppercase tracking-widest text-[10px]"><ArrowLeft className="w-4 h-4 mr-1" /> Students</Button></Link>
@@ -389,7 +389,7 @@ function printReceipt(p: Payment, s?: Student) {
 <!doctype html><html><head><title>Receipt ${p.receipt_number}</title>
 <style>body{font-family:system-ui;padding:40px;max-width:600px;margin:auto}h1{color:#4f46e5}table{width:100%;border-collapse:collapse;margin-top:20px}td{padding:8px;border-bottom:1px solid #eee}.r{text-align:right}.muted{color:#666;font-size:12px}</style>
 </head><body>
-<h1>EduConnect Distance Learning</h1>
+<h1>JoinOnline Education</h1>
 <p class="muted">Official Fee Payment Receipt</p>
 <hr/>
 <h2>Receipt #${p.receipt_number}</h2>

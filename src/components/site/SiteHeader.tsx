@@ -48,12 +48,12 @@ export function SiteHeader() {
       {/* Masthead */}
       <div className="container mx-auto px-4 py-6 text-center">
         <Link to="/" className="block">
-          <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl tracking-tight">
-            The EduConnect Times
+          <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl tracking-tight uppercase">
+            JoinOnline Education
           </h1>
         </Link>
         <p className="news-byline mt-2">
-          "Distance Learning, Faithfully Reported Since 2016"
+          "Indian Distance Learning, Faithfully Reported Since 2016"
         </p>
       </div>
 

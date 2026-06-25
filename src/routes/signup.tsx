@@ -8,7 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account | EduConnect" }] }),
+  head: () => ({
+    meta: [
+      { title: "Create account | JoinOnline Education" },
+      { name: "description", content: "Register for your JoinOnline account to start your admission process." },
+    ],
+  }),
   component: SignupPage,
 });
 
@@ -51,7 +56,7 @@ function SignupPage() {
       {/* Editorial Masthead */}
       <div className="text-center max-w-md mb-8 w-full">
         <Link to="/" className="font-headline text-4xl sm:text-5xl hover:opacity-80 uppercase tracking-tight block">
-          EduConnect Times
+          JoinOnline Education
         </Link>
         <div className="news-divider mt-3 py-1.5 text-center text-[10px] sm:text-xs uppercase tracking-widest font-sans font-bold">
           Vol. CXIV · Special Admissions Issue · Bengaluru

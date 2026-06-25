@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { GlobalFAQ } from "@/components/site/GlobalFAQ";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,22 +13,51 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
+  validateSearch: (search: Record<string, unknown>): { university?: string } => {
+    return {
+      university: search.university ? (search.university as string) : undefined,
+    };
+  },
   head: () => ({
     meta: [
-      { title: "Contact EduConnect Times" },
-      { name: "description", content: "Get in touch with our admissions team. We respond within one working day." },
+      { title: "Contact Admissions | JoinOnline Education Online MBA & BBA Support" },
+      { name: "description", content: "Get free expert admissions counselling for Online MBA, BBA and distance courses. Reach our Bengaluru office or message us on WhatsApp for PAN-India support." },
     ],
   }),
   component: ContactPage,
 });
 
+const CONTACT_FAQS = [
+  {
+    k: "response-time",
+    q: "How soon can I expect a call back from a counsellor?",
+    a: "Typically, our counsellors call back within 2-4 business hours. If you submit a query after 7 PM, expect a call the following morning between 10 AM and 11 AM IST."
+  },
+  {
+    k: "docs-whatsapp",
+    q: "Can I send my documents via WhatsApp for verification?",
+    a: "Yes! Once you are connected with a counsellor, you can securely share your marksheets and ID proof via WhatsApp for a preliminary eligibility check."
+  },
+  {
+    k: "visit-office",
+    q: "Can I visit your office in Bengaluru?",
+    a: "Absolutely. We are located in the heart of Bengaluru's education hub. Please schedule an appointment through your counsellor to ensure the right advisor is available to meet you."
+  },
+  {
+    k: "multilingual",
+    q: "Is counselling available in regional languages?",
+    a: "Yes, our team can assist you in English, Hindi, Kannada, Tamil, Telugu, and Malayalam to make sure you understand every detail of your chosen program."
+  }
+];
+
 function ContactPage() {
   const { user, studentData } = useAuth();
+  const search = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [university, setUniversity] = useState("");
+  const [university, setUniversity] = useState(search.university || "");
   const [course, setCourse] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [message, setMessage] = useState("");
@@ -64,7 +94,32 @@ function ContactPage() {
       if (dbError) throw dbError;
 
       // 2. Original FormSubmit.co notification fallback
-      const response = await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
+      const autoReplyMessage = `Dear ${name},
+
+Thank you for reaching out to JoinOnline Education! We have successfully received your enquiry regarding ${course || "online education"} and our expert counsellor will get in touch with you within 2–4 business hours.
+
+Here's a summary of what we received:
+• Name: ${name}
+• Interested In: ${course}
+• University of Interest: ${university}
+
+If you'd like to speak to us immediately, please feel free to reach us:
+📧 Email: admissions@joinonlineeducation.com
+📞 Phone: +91 80 4000 0000
+💬 WhatsApp: Available Mon–Sat, 9 AM – 8 PM IST
+
+About JoinOnline Education:
+We are a leading distance & online education consultancy helping thousands of students across India get admitted to UGC-DEB approved universities like Jain University, Manipal University, Amity, NMIMS, and more. Our counsellors guide you through every step — from eligibility check to document submission and final enrolment.
+
+We look forward to helping you build your future!
+
+Warm regards,
+The Admissions Team
+JoinOnline Education
+HSR Layout, Bengaluru, Karnataka
+admissions@joinonlineeducation.com`;
+
+      const response = await fetch("https://formsubmit.co/ajax/joinonlineeducation@gmail.com", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,11 +133,13 @@ function ContactPage() {
           course,
           courseDescription,
           message,
-          _subject: `New Admission Inquiry from ${name}`
+          _subject: `📩 New Admission Enquiry from ${name}`,
+          _autoresponse: autoReplyMessage,
+          _template: "table"
         })
       });
 
-      toast.success("Inquiry received! Prashant Bhai is allocating your counselor now.");
+      toast.success("Inquiry received! Our counselor will get back to you shortly.");
       setName(user?.user_metadata?.full_name || studentData?.full_name || "");
       setEmail(user?.email || "");
       setPhone(studentData?.phone || "");
@@ -115,10 +172,10 @@ function ContactPage() {
         </section>
 
         {/* Form and info row */}
-        <section className="mt-12 grid gap-12 lg:grid-cols-2 news-rule py-8">
+        <section className="mt-12 grid gap-12 lg:grid-cols-2 news-rule py-8 pb-20">
           {/* Left panel - newspaper column info */}
           <div className="space-y-6 font-serif-news text-[15px] leading-relaxed">
-            <h3 className="font-headline text-3xl mb-4">Admissions Bureau</h3>
+            <h3 className="font-headline text-3xl mb-4 text-gradient">Admissions Bureau</h3>
             <p>
               Free counselling is available from Monday through Saturday, 9:00 AM to 8:00 PM IST.
               Our desk is fully staffed and ready to evaluate eligibility credentials on the spot.
@@ -131,7 +188,7 @@ function ContactPage() {
             <div className="news-divider pt-6 space-y-4">
               <div className="flex items-center gap-3">
                 <span className="grid place-items-center w-9 h-9 border border-foreground rounded-lg bg-foreground/5 text-foreground"><Mail className="w-4 h-4" /></span>
-                <span className="text-sm font-semibold">admissions@educonnect.app</span>
+                <span className="text-sm font-semibold">admissions@joinonlineeducation.com</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="grid place-items-center w-9 h-9 border border-foreground rounded-lg bg-foreground/5 text-foreground"><Phone className="w-4 h-4" /></span>
@@ -186,7 +243,9 @@ function ContactPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   className="bg-transparent border-foreground/40 focus:border-foreground rounded-none font-serif-news" 
                 />
-              </div>              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                 <div>
                   <Label htmlFor="university" className="font-serif-news text-xs uppercase font-bold text-foreground/80">Affiliated University / Board</Label>
                   <select 
@@ -271,7 +330,7 @@ function ContactPage() {
               <div className="pt-2">
                 <Button 
                   disabled={loading} 
-                  className="w-full bg-foreground text-background hover:bg-foreground/80 rounded-none font-serif-news uppercase tracking-widest text-xs py-3"
+                  className="w-full bg-foreground text-background hover:bg-foreground/80 rounded-none font-serif-news uppercase tracking-widest text-xs py-3 font-bold"
                 >
                   {loading ? "Submitting Inquiry..." : "Submit Inquiry"}
                 </Button>
@@ -279,8 +338,12 @@ function ContactPage() {
             </form>
           </div>
         </section>
+
+        <GlobalFAQ faqs={CONTACT_FAQS} />
+
       </main>
       <SiteFooter />
     </div>
   );
 }
+

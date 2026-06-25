@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/setup")({
-  head: () => ({ meta: [{ title: "Setup | EduConnect" }] }),
+  head: () => ({ meta: [{ title: "Setup | JoinOnline Education" }] }),
   component: SetupPage,
 });
 

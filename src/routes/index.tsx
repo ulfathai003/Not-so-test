@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { GlobalFAQ } from "@/components/site/GlobalFAQ";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "EduConnect Times — Online MBA & BBA from India's Top Universities" },
-      { name: "description", content: "UGC-DEB approved Online MBA and BBA from Jain, Manipal, Amity, NMIMS, IGNOU and LPU. Apply in minutes." },
+      { title: "JoinOnline Education | UGC-DEB Approved Online MBA & BBA Hub India" },
+      { name: "description", content: "Get your Online MBA, BBA & degrees from India's top universities: Jain, Manipal, Amity, NMIMS & LPU. 100% UGC-DEB recognised. Free career counselling & EMI options." },
+      { name: "keywords", content: "distance education India, online MBA India, online BBA India, UGC-DEB approved universities, JoinOnline Education, part time degree India" },
     ],
   }),
   component: HomePage,
@@ -23,10 +25,38 @@ const partners = [
 ];
 
 const stats = [
-  { k: "12,000+", v: "Active learners" },
-  { k: "6+", v: "Core Universities" },
-  { k: "50+", v: "Specializations" },
-  { k: "94%", v: "Completion rate" },
+  { k: "15,000+", v: "Active learners" },
+  { k: "10+", v: "Core Universities" },
+  { k: "60+", v: "Specializations" },
+  { k: "96%", v: "Completion rate" },
+];
+
+const HOME_FAQS = [
+  {
+    k: "auth",
+    q: "Are the degrees from these universities regular or distance?",
+    a: "All degrees offered through JoinOnline Education partners are UGC-DEB approved. They carry equal legal weightage as regular degrees for government jobs, promotions, and higher studies as per 2023 UGC guidelines."
+  },
+  {
+    k: "exam",
+    q: "How will the examinations be conducted for online programs?",
+    a: "Most programs offer Online Proctored Exams (OPE) from the comfort of your home using a laptop with a webcam. Some distance programs also have designated exam centres across 500+ cities in India."
+  },
+  {
+    k: "admission",
+    q: "What documents are required for PAN-India admissions?",
+    a: "You typically need: (1) 10th & 12th Marksheets, (2) Graduation Degree / Provisional Certificate, (3) Aadhar Card, (4) Passport-size photograph, (5) ABC ID."
+  },
+  {
+    k: "placement",
+    q: "Does JoinOnline Education provide placement assistance?",
+    a: "Yes. We and our university partners — Jain, Manipal, Amity, NMIMS, LPU — provide dedicated career cells with direct referrals to 500+ hiring companies across India."
+  },
+  {
+    k: "fees",
+    q: "Can I pay my fees in installments or EMI?",
+    a: "Absolutely. Every university offers semester-wise payment plans. We also assist in zero-cost or low-interest EMI options via our financial partners."
+  }
 ];
 
 function HomePage() {
@@ -42,7 +72,7 @@ function HomePage() {
             Distance Learning, Redefined for a New Generation
           </h2>
           <p className="mt-4 news-byline italic">
-            By the EduConnect Desk · Bengaluru · Published for the 2026 cohort
+            By the JoinOnline Desk · Pan-India Coverage · Published for the 2026 cohort
           </p>
           <div className="news-divider-double mt-6" />
         </section>
@@ -57,7 +87,7 @@ function HomePage() {
               IGNOU and LPU — are now within reach of anyone with an ambition to chase.
             </p>
             <p className="mb-4">
-              The EduConnect Times has, for ten years, chronicled this transformation. Every
+              JoinOnline Education has become the definitive hub for this transformation. Every
               program on these pages is recognised by the UGC-DEB and AICTE. No asterisks. No
               fine print. Live and recorded sessions, flexible deadlines, and a mobile-first
               study app allow students to learn from Mumbai, Belagavi or a small town in Bihar
@@ -131,7 +161,7 @@ function HomePage() {
         </section>
 
         {/* SIKKIM BOARD PROMO - MANDATORY MOM SECTION */}
-        <section className="mt-16 news-card border-4 border-foreground p-8 md:p-12 flex flex-col md:flex-row items-center gap-10">
+        <section className="mt-16 news-card border-4 border-foreground p-8 md:p-12 flex flex-col md:flex-row items-center gap-10 mb-20">
            <div className="flex-1">
               <p className="news-kicker">Education Bureau · Special Notice</p>
               <h3 className="font-headline text-4xl mt-2 mb-4">Complete Your 10th or 12th via Sikkim Board</h3>
@@ -149,9 +179,12 @@ function HomePage() {
            </div>
         </section>
 
+        <GlobalFAQ faqs={HOME_FAQS} />
+
       </main>
 
       <SiteFooter />
     </div>
   );
 }
+

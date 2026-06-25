@@ -14,11 +14,19 @@ import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProgramsRouteImport } from './routes/programs'
+import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FeesRouteImport } from './routes/fees'
+import { Route as EnrollmentNoRouteImport } from './routes/enrollment-no'
+import { Route as EnquiriesRouteImport } from './routes/enquiries'
+import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CentersRouteImport } from './routes/centers'
 import { Route as CenterRouteImport } from './routes/center'
+import { Route as BoardsRouteImport } from './routes/boards'
+import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AdmissionDeskRouteImport } from './routes/admission-desk'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
@@ -49,6 +57,11 @@ const ProgramsRoute = ProgramsRouteImport.update({
   path: '/programs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManagerRoute = ManagerRouteImport.update({
   id: '/manager',
   path: '/manager',
@@ -57,6 +70,26 @@ const ManagerRoute = ManagerRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeesRoute = FeesRouteImport.update({
+  id: '/fees',
+  path: '/fees',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnrollmentNoRoute = EnrollmentNoRouteImport.update({
+  id: '/enrollment-no',
+  path: '/enrollment-no',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnquiriesRoute = EnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -69,9 +102,24 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CentersRoute = CentersRouteImport.update({
+  id: '/centers',
+  path: '/centers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CenterRoute = CenterRouteImport.update({
   id: '/center',
   path: '/center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoardsRoute = BoardsRouteImport.update({
+  id: '/boards',
+  path: '/boards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovalsRoute = ApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdmissionDeskRoute = AdmissionDeskRouteImport.update({
@@ -100,11 +148,19 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/approvals': typeof ApprovalsRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
+  '/centers': typeof CentersRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/employees': typeof EmployeesRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/enrollment-no': typeof EnrollmentNoRoute
+  '/fees': typeof FeesRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
+  '/payments': typeof PaymentsRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -116,11 +172,19 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/approvals': typeof ApprovalsRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
+  '/centers': typeof CentersRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/employees': typeof EmployeesRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/enrollment-no': typeof EnrollmentNoRoute
+  '/fees': typeof FeesRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
+  '/payments': typeof PaymentsRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -133,11 +197,19 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/admission-desk': typeof AdmissionDeskRoute
+  '/approvals': typeof ApprovalsRoute
+  '/boards': typeof BoardsRoute
   '/center': typeof CenterRoute
+  '/centers': typeof CentersRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/employees': typeof EmployeesRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/enrollment-no': typeof EnrollmentNoRoute
+  '/fees': typeof FeesRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
+  '/payments': typeof PaymentsRoute
   '/programs': typeof ProgramsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
@@ -151,11 +223,19 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/approvals'
+    | '/boards'
     | '/center'
+    | '/centers'
     | '/contact'
     | '/dashboard'
+    | '/employees'
+    | '/enquiries'
+    | '/enrollment-no'
+    | '/fees'
     | '/login'
     | '/manager'
+    | '/payments'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -167,11 +247,19 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/approvals'
+    | '/boards'
     | '/center'
+    | '/centers'
     | '/contact'
     | '/dashboard'
+    | '/employees'
+    | '/enquiries'
+    | '/enrollment-no'
+    | '/fees'
     | '/login'
     | '/manager'
+    | '/payments'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -183,11 +271,19 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admission-desk'
+    | '/approvals'
+    | '/boards'
     | '/center'
+    | '/centers'
     | '/contact'
     | '/dashboard'
+    | '/employees'
+    | '/enquiries'
+    | '/enrollment-no'
+    | '/fees'
     | '/login'
     | '/manager'
+    | '/payments'
     | '/programs'
     | '/setup'
     | '/signup'
@@ -200,11 +296,19 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   AdmissionDeskRoute: typeof AdmissionDeskRoute
+  ApprovalsRoute: typeof ApprovalsRoute
+  BoardsRoute: typeof BoardsRoute
   CenterRoute: typeof CenterRoute
+  CentersRoute: typeof CentersRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
+  EmployeesRoute: typeof EmployeesRoute
+  EnquiriesRoute: typeof EnquiriesRoute
+  EnrollmentNoRoute: typeof EnrollmentNoRoute
+  FeesRoute: typeof FeesRoute
   LoginRoute: typeof LoginRoute
   ManagerRoute: typeof ManagerRoute
+  PaymentsRoute: typeof PaymentsRoute
   ProgramsRoute: typeof ProgramsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
@@ -249,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgramsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/manager': {
       id: '/manager'
       path: '/manager'
@@ -261,6 +372,34 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fees': {
+      id: '/fees'
+      path: '/fees'
+      fullPath: '/fees'
+      preLoaderRoute: typeof FeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enrollment-no': {
+      id: '/enrollment-no'
+      path: '/enrollment-no'
+      fullPath: '/enrollment-no'
+      preLoaderRoute: typeof EnrollmentNoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enquiries': {
+      id: '/enquiries'
+      path: '/enquiries'
+      fullPath: '/enquiries'
+      preLoaderRoute: typeof EnquiriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -277,11 +416,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/centers': {
+      id: '/centers'
+      path: '/centers'
+      fullPath: '/centers'
+      preLoaderRoute: typeof CentersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/center': {
       id: '/center'
       path: '/center'
       fullPath: '/center'
       preLoaderRoute: typeof CenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boards': {
+      id: '/boards'
+      path: '/boards'
+      fullPath: '/boards'
+      preLoaderRoute: typeof BoardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approvals': {
+      id: '/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof ApprovalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admission-desk': {
@@ -320,11 +480,19 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   AdmissionDeskRoute: AdmissionDeskRoute,
+  ApprovalsRoute: ApprovalsRoute,
+  BoardsRoute: BoardsRoute,
   CenterRoute: CenterRoute,
+  CentersRoute: CentersRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
+  EmployeesRoute: EmployeesRoute,
+  EnquiriesRoute: EnquiriesRoute,
+  EnrollmentNoRoute: EnrollmentNoRoute,
+  FeesRoute: FeesRoute,
   LoginRoute: LoginRoute,
   ManagerRoute: ManagerRoute,
+  PaymentsRoute: PaymentsRoute,
   ProgramsRoute: ProgramsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,

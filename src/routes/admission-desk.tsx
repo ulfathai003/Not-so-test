@@ -18,8 +18,8 @@ import {
 export const Route = createFileRoute("/admission-desk")({
   head: () => ({
     meta: [
-      { title: "Admissions Intake Desk | EduConnect Times" },
-      { name: "description", content: "Apply for Online MBA, BBA and distance courses. Official intake desk." },
+      { title: "Admissions Intake Desk | JoinOnline Education" },
+      { name: "description", content: "Apply for Online MBA, BBA and distance courses. Official intake desk for JoinOnline students." },
     ],
   }),
   component: AdmissionDeskPage,
@@ -144,7 +144,7 @@ function AdmissionDeskPage() {
 
   // Load draft from localStorage on mount
   useEffect(() => {
-    const savedDraft = localStorage.getItem("educonnect_admissions_draft");
+    const savedDraft = localStorage.getItem("joinonline_admissions_draft");
     if (savedDraft) {
       try {
         setFormData(JSON.parse(savedDraft));
@@ -218,11 +218,11 @@ function AdmissionDeskPage() {
   const updateField = (key: keyof FormState, value: any) => {
     const updated = { ...formData, [key]: value };
     setFormData(updated);
-    localStorage.setItem("educonnect_admissions_draft", JSON.stringify(updated));
+    localStorage.setItem("joinonline_admissions_draft", JSON.stringify(updated));
   };
 
   const handleSaveDraft = async () => {
-    localStorage.setItem("educonnect_admissions_draft", JSON.stringify(formData));
+    localStorage.setItem("joinonline_admissions_draft", JSON.stringify(formData));
     toast.success("Draft application saved to local storage!");
 
     if (user) {
@@ -301,7 +301,7 @@ function AdmissionDeskPage() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>EduConnect Times - Application Voucher</title>
+          <title>JoinOnline Education - Application Voucher</title>
           <style>
             body { font-family: 'Georgia', serif; background-color: #fbf6e7; color: #1a1410; padding: 40px; }
             .receipt { border: 4px double #1a1410; padding: 30px; max-width: 650px; margin: 0 auto; background: #fff; }
@@ -318,7 +318,7 @@ function AdmissionDeskPage() {
         <body>
           <div class="receipt">
             <div class="header">
-              <div class="title">EduConnect Times</div>
+              <div class="title">JoinOnline Education</div>
               <div class="subtitle">Official Admissions Desk Voucher · Batch of 2026</div>
             </div>
             <div class="field-grid">
@@ -436,11 +436,46 @@ function AdmissionDeskPage() {
         }
       }
 
-      // 2. Submit to ulfathai003@gmail.com using FormSubmit AJAX
+      const studentEmail = user?.email || formData.phone + "@applicant.noreply";
+      const autoReplyMessage = `Dear ${formData.full_name},
+
+Thank you for submitting your application to JoinOnline Education! 🎓
+
+We have successfully received your complete admissions form and our expert counsellor will review your credentials and get in touch with you within 24 hours.
+
+Your Application Summary:
+• Program: ${formData.program} — ${formData.specialization}
+• University: ${formData.university}
+• Session: ${formData.admission_session} 2026
+• Study Mode: ${formData.study_mode}
+
+Next Steps:
+1. Our counsellor will call you to confirm eligibility
+2. You will receive a document checklist via WhatsApp
+3. Account creation & fee structure will be shared
+4. Enrollment & University registration begins
+
+Need to talk to us right away?
+📧 Email: admissions@joinonlineeducation.com
+📞 Phone: +91 80 4000 0000
+💬 WhatsApp: Mon–Sat, 9 AM – 8 PM IST
+
+About JoinOnline Education:
+We are a trusted distance & online education consultancy, guiding students across India into UGC-DEB approved programs at top universities such as Jain University, Manipal University, Amity, NMIMS, and LPU. Our end-to-end support means you are never alone in the admissions process.
+
+We look forward to welcoming you into the JoinOnline family!
+
+Warm regards,
+The Admissions Team
+JoinOnline Education | HSR Layout, Bengaluru
+admissions@joinonlineeducation.com`;
+
+      // 2. Submit notification + auto-reply via FormSubmit
       const emailBody = {
-        _subject: `New Admissions Intake Submission - ${formData.full_name} (${formData.program})`,
+        _subject: `📋 New Admission Application — ${formData.full_name} (${formData.program} · ${formData.university})`,
+        _cc: "joinonlineeducation@gmail.com",
         applicant_name: formData.full_name,
-        email: user?.email || "guest@applicant.com",
+        email: studentEmail,
         phone: formData.phone,
         aadhar: formData.aadhar_number,
         program: formData.program,
@@ -479,9 +514,11 @@ function AdmissionDeskPage() {
         degree_marks: formData.edu_degree_marks,
         degree_percent: formData.edu_degree_percentage,
         degree_result: formData.edu_degree_result,
+        _autoresponse: autoReplyMessage,
+        _template: "table",
       };
 
-      const response = await fetch("https://formsubmit.co/ajax/ulfathai003@gmail.com", {
+      const response = await fetch("https://formsubmit.co/ajax/joinonlineeducation@gmail.com", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -495,7 +532,7 @@ function AdmissionDeskPage() {
       }
 
       toast.success("Application successfully submitted directly to the desk!");
-      localStorage.removeItem("educonnect_admissions_draft");
+      localStorage.removeItem("joinonline_admissions_draft");
 
       if (user) {
         await refetchStudent();
