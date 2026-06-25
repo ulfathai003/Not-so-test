@@ -275,9 +275,9 @@ function AdmissionDeskPage() {
           doc_marksheet_10: formData.doc_marksheet_10,
           doc_marksheet_12: formData.doc_marksheet_12,
           doc_marksheet_degree: formData.doc_marksheet_degree,
-          status: "inactive", // applicants start as inactive
+          status: "inactive",
           batch_year: 2026,
-        });
+        }, { onConflict: "email" });
 
         if (error) {
           console.error("Supabase upsert error:", error);
@@ -426,9 +426,9 @@ function AdmissionDeskPage() {
           doc_marksheet_10: formData.doc_marksheet_10,
           doc_marksheet_12: formData.doc_marksheet_12,
           doc_marksheet_degree: formData.doc_marksheet_degree,
-          status: "inactive", // applicants start as inactive
+          status: "inactive",
           batch_year: 2026,
-        });
+        }, { onConflict: "email" });
 
         if (error) {
           console.error("Error inserting record:", error);
