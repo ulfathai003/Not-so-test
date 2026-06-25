@@ -77,13 +77,28 @@ function ContactPage() {
     setLoading(true);
 
     try {
-      // 1. Save to Supabase (Order Flow: Lands in Manager Console for Prashant Bhai)
+      // Map contact-form course strings → database program_type enum values
+      const PROGRAM_MAP: Record<string, string> = {
+        "Online MBA":            "MBA",
+        "Online MCA":            "MBA",   // nearest enum match
+        "Online BBA":            "BBA",
+        "Online B.Com":          "BBA",   // nearest enum match
+        "Online BCA":            "BBA",   // nearest enum match
+        "Online MA":             "MBA",   // nearest enum match
+        "Online BA":             "BBA",   // nearest enum match
+        "Diploma":               "BBA",   // nearest enum match
+        "Secondary (10th)":      "10th",
+        "Senior Secondary (12th)": "12th Commerce",
+      };
+      const mappedProgram = PROGRAM_MAP[course] ?? "MBA"; // safe fallback
+
+      // 1. Save to Supabase (lands in Enquiries desk as a lead)
       const { error: dbError } = await (supabase as any).from("students").insert([{
         full_name: name,
         email: email,
         phone: phone,
         university: university,
-        program: course.includes("10th") ? "10th" : course.includes("12th") ? "12th Commerce" : (course as any),
+        program: mappedProgram,
         specialization: course,
         notes: `Interest: ${courseDescription}. Message: ${message}`,
         status: "lead",
