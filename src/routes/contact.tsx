@@ -92,21 +92,27 @@ function ContactPage() {
       };
       const mappedProgram = PROGRAM_MAP[course] ?? "MBA"; // safe fallback
 
-      // 1. Save to Supabase (lands in Enquiries desk as a lead)
-      const { error: dbError } = await (supabase as any).from("students").insert([{
-        full_name: name,
-        email: email,
-        phone: phone,
-        university: university,
-        program: mappedProgram,
-        specialization: course,
-        notes: `Interest: ${courseDescription}. Message: ${message}`,
-        status: "lead",
-        batch_year: new Date().getFullYear(),
-        location: "Website Inbound"
-      }]);
+      // 1. Save to the CRM via the security-definer RPC. A direct
+      // students.insert() is blocked by RLS for anonymous visitors (the table
+      // is locked down), so leads were never reaching the Enquiries desk.
+      // submit_inquiry() is granted to anon, forces status='lead', and is
+      // rate-limited server-side.
+      const { error: dbError } = await (supabase as any).rpc("submit_inquiry", {
+        p_full_name: name,
+        p_email: email,
+        p_phone: phone,
+        p_university: university,
+        p_program: mappedProgram,
+        p_specialization: course,
+        p_notes: `Interest: ${courseDescription}. Message: ${message}`,
+        p_location: "Website Inbound",
+      });
 
-      if (dbError) throw dbError;
+      // Never lose a lead: if the CRM save fails, log it and still deliver the
+      // email notification below instead of erroring the whole submission.
+      if (dbError) {
+        console.error("Lead CRM save failed; sending email fallback:", dbError.message);
+      }
 
       // 2. Original FormSubmit.co notification fallback
       const autoReplyMessage = `Dear ${name},
