@@ -53,6 +53,32 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Resolve the signed-in user's role and forward them to the right console.
+  // The login page does not mount useAuth, so without this the session is set
+  // (and a success toast shown) but nothing navigates — leaving the user stuck
+  // on the login screen.
+  async function routeByRole(userId: string, userEmail: string) {
+    const cleanEmail = userEmail.toLowerCase();
+    if (cleanEmail === "ulfathai003@gmail.com") {
+      return navigate({ to: "/dashboard" });
+    }
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const roles = (data ?? []).map((r: any) => r.role);
+    if (roles.includes("super_admin") || roles.includes("admin")) {
+      navigate({ to: "/dashboard" });
+    } else if (roles.includes("center")) {
+      navigate({ to: "/center" });
+    } else if (roles.includes("staff")) {
+      navigate({ to: "/staff" });
+    } else {
+      // Students / applicants land on the admissions dashboard.
+      navigate({ to: "/dashboard" });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -61,44 +87,41 @@ function LoginPage() {
 
     try {
       // 1. Attempt standard login
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
-        email: checkEmail, 
-        password 
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: checkEmail,
+        password
       });
 
       if (!signInError) {
-        setLoading(false);
         toast.success("Welcome back! Routing to your console…");
+        if (signInData?.user) {
+          await routeByRole(signInData.user.id, signInData.user.email || checkEmail);
+        }
+        setLoading(false);
         return;
       }
 
-      // 2. If login fails, check if this is an 'allowed manager' attempting first login with phone
-      const { data: manager } = await supabase
-        .from("allowed_managers" as any)
-        .select("phone")
-        .eq("email", checkEmail)
-        .maybeSingle();
-
-      // If the provided password matches the recorded phone number, we perform auto-signup
-      if (manager && manager.phone && manager.phone === password.trim()) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: checkEmail,
-          password: password.trim(),
-        });
-
-        if (signUpError) {
-          setLoading(false);
-          return toast.error("Auto-registration failed: " + signUpError.message);
+      // 2. Login failed. Managers/centers/staff are onboarded by whitelisting
+      // their email (Settings → add to allowed_managers with a role); they then
+      // register a password via /signup, and the handle_new_user trigger grants
+      // the whitelisted role automatically. If this email is whitelisted but has
+      // no account yet, nudge them to register instead of showing a raw error.
+      let hint: string | null = null;
+      try {
+        const { data: manager } = await supabase
+          .from("allowed_managers" as any)
+          .select("email")
+          .eq("email", checkEmail)
+          .maybeSingle();
+        if (manager) {
+          hint = "This email is approved for access but has no account yet. Tap “Register on the Desk” below to set your password.";
         }
-
-        // SignUp usually signs in automatically too
-        setLoading(false);
-        toast.success("Account initialized! Welcome to the hub.");
-        return;
+      } catch {
+        // allowed_managers lookup is best-effort; never block the error message.
       }
 
       setLoading(false);
-      return toast.error(signInError.message);
+      return toast.error(hint || signInError.message);
     } catch (err) {
       setLoading(false);
       return toast.error("Authentication failed. Please check your network connection.");
