@@ -101,27 +101,49 @@ function LoginPage() {
         return;
       }
 
-      // 2. Login failed. Managers/centers/staff are onboarded by whitelisting
-      // their email (Settings → add to allowed_managers with a role); they then
-      // register a password via /signup, and the handle_new_user trigger grants
-      // the whitelisted role automatically. If this email is whitelisted but has
-      // no account yet, nudge them to register instead of showing a raw error.
-      let hint: string | null = null;
+      // 2. Login failed. Centers/Employees are onboarded by an admin who
+      // whitelists their name+email+mobile in allowed_managers; the mobile
+      // number is their first-login password. If the entered password matches
+      // that mobile and no account exists yet, auto-create it here. The
+      // handle_new_user trigger then grants the whitelisted role on sign-up.
       try {
         const { data: manager } = await supabase
           .from("allowed_managers" as any)
-          .select("email")
+          .select("phone")
           .eq("email", checkEmail)
           .maybeSingle();
-        if (manager) {
-          hint = "This email is approved for access but has no account yet. Tap “Register on the Desk” below to set your password.";
+
+        const enteredDigits = password.replace(/\D/g, "");
+        const phoneDigits = manager?.phone ? String(manager.phone).replace(/\D/g, "") : "";
+
+        if (manager && phoneDigits && enteredDigits === phoneDigits) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: checkEmail,
+            password,
+          });
+          if (signUpError) {
+            setLoading(false);
+            return toast.error("Could not initialise your account: " + signUpError.message);
+          }
+          // Email confirmation is ON, so signUp returns no session: the user
+          // must confirm via the emailed link, then sign in again with the
+          // same email + mobile. If confirmation is ever turned off, a session
+          // is returned and we route them straight in.
+          if (signUpData?.session && signUpData.user) {
+            toast.success("Welcome aboard! Routing to your console…");
+            await routeByRole(signUpData.user.id, signUpData.user.email || checkEmail);
+          } else {
+            toast.success("Account created. Please confirm your email from your inbox, then sign in again with your email and mobile number.");
+          }
+          setLoading(false);
+          return;
         }
       } catch {
-        // allowed_managers lookup is best-effort; never block the error message.
+        // allowed_managers lookup is best-effort; never block the error below.
       }
 
       setLoading(false);
-      return toast.error(hint || signInError.message);
+      return toast.error(signInError.message);
     } catch (err) {
       setLoading(false);
       return toast.error("Authentication failed. Please check your network connection.");

@@ -528,7 +528,7 @@ function StudentsTab({ role, userEmail }: { role: string; userEmail: string }) {
                 </td>
                 <td className="p-4">
                   <div className="font-bold">{s.program}{s.specialization ? ` — ${s.specialization}` : ""}</div>
-                  <div className="text-xs text-muted-foreground">Batch: {s.batch_year}</div>
+                  <div className="text-xs text-muted-foreground">Session: {s.admission_session || s.batch_year}</div>
                   <div className="text-xs text-muted-foreground">{s.university}</div>
                 </td>
                 <td className="p-4">
@@ -612,12 +612,17 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
     e.preventDefault();
     setBusy(true);
     try {
+      // Session is free text (e.g. "NIOS - Dec 2026"); keep batch_year in sync
+      // by parsing a 4-digit year out of it for sorting/filtering.
+      const sessionText = String(form.admission_session ?? "");
+      const ym = sessionText.match(/(20\d{2})/);
+      const payload = { ...form, batch_year: ym ? Number(ym[1]) : (Number(form.batch_year) || new Date().getFullYear()) };
       if (student) {
-        const { error } = await supabase.from("students").update(form).eq("id", student.id);
+        const { error } = await supabase.from("students").update(payload).eq("id", student.id);
         if (error) throw error;
         toast.success("Student updated");
       } else {
-        const { error } = await supabase.from("students").insert([form]);
+        const { error } = await supabase.from("students").insert([payload]);
         if (error) throw error;
         toast.success("Student admitted");
       }
@@ -677,7 +682,7 @@ function StudentEditorDialog({ student, onClose }: { student: Student | null; on
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Batch Year"><Input type="number" value={form.batch_year} onChange={e => setForm({ ...form, batch_year: Number(e.target.value) })} className="rounded-none border-2 border-foreground" /></Field>
+            <Field label="Session"><Input value={form.admission_session ?? ""} onChange={e => setForm({ ...form, admission_session: e.target.value })} placeholder="e.g. NIOS - Dec 2026" maxLength={60} className="rounded-none border-2 border-foreground" /></Field>
             <Field label="Enrollment Number (Final)"><Input value={form.enrollment_number || ""} onChange={e => setForm({ ...form, enrollment_number: e.target.value })} placeholder="Provided by Admin later" className="rounded-none border-2 border-foreground" /></Field>
           </div>
         </section>

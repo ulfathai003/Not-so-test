@@ -43,7 +43,6 @@ const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
 const EMPLOYMENT = ["Employed", "Unemployed", "Self-employed", "Student"];
 const MARITAL = ["Single", "Married", "Divorced", "Widowed"];
 const RESULTS = ["Pass", "Fail", "Distinction", "First Class", "Second Class"];
-const SESSIONS = ["January", "July"];
 const STUDY_MODES = ["Online", "Distance", "Hybrid"];
 const MEDIUMS = ["English", "Hindi", "Bilingual"];
 const PAYMENT_STATUSES = ["Paid", "Partial", "Pending", "Overdue"];
@@ -247,7 +246,7 @@ function ProspectDashboard({
                   <div><strong>Selected Program:</strong> {studentData?.program}</div>
                   <div><strong>University:</strong> {studentData?.university}</div>
                   <div><strong>Specialization:</strong> {studentData?.specialization || "General"}</div>
-                  <div><strong>Session:</strong> {studentData?.admission_session} 2026</div>
+                  <div><strong>Session:</strong> {studentData?.admission_session}</div>
                 </div>
               </div>
             ) : (
@@ -934,7 +933,7 @@ function AdminPanel({ isCenter, isStaff, view, userEmail }: { isCenter?: boolean
                 <Th>Program</Th>
                 <Th>Specialization</Th>
                 <Th>University</Th>
-                <Th>Batch</Th>
+                <Th>Session</Th>
                 <Th>Location</Th>
                 <Th>Status</Th>
                 <Th className="text-right">Action</Th>
@@ -962,7 +961,7 @@ function AdminPanel({ isCenter, isStaff, view, userEmail }: { isCenter?: boolean
                   <td className="p-4"><span className="font-sans font-bold uppercase text-xs border border-foreground/40 px-1 py-0.5">{s.program}</span></td>
                   <td className="p-4">{s.specialization}</td>
                   <td className="p-4 text-foreground/80">{s.university}</td>
-                  <td className="p-4">{s.batch_year}</td>
+                  <td className="p-4">{s.admission_session || s.batch_year}</td>
                   <td className="p-4 text-foreground/80">{s.location}</td>
                   <td className="p-4"><StatusBadge status={s.status} /></td>
                   <td className="p-4 text-right">
@@ -1031,10 +1030,15 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
     e.preventDefault();
     setSaving(true);
     const combinedNotes = (invoiceUrlInput.trim() ? `[INVOICE_URL]: ${invoiceUrlInput.trim()}\n` : "") + generalNotesInput.trim();
+    // The Session field is free text (e.g. "NIOS - Dec 2026"); keep batch_year
+    // populated for sorting/filtering by parsing a 4-digit year out of it.
+    const sessionText = String(form.admission_session ?? "");
+    const yearMatch = sessionText.match(/(20\d{2})/);
+    const derivedYear = yearMatch ? Number(yearMatch[1]) : (Number(form.batch_year) || new Date().getFullYear());
     const payload = {
       ...form,
       notes: combinedNotes || null,
-      batch_year: Number(form.batch_year),
+      batch_year: derivedYear,
       phone: form.phone || null,
       location: form.location || form.city || "—",
     };
@@ -1110,8 +1114,8 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
                 <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{UNIVERSITIES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Batch year" required>
-              <Input className="rounded-none border border-foreground bg-transparent" type="number" min={2020} max={2040} value={form.batch_year} onChange={(e) => set("batch_year", Number(e.target.value))} required />
+            <Field label="Session" required>
+              <Input className="rounded-none border border-foreground bg-transparent" value={form.admission_session ?? ""} onChange={(e) => set("admission_session", e.target.value)} maxLength={60} placeholder="e.g. NIOS - Dec 2026" required />
             </Field>
             <Field label="Status" required>
               <Select value={form.status ?? "active"} onValueChange={(v) => set("status", v as Student["status"])}>
@@ -1125,12 +1129,6 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
           <TabsContent value="enrollment" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Enrollment number">
               <Input className="rounded-none border border-foreground bg-transparent" value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
-            </Field>
-            <Field label="Admission session">
-              <Select value={form.admission_session ?? ""} onValueChange={(v) => set("admission_session", v)}>
-                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="January / July" /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
             </Field>
             <Field label="Study mode">
               <Select value={form.study_mode ?? ""} onValueChange={(v) => set("study_mode", v)}>
@@ -1395,7 +1393,7 @@ function StudentPanel({ email }: { email: string }) {
             </div>
             
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <Info icon={GraduationCap} label="Academic Session" value={`${record.admission_session || "July"} ${record.batch_year}`} />
+              <Info icon={GraduationCap} label="Academic Session" value={`${record.admission_session || record.batch_year}`} />
               <Info icon={BookOpen} label="Study Delivery Mode" value={record.study_mode || "Online"} />
               <Info icon={MapPin} label="Intake Location" value={record.location} />
               <Info icon={Mail} label="Academic Email" value={record.email} />

@@ -18,15 +18,17 @@ type Student = Tables<"students">;
 
 function EmployeesPage() {
   const { role, loading } = useAuth();
-  const [staff, setStaff] = useState<{ email: string; created_at: string }[]>([]);
+  const [staff, setStaff] = useState<{ name?: string; email: string; phone?: string; created_at: string }[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const [s, st] = await Promise.all([
-      supabase.from("allowed_managers" as any).select("email, created_at").eq("role", "staff").order("created_at", { ascending: false }),
-      supabase.from("students").select("*").eq("status", "lead"),
-    ]);
+    let s = await supabase.from("allowed_managers" as any).select("name, email, phone, created_at").eq("role", "staff").order("created_at", { ascending: false });
+    // Fall back if name/phone columns aren't added yet (DB_SETUP/FIX_manager_contact.sql).
+    if (s.error) {
+      s = await supabase.from("allowed_managers" as any).select("email, created_at").eq("role", "staff").order("created_at", { ascending: false });
+    }
+    const st = await supabase.from("students").select("*").eq("status", "lead");
     if (s.data) setStaff(s.data as any);
     if (st.data) setStudents(st.data as Student[]);
   };
@@ -69,7 +71,9 @@ function EmployeesPage() {
           <table className="w-full text-left font-serif-news text-sm">
             <thead className="bg-[#f4ecd8] border-b border-foreground/30">
               <tr>
-                <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Employee Email</th>
+                <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Employee Name</th>
+                <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Email</th>
+                <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Mobile</th>
                 <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Assigned Leads</th>
                 <th className="p-4 font-sans font-bold text-xs uppercase tracking-wider text-[#6b3e1a]">Onboarded</th>
               </tr>
@@ -77,13 +81,15 @@ function EmployeesPage() {
             <tbody>
               {staff.map((emp) => (
                 <tr key={emp.email} className="border-t border-foreground/10 hover:bg-[#f4ecd8]/40">
-                  <td className="p-4 font-bold">{emp.email}</td>
+                  <td className="p-4 font-bold">{emp.name || "—"}</td>
+                  <td className="p-4">{emp.email}</td>
+                  <td className="p-4">{emp.phone || "—"}</td>
                   <td className="p-4">{assignedCount(emp.email)}</td>
                   <td className="p-4 text-xs text-[#6b3e1a]">{new Date(emp.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
               {staff.length === 0 && (
-                <tr><td colSpan={3} className="p-10 text-center italic text-[#6b3e1a]">No employees onboarded yet.</td></tr>
+                <tr><td colSpan={5} className="p-10 text-center italic text-[#6b3e1a]">No employees onboarded yet.</td></tr>
               )}
             </tbody>
           </table>
