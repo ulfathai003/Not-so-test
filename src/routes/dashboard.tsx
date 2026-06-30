@@ -37,7 +37,7 @@ type ProgramType = Student["program"];
 
 const PROGRAMS: ProgramType[] = ["10th", "12th Arts", "12th Commerce", "12th Science", "BBA", "MBA"];
 const STATUSES = ["active", "inactive", "graduated", "suspended"] as const;
-const UNIVERSITIES = ["Mangalayatan University", "Jain University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
+const UNIVERSITIES = ["Mangalayatan University", "Subharti University", "Jain University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
 const GENDERS = ["Male", "Female", "Other"];
 const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
 const EMPLOYMENT = ["Employed", "Unemployed", "Self-employed", "Student"];

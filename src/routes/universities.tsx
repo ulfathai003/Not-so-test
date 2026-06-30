@@ -59,7 +59,38 @@ const universities = [
       { k: "jain-electives", q: "Can I choose my electives in the second year at Jain Online?", a: "Yes, Jain University offers a wide array of over 30+ electives in MBA and MCA, allowing students to specialize in niche areas like Digital Marketing, Business Analytics, or FinTech." }
     ]
   },
-  { 
+  {
+    id: "mangalayatan",
+    name: "Mangalayatan University",
+    city: "Aligarh, Uttar Pradesh",
+    description: "Mangalayatan University Distance Education is a private university located in the city of Aligarh in Uttar Pradesh, India. It was established in 2006 and is approved by UGC-DEB, offering undergraduate, postgraduate, and doctoral programs in various fields such as engineering, management, law, commerce, arts, and sciences. The university has state-of-the-art facilities, including a library, computer labs, sports grounds, and research centres, and aims to provide quality education and develop well-rounded individuals with a strong sense of social responsibility.",
+    courses: ["Online MBA", "Online BBA", "Online B.Com", "Online MCA", "Online BA", "Online MA"],
+    affiliation: "UGC-DEB-AICTE · Open & Distance Learning (ODL)",
+    ranking: "UGC-DEB Approved",
+    highlight: "A hub of innovation and learning — affordable, holistic and committed to excellence, assisting students in pursuing their degrees.",
+    accreditation: "UGC-DEB-AICTE — OPEN & DISTANCE LEARNING (ODL). Mangalayatan University Aligarh is recognized by the University Grants Commission – Distance Education Bureau (UGC-DEB), which allows the University to conduct open and distance learning modes of education in the higher education system.",
+    faqs: [
+      { k: "manga-approved", q: "Is Mangalayatan University recognised for distance education?", a: "Yes. Mangalayatan University Aligarh is recognized by the University Grants Commission – Distance Education Bureau (UGC-DEB) under the UGC-DEB-AICTE Open & Distance Learning (ODL) framework, allowing it to offer distance and online programs in the higher-education system." },
+      { k: "manga-programs", q: "What programs does Mangalayatan University offer through distance mode?", a: "Established in 2006, the university offers undergraduate, postgraduate, and doctoral programs across engineering, management, law, commerce, arts, and sciences, supported by a library, computer labs, and research centres." }
+    ]
+  },
+  {
+    id: "subharti",
+    name: "Subharti University",
+    city: "Meerut, Uttar Pradesh",
+    description: "To accomplish higher goals within busy schedules is a challenge which only Distance Learning can solve. Swami Vivekanand Subharti University, Centre for Distance and Online Education (CDOE), presents young as well as adult learners with a suitable alternative outside conventional class-room teaching. It frees learners from limitations like an on-going job, no good educational institution within reach, or expensive higher qualifications. The University has introduced a contemporary wide range of curricular options to train students in different fields of specialization through teaching, research and extension.",
+    courses: ["Online MBA", "Online BBA", "Online B.Com", "Online BA", "Online MA", "Online MCA"],
+    affiliation: "UGC Approved · Centre for Distance and Online Education (CDOE)",
+    ranking: "UGC-DEB Approved",
+    highlight: "Distance Education programs have obvious multiple advantages in today's life.",
+    mission: "To develop programs of the highest standards, and to produce confident, self-reliant, responsible youth having skills, social values, leadership, and entrepreneurship bent of mind in highly competitive, technologically advanced, ever-changing needs of society.",
+    vision: "To be an acclaimed University that provides contemporary Technical and Professional knowledge, skills as well as research opportunities befitting global scenarios while maintaining Service, Sacrament, and Nationality.",
+    faqs: [
+      { k: "subharti-cdoe", q: "What is Subharti University's CDOE?", a: "The Centre for Distance and Online Education (CDOE) is Swami Vivekanand Subharti University's wing for distance and online programs, offering a flexible alternative to conventional classroom teaching for working professionals and adult learners." },
+      { k: "subharti-who", q: "Who is distance learning at Subharti best suited for?", a: "It is ideal for learners balancing an on-going job, those without a good institution within reach, or anyone seeking an affordable path to higher qualifications across a wide range of specializations." }
+    ]
+  },
+  {
     id: "manipal",
     name: "Manipal University", 
     city: "Manipal", 
@@ -192,6 +223,30 @@ function UniversitiesPage() {
                 <p className="news-dropcap">{selectedUni.description}</p>
                 <p className="mt-4 md:mt-0 font-bold italic">"{selectedUni.highlight}"</p>
               </div>
+
+              {((selectedUni as any).vision || (selectedUni as any).mission) && (
+                <div className="grid md:grid-cols-2 gap-6 mb-10">
+                  {(selectedUni as any).mission && (
+                    <div className="border-2 border-foreground p-6 bg-slate-50">
+                      <h3 className="font-headline text-2xl mb-3">Our Mission</h3>
+                      <p className="font-serif-news text-base leading-relaxed">{(selectedUni as any).mission}</p>
+                    </div>
+                  )}
+                  {(selectedUni as any).vision && (
+                    <div className="border-2 border-foreground p-6 bg-slate-50">
+                      <h3 className="font-headline text-2xl mb-3">Our Vision</h3>
+                      <p className="font-serif-news text-base leading-relaxed">{(selectedUni as any).vision}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(selectedUni as any).accreditation && (
+                <div className="border-4 border-foreground p-6 md:p-8 mb-10 bg-foreground text-background">
+                  <h3 className="font-headline text-3xl mb-3 flex items-center gap-3"><ShieldCheck className="w-7 h-7" /> Approval &amp; Accreditation</h3>
+                  <p className="font-serif-news text-base leading-relaxed">{(selectedUni as any).accreditation}</p>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-10">
                  <div className="news-rule-vertical pr-8">
