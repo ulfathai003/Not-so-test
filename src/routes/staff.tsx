@@ -207,13 +207,15 @@ function NegotiationDialog({ lead, onSaved }: { lead: Student, onSaved: () => vo
       })
       .eq("id", lead.id);
     
-    // Also log in follow_ups table if possible (optional but good practice)
-    await supabase.from("follow_ups").insert([{
+    // Also log in the follow_ups activity table. Don't fail the whole save if
+    // this errors, but surface it instead of swallowing it silently.
+    const { error: followErr } = await supabase.from("follow_ups").insert([{
       student_id: lead.id,
       notes: notes,
       follow_up_date: new Date().toISOString(),
       status: "lead"
     }]);
+    if (followErr) console.warn("follow_ups log failed:", followErr.message);
 
     setBusy(false);
     if (error) toast.error(error.message);
