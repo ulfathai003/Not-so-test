@@ -26,7 +26,7 @@ class RateLimiter {
 }
 
 // Rate limiting thresholds
-const dbLimiter = new RateLimiter(60); // 60 DB requests per minute
+const dbLimiter = new RateLimiter(200); // 200 DB requests per minute (data-heavy dashboards fan out many reads)
 const authLimiter = new RateLimiter(10); // 10 login/signup attempts per minute
 
 function resolveConfig() {
@@ -76,7 +76,7 @@ function withRateLimits(client: SupabaseClient<Database>): SupabaseClient<Databa
         return (table: string) => {
           if (!dbLimiter.check()) {
             if (typeof window !== "undefined") {
-              toast.error("Too many database requests. Please wait a moment and try again.");
+              toast.error("Too many database requests. Please wait a moment and try again.", { id: "db-rate-limit" });
             }
             throw new Error("Rate limit exceeded: too many database queries.");
           }
