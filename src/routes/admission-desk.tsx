@@ -26,7 +26,7 @@ export const Route = createFileRoute("/admission-desk")({
 });
 
 const PROGRAMS = ["10th", "12th Arts", "12th Commerce", "12th Science", "BBA", "MBA"];
-const UNIVERSITIES = ["Mangalayatan University", "Jain University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
+const UNIVERSITIES = ["Mangalayatan University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
 const GENDERS = ["Male", "Female", "Other"];
 const CATEGORIES = ["General", "OBC", "SC", "ST", "Other"];
 const MARITAL_STATUSES = ["Single", "Married", "Divorced", "Widowed", "Other"];
@@ -87,7 +87,7 @@ interface FormState {
 
 const initialFormState: FormState = {
   program: "MBA",
-  university: "Jain University",
+  university: "Mangalayatan University",
   specialization: "Marketing",
   medium_of_instruction: "English",
   admission_session: "January",
@@ -160,7 +160,7 @@ function AdmissionDeskPage() {
       setFormData((prev) => ({
         ...prev,
         program: prev.program || studentData.program || "MBA",
-        university: prev.university || studentData.university || "Jain University",
+        university: prev.university || studentData.university || "Mangalayatan University",
         specialization: prev.specialization || studentData.specialization || "",
         medium_of_instruction: prev.medium_of_instruction || studentData.medium_of_instruction || "English",
         admission_session: prev.admission_session || studentData.admission_session || "January",
@@ -461,7 +461,7 @@ Need to talk to us right away?
 💬 WhatsApp: Mon–Sat, 9 AM – 8 PM IST
 
 About JoinOnline Education:
-We are a trusted distance & online education consultancy, guiding students across India into UGC-DEB approved programs at top universities such as Jain University, Manipal University, Amity, NMIMS, and LPU. Our end-to-end support means you are never alone in the admissions process.
+We are a trusted distance & online education consultancy, guiding students across India into UGC-DEB approved programs at top universities such as Mangalayatan University, Manipal University, Amity, NMIMS, and LPU. Our end-to-end support means you are never alone in the admissions process.
 
 We look forward to welcoming you into the JoinOnline family!
 

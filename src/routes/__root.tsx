@@ -30,7 +30,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "JoinOnline Education — India's Premier Hub for Top Distance & Online Degrees" },
-      { name: "description", content: "Apply for UGC-DEB accredited Online MBA, BBA, MCA & Degree programs from India's top universities including Jain, Manipal, Amity, NMIMS, IGNOU and LPU. Complete your education anywhere in India." },
+      { name: "description", content: "Apply for UGC-DEB accredited Online MBA, BBA, MCA & Degree programs from India's top universities including Mangalayatan, Manipal, Amity, NMIMS, IGNOU and LPU. Complete your education anywhere in India." },
       { property: "og:title", content: "JoinOnline Education — Premium Distance Learning Hub" },
       { property: "og:description", content: "Accredited BBA, MBA & degree programs from India's top universities. Pan-India admissions coverage." },
       { property: "og:type", content: "website" },

@@ -130,7 +130,7 @@ If you'd like to speak to us immediately, please feel free to reach us:
 💬 WhatsApp: Available Mon–Sat, 9 AM – 8 PM IST
 
 About JoinOnline Education:
-We are a leading distance & online education consultancy helping thousands of students across India get admitted to UGC-DEB approved universities like Jain University, Manipal University, Amity, NMIMS, and more. Our counsellors guide you through every step — from eligibility check to document submission and final enrolment.
+We are a leading distance & online education consultancy helping thousands of students across India get admitted to UGC-DEB approved universities like Mangalayatan University, Manipal University, Amity, NMIMS, and more. Our counsellors guide you through every step — from eligibility check to document submission and final enrolment.
 
 We look forward to helping you build your future!
 
@@ -279,7 +279,6 @@ admissions@joinonlineeducation.com`;
                     style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
                   >
                     <option value="">-- Choose University --</option>
-                    <option value="Jain (Deemed-to-be) University">Jain (Deemed-to-be) University</option>
                     <option value="Manipal University">Manipal University</option>
                     <option value="Amity University">Amity University</option>
                     <option value="NMIMS">NMIMS</option>

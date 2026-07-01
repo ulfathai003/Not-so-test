@@ -27,7 +27,6 @@ export function SiteFooter() {
           <div>
             <h4 className="news-kicker mb-3">Universities</h4>
             <ul className="space-y-1.5">
-              <li>Jain (Deemed-to-be) University</li>
               <li>Manipal University</li>
               <li>Amity · NMIMS · IGNOU · LPU</li>
             </ul>

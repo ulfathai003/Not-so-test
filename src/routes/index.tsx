@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "JoinOnline Education | UGC-DEB Approved Online MBA & BBA Hub India" },
-      { name: "description", content: "Get your Online MBA, BBA & degrees from India's top universities: Jain, Manipal, Amity, NMIMS & LPU. 100% UGC-DEB recognised. Free career counselling & EMI options." },
+      { name: "description", content: "Get your Online MBA, BBA & degrees from India's top universities: Mangalayatan, Manipal, Amity, NMIMS & LPU. 100% UGC-DEB recognised. Free career counselling & EMI options." },
       { name: "keywords", content: "distance education India, online MBA India, online BBA India, UGC-DEB approved universities, JoinOnline Education, part time degree India" },
     ],
   }),
@@ -15,7 +15,6 @@ export const Route = createFileRoute("/")({
 });
 
 const partners = [
-  "Jain (Deemed-to-be) University",
   "Manipal University",
   "Amity University",
   "NMIMS",
@@ -50,7 +49,7 @@ const HOME_FAQS = [
   {
     k: "placement",
     q: "Does JoinOnline Education provide placement assistance?",
-    a: "Yes. We and our university partners — Jain, Manipal, Amity, NMIMS, LPU — provide dedicated career cells with direct referrals to 500+ hiring companies across India."
+    a: "Yes. We and our university partners — Mangalayatan, Manipal, Amity, NMIMS, LPU — provide dedicated career cells with direct referrals to 500+ hiring companies across India."
   },
   {
     k: "fees",
@@ -83,7 +82,7 @@ function HomePage() {
             <p className="mb-4">
               In an age when classrooms once demanded presence, a quiet revolution has arrived
               at the doorstep of the working professional. Online MBA, BBA and specialization
-              programs from India's most respected universities — Jain, Manipal, Amity, NMIMS,
+              programs from India's most respected universities — Mangalayatan, Manipal, Amity, NMIMS,
               IGNOU and LPU — are now within reach of anyone with an ambition to chase.
             </p>
             <p className="mb-4">

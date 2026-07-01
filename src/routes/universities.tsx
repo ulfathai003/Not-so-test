@@ -10,7 +10,7 @@ export const Route = createFileRoute("/universities")({
   head: () => ({
     meta: [
       { title: "Top Online Universities in India 2024 | JoinOnline Education" },
-      { name: "description", content: "Compare top UGC-DEB approved online universities like Jain, Manipal, Amity, and NMIMS. Get direct admission with expert counselling in India." },
+      { name: "description", content: "Compare top UGC-DEB approved online universities like Mangalayatan, Manipal, Amity, and NMIMS. Get direct admission with expert counselling in India." },
     ],
   }),
   component: UniversitiesPage,
@@ -25,17 +25,17 @@ const UNIVERSITY_FAQS = [
   {
     k: "rankings",
     q: "Which are the top-ranked online universities in India for 2024?",
-    a: "Based on NIRF rankings and NAAC scores, Jain University, Manipal University Online, Amity Online, and NMIMS are among the top choices. Each has unique strengths in specific streams like Management, IT, or Commerce."
+    a: "Based on NIRF rankings and NAAC scores, Mangalayatan University, Manipal University Online, Amity Online, and NMIMS are among the top choices. Each has unique strengths in specific streams like Management, IT, or Commerce."
   },
   {
     k: "campus",
     q: "Can I visit the university campus if I am an online student?",
-    a: "Yes! Online students are bonafide students of the university. You can visit the campus, use the library, and attend convocation ceremonies just like regular students. Most of our partners like Jain and LPU have massive, world-class campuses in Bengaluru and Punjab."
+    a: "Yes! Online students are bonafide students of the university. You can visit the campus, use the library, and attend convocation ceremonies just like regular students. Most of our partners like Mangalayatan and LPU have massive, world-class campuses in Bengaluru and Punjab."
   },
   {
     k: "international",
     q: "Are the degrees from these universities valid for WES evaluation?",
-    a: "Yes, degrees from NAAC A+ accredited universities like Jain and Manipal are typically cleared by WES (World Education Services) for Canada and USA immigration/higher studies. We provide assistance in document procurement for WES."
+    a: "Yes, degrees from NAAC A+ accredited universities like Mangalayatan and Manipal are typically cleared by WES (World Education Services) for Canada and USA immigration/higher studies. We provide assistance in document procurement for WES."
   },
   {
     k: "support",
@@ -45,20 +45,6 @@ const UNIVERSITY_FAQS = [
 ];
 
 const universities = [
-  { 
-    id: "jain",
-    name: "Jain (Deemed-to-be) University", 
-    city: "Bengaluru", 
-    description: "Jain University is a hub for learning in every sense of the word. A regular recipient of NAAC A++ accreditation, it offers a world-class environment for online management and computer application studies.",
-    courses: ["Online MBA", "Online MCA", "Online BBA", "Online B.Com"],
-    affiliation: "UGC-DEB, AICTE Approved",
-    ranking: "#68 NIRF Ranking",
-    highlight: "Industry-aligned specializations and top-tier placement support.",
-    faqs: [
-      { k: "jain-naac", q: "What does NAAC A++ accreditation mean for Jain University?", a: "NAAC A++ is the highest possible grade awarded by India's National Assessment and Accreditation Council. It signifies excellence in curriculum, teaching, and infrastructure, ensuring your degree is globally competitive." },
-      { k: "jain-electives", q: "Can I choose my electives in the second year at Jain Online?", a: "Yes, Jain University offers a wide array of over 30+ electives in MBA and MCA, allowing students to specialize in niche areas like Digital Marketing, Business Analytics, or FinTech." }
-    ]
-  },
   {
     id: "mangalayatan",
     name: "Mangalayatan University",

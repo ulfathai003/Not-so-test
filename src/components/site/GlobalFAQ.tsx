@@ -24,7 +24,7 @@ const FAQS = [
   {
     k: "placement",
     q: "Does JoinOnline Education provide placement assistance?",
-    a: "Yes. We and our university partners — Jain, Manipal, Amity, NMIMS, LPU — provide dedicated career cells with resume reviews, mock interviews, LinkedIn optimization, and direct referrals to 500+ hiring companies across India. MBA graduates see an average 40% salary hike within 12 months of completion."
+    a: "Yes. We and our university partners — Mangalayatan, Manipal, Amity, NMIMS, LPU — provide dedicated career cells with resume reviews, mock interviews, LinkedIn optimization, and direct referrals to 500+ hiring companies across India. MBA graduates see an average 40% salary hike within 12 months of completion."
   },
   {
     k: "fees",
@@ -59,7 +59,7 @@ const FAQS = [
   {
     k: "universities",
     q: "Which are the best universities for online MBA in India?",
-    a: "JoinOnline Education partners with India's most respected UGC-DEB approved online universities: Jain (Deemed-to-be) University (Bengaluru), Manipal University Online, Amity University Online, NMIMS Global Access, Lovely Professional University (LPU), and IGNOU. All are NAAC accredited and their degrees are accepted by employers across India and globally."
+    a: "JoinOnline Education partners with India's most respected UGC-DEB approved online universities: Mangalayatan University (Bengaluru), Manipal University Online, Amity University Online, NMIMS Global Access, Lovely Professional University (LPU), and IGNOU. All are NAAC accredited and their degrees are accepted by employers across India and globally."
   },
   {
     k: "lateral",
@@ -69,7 +69,7 @@ const FAQS = [
   {
     k: "salary",
     q: "What is the average salary after an online MBA in India?",
-    a: "Entry-level MBA graduates in Finance, HR, or Marketing earn ₹3.5 – 6 LPA. Experienced professionals with 3–5 years of work experience who complete an online MBA typically see packages of ₹8 – 15 LPA, especially in BFSI, IT, Consulting, and E-commerce sectors. Top performers from premium universities (Jain, NMIMS) average ₹12+ LPA."
+    a: "Entry-level MBA graduates in Finance, HR, or Marketing earn ₹3.5 – 6 LPA. Experienced professionals with 3–5 years of work experience who complete an online MBA typically see packages of ₹8 – 15 LPA, especially in BFSI, IT, Consulting, and E-commerce sectors. Top performers from premium universities (Mangalayatan, NMIMS) average ₹12+ LPA."
   },
   {
     k: "counsellor",
@@ -79,7 +79,7 @@ const FAQS = [
   {
     k: "recognition",
     q: "Are online degrees from India recognised abroad for immigration or foreign jobs?",
-    a: "Online degrees from NAAC-accredited, UGC-recognised Indian universities are increasingly accepted abroad. Countries with large Indian diaspora — UAE, USA, Canada, UK, Singapore, Australia — generally recognise these degrees. We recommend checking the specific country's equivalency requirements. For immigration (Canada PR, Australia points test), the degree must be assessed by WES or equivalent. JoinOnline recommends Jain or Manipal University for their best international recognition track record."
+    a: "Online degrees from NAAC-accredited, UGC-recognised Indian universities are increasingly accepted abroad. Countries with large Indian diaspora — UAE, USA, Canada, UK, Singapore, Australia — generally recognise these degrees. We recommend checking the specific country's equivalency requirements. For immigration (Canada PR, Australia points test), the degree must be assessed by WES or equivalent. JoinOnline recommends Mangalayatan or Manipal University for their best international recognition track record."
   }
 ];
 

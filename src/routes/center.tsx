@@ -356,7 +356,7 @@ function RecordRow({ label, value }: { label: string, value: string }) {
   );
 }
 
-const UNIVERSITIES = ["Mangalayatan University", "Jain University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
+const UNIVERSITIES = ["Mangalayatan University", "Manipal University", "Amity University", "NMIMS", "IGNOU", "LPU"];
 const PROGRAMS = ["BBA", "MBA", "BCA", "MCA", "B.Com", "M.Com", "10th", "12th Arts", "12th Commerce", "12th Science"];
 const BOARDS = [
   "CBSE", "ICSE", "NIOS", 
