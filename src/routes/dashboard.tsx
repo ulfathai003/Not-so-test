@@ -1106,13 +1106,12 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
         <Tabs defaultValue="course" className="w-full">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full h-auto bg-[#f4ecd8] border border-foreground/30 p-1 gap-1">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto bg-[#f4ecd8] border border-foreground/30 p-1 gap-1">
             <TabsTrigger value="course" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><BookOpen className="w-3.5 h-3.5 mr-1" /> Course</TabsTrigger>
             <TabsTrigger value="enrollment" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><ClipboardList className="w-3.5 h-3.5 mr-1" /> Enrol</TabsTrigger>
             <TabsTrigger value="personal" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><User className="w-3.5 h-3.5 mr-1" /> Personal</TabsTrigger>
             <TabsTrigger value="address" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><Home className="w-3.5 h-3.5 mr-1" /> Address</TabsTrigger>
             <TabsTrigger value="education" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><FileText className="w-3.5 h-3.5 mr-1" /> School</TabsTrigger>
-            <TabsTrigger value="fees" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><Wallet className="w-3.5 h-3.5 mr-1" /> Fees</TabsTrigger>
             <TabsTrigger value="docs" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><FolderCheck className="w-3.5 h-3.5 mr-1" /> Docs</TabsTrigger>
           </TabsList>
 
@@ -1177,10 +1176,8 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
                 <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{MEDIUMS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Course name"><Input className="rounded-none border border-foreground bg-transparent" value={form.course_name ?? ""} onChange={(e) => set("course_name", e.target.value)} maxLength={120} placeholder="Master of Business Administration" /></Field>
-            <Field label="Course code"><Input className="rounded-none border border-foreground bg-transparent" value={form.course_code ?? ""} onChange={(e) => set("course_code", e.target.value)} maxLength={30} placeholder="MBA-FIN" /></Field>
-            <Field label="Duration (years)"><Input className="rounded-none border border-foreground bg-transparent" type="number" step="0.5" min={0} max={10} value={form.duration_years ?? ""} onChange={(e) => set("duration_years", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Total semesters"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={1} max={12} value={form.total_semesters ?? ""} onChange={(e) => set("total_semesters", e.target.value ? Number(e.target.value) : null)} /></Field>
+            {/* Course name/code, duration & total semesters are attributes of the
+                course itself (set when a course is created) — not entered per student. */}
             <Field label="Current semester"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={1} max={12} value={form.current_semester ?? ""} onChange={(e) => set("current_semester", e.target.value ? Number(e.target.value) : null)} /></Field>
             <Field label="Counsellor"><Input className="rounded-none border border-foreground bg-transparent" value={form.counsellor_name ?? ""} onChange={(e) => set("counsellor_name", e.target.value)} maxLength={120} /></Field>
             <Field label="Lead source">
@@ -1210,6 +1207,8 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
                 <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
+            <Field label="Caste"><Input className="rounded-none border border-foreground bg-transparent" value={(form as any).caste ?? ""} onChange={(e) => set("caste" as keyof TablesInsert<"students">, e.target.value as never)} maxLength={60} /></Field>
+            <Field label="Sub-Caste"><Input className="rounded-none border border-foreground bg-transparent" value={(form as any).sub_caste ?? ""} onChange={(e) => set("sub_caste" as keyof TablesInsert<"students">, e.target.value as never)} maxLength={60} /></Field>
             <Field label="Employment status">
               <Select value={form.employment_status ?? ""} onValueChange={(v) => set("employment_status", v)}>
                 <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
@@ -1237,7 +1236,6 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
             <Field label="City"><Input className="rounded-none border border-foreground bg-transparent" value={form.city ?? ""} onChange={(e) => set("city", e.target.value)} maxLength={80} /></Field>
             <Field label="District"><Input className="rounded-none border border-foreground bg-transparent" value={form.district ?? ""} onChange={(e) => set("district", e.target.value)} maxLength={80} /></Field>
             <Field label="State"><Input className="rounded-none border border-foreground bg-transparent" value={form.state ?? ""} onChange={(e) => set("state", e.target.value)} maxLength={80} /></Field>
-            <div className="sm:col-span-2"><Field label="Location (display)" required><Input className="rounded-none border border-foreground bg-transparent" value={form.location} onChange={(e) => set("location", e.target.value)} maxLength={120} placeholder="City, State" required /></Field></div>
           </TabsContent>
 
           {/* EDUCATION */}
@@ -1262,41 +1260,7 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
             />
           </TabsContent>
 
-          {/* FEES */}
-          <TabsContent value="fees" className="grid gap-4 sm:grid-cols-2 pt-4">
-            <Field label="Total fee (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.total_fee ?? ""} onChange={(e) => set("total_fee", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Fee paid (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.fee_paid ?? ""} onChange={(e) => set("fee_paid", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Fee pending (₹)"><Input className="rounded-none border border-foreground bg-transparent" type="number" min={0} step="0.01" value={form.fee_pending ?? ""} onChange={(e) => set("fee_pending", e.target.value ? Number(e.target.value) : null)} /></Field>
-            <Field label="Payment status">
-              <Select value={form.payment_status ?? ""} onValueChange={(v) => set("payment_status", v)}>
-                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Payment mode">
-              <Select value={form.payment_mode ?? ""} onValueChange={(v) => set("payment_mode", v)}>
-                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Last payment date"><Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.last_payment_date ?? ""} onChange={(e) => set("last_payment_date", e.target.value || null)} /></Field>
-            <Field label="Next due date"><Input className="rounded-none border border-foreground bg-transparent" type="date" value={form.next_due_date ?? ""} onChange={(e) => set("next_due_date", e.target.value || null)} /></Field>
-            
-            <div className="sm:col-span-2 border-t border-foreground/20 pt-4 mt-2 grid gap-4 sm:grid-cols-2">
-              <Field label="Invoice Receipt Link / PDF URL">
-                <Input className="rounded-none border border-foreground bg-transparent font-serif-news text-xs" value={invoiceUrlInput} onChange={(e) => setInvoiceUrlInput(e.target.value)} placeholder="https://..." />
-              </Field>
-              <div>
-                <Label className="font-sans font-bold uppercase tracking-wider text-[10px] block mb-1">Upload Invoice File</Label>
-                <Input type="file" onChange={handleUploadInvoice} className="rounded-none border border-foreground bg-transparent text-xs p-1 cursor-pointer" />
-              </div>
-              <div className="sm:col-span-2">
-                <Field label="Counselor / Booking Office Notes">
-                  <Textarea className="rounded-none border border-foreground bg-transparent font-serif-news text-xs" value={generalNotesInput} onChange={(e) => setGeneralNotesInput(e.target.value)} placeholder="Enter counselor notes, details of past sessions, pending items..." rows={3} />
-                </Field>
-              </div>
-            </div>
-          </TabsContent>
+          {/* Fees are decided by the admin at approval time — not during admission entry. */}
 
           {/* DOCS */}
           <TabsContent value="docs" className="pt-4">
