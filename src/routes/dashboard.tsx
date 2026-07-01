@@ -50,6 +50,7 @@ const PAYMENT_MODES = ["UPI", "Net Banking", "Card", "Cash", "Cheque", "EMI"];
 const LEAD_SOURCES = ["Website", "Walk-in", "Referral", "Social Media", "Counsellor", "Education Fair"];
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { coursesFor } from "@/lib/catalog";
 
 function DashboardPage() {
   const { user, role, studentStatus, studentData, loading, signOut, refetchStudent } = useAuth();
@@ -1011,6 +1012,24 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
   const [saving, setSaving] = useState(false);
   const [invoiceUrlInput, setInvoiceUrlInput] = useState("");
   const [generalNotesInput, setGeneralNotesInput] = useState("");
+  const [sessions, setSessions] = useState<{ university: string; label: string }[]>([]);
+
+  async function loadSessions() {
+    const { data } = await supabase.from("academic_sessions").select("university,label").eq("active", true);
+    setSessions((data as any) ?? []);
+  }
+  useEffect(() => { loadSessions(); }, []);
+  const uniSessions = sessions.filter((s) => s.university === form.university).map((s) => s.label);
+
+  async function addSession() {
+    const label = window.prompt(`New session for ${form.university || "this university"} (e.g. December 2026):`);
+    if (!label || !label.trim()) return;
+    const { error } = await supabase.from("academic_sessions").insert({ university: form.university, label: label.trim() });
+    if (error) return toast.error(error.message);
+    await loadSessions();
+    set("admission_session", label.trim());
+    toast.success("Session added");
+  }
 
   useEffect(() => {
     const notesText = (editing?.notes) || "";
@@ -1099,23 +1118,39 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
 
           {/* COURSE */}
           <TabsContent value="course" className="grid gap-4 sm:grid-cols-2 pt-4">
+            <Field label="University" required>
+              <Select value={form.university} onValueChange={(v) => {
+                set("university", v);
+                const allowed = coursesFor(v);
+                if (form.program && !allowed.includes(form.program as string)) set("program", allowed[0] as ProgramType);
+                // clear a session that doesn't belong to the newly picked university
+                if (form.admission_session && !sessions.some((s) => s.university === v && s.label === form.admission_session)) set("admission_session", "");
+              }}>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{UNIVERSITIES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
             <Field label="Course / Program" required>
               <Select value={form.program} onValueChange={(v) => set("program", v as ProgramType)}>
-                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{PROGRAMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder="Select course" /></SelectTrigger>
+                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{coursesFor(form.university).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
             <Field label="Specialization" required>
               <Input className="rounded-none border border-foreground bg-transparent" value={form.specialization} onChange={(e) => set("specialization", e.target.value)} maxLength={100} placeholder="e.g. Finance and Management" required />
             </Field>
-            <Field label="University" required>
-              <Select value={form.university} onValueChange={(v) => set("university", v)}>
-                <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">{UNIVERSITIES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
             <Field label="Session" required>
-              <Input className="rounded-none border border-foreground bg-transparent" value={form.admission_session ?? ""} onChange={(e) => set("admission_session", e.target.value)} maxLength={60} placeholder="e.g. NIOS - Dec 2026" required />
+              <div className="flex gap-1">
+                <Select value={form.admission_session ?? ""} onValueChange={(v) => set("admission_session", v)}>
+                  <SelectTrigger className="rounded-none border border-foreground bg-transparent"><SelectValue placeholder={uniSessions.length ? "Select session" : "Add a session →"} /></SelectTrigger>
+                  <SelectContent className="bg-[#fbf6e7] border border-foreground rounded-none">
+                    {uniSessions.length === 0
+                      ? <div className="px-3 py-2 text-xs italic text-[#6b3e1a]">No sessions for this university yet</div>
+                      : uniSessions.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="outline" onClick={addSession} title="Add session for this university" className="rounded-none border border-foreground px-2 h-auto">+</Button>
+              </div>
             </Field>
             <Field label="Status" required>
               <Select value={form.status ?? "active"} onValueChange={(v) => set("status", v as Student["status"])}>
