@@ -1013,6 +1013,35 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
   const [invoiceUrlInput, setInvoiceUrlInput] = useState("");
   const [generalNotesInput, setGeneralNotesInput] = useState("");
   const [sessions, setSessions] = useState<{ university: string; label: string }[]>([]);
+  const isCenter = !!centerEmail;
+
+  // Wizard steps (Course → … → Documents), with Next/Back and a final Submit.
+  const STEPS = ["course", "enrollment", "personal", "address", "education", "docs"] as const;
+  const [step, setStep] = useState(0);
+  const isLast = step === STEPS.length - 1;
+
+  // Uploaded document links: { photo: url, aadhar_front: url, ... }
+  const [docLinks, setDocLinks] = useState<Record<string, string>>(() => {
+    const dl = (editing as any)?.document_links;
+    try { return typeof dl === "string" ? JSON.parse(dl) : (dl || {}); } catch { return {}; }
+  });
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+
+  async function uploadDoc(key: string, label: string, file: File) {
+    setUploadingKey(key);
+    const ext = file.name.split(".").pop();
+    const base = String(form.email || "new").replace(/[^a-z0-9]/gi, "_");
+    const path = `${base}/${key}_${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("student-documents").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data } = supabase.storage.from("student-documents").getPublicUrl(path);
+      setDocLinks((d) => ({ ...d, [key]: data.publicUrl }));
+      toast.success(`${label} uploaded`);
+    } else {
+      toast.error(`${label}: ${error.message}`);
+    }
+    setUploadingKey(null);
+  }
 
   async function loadSessions() {
     const { data } = await supabase.from("academic_sessions").select("university,label").eq("active", true);
@@ -1039,6 +1068,9 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
     setInvoiceUrlInput(inv);
     setGeneralNotesInput(gen);
     setForm(editing ?? blankForm(centerEmail));
+    setStep(0);
+    const dl = (editing as any)?.document_links;
+    try { setDocLinks(typeof dl === "string" ? JSON.parse(dl) : (dl || {})); } catch { setDocLinks({}); }
   }, [editing]);
 
   function set<K extends keyof TablesInsert<"students">>(key: K, value: TablesInsert<"students">[K]) {
@@ -1047,10 +1079,18 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Validate the key required fields across steps (Radix unmounts inactive
+    // steps, so native `required` alone can't be relied on). Jump to the step.
+    const missing: Array<[keyof TablesInsert<"students">, number, string]> = [
+      ["university", 0, "University"], ["program", 0, "Course"], ["specialization", 0, "Specialization"],
+      ["admission_session", 0, "Session"], ["full_name", 2, "Full name"], ["email", 2, "Email"],
+    ];
+    for (const [key, s, label] of missing) {
+      if (!String((form as any)[key] ?? "").trim()) { setStep(s); return toast.error(`${label} is required.`); }
+    }
     setSaving(true);
     const combinedNotes = (invoiceUrlInput.trim() ? `[INVOICE_URL]: ${invoiceUrlInput.trim()}\n` : "") + generalNotesInput.trim();
-    // The Session field is free text (e.g. "NIOS - Dec 2026"); keep batch_year
-    // populated for sorting/filtering by parsing a 4-digit year out of it.
+    // Keep batch_year populated for sorting/filtering by parsing a 4-digit year.
     const sessionText = String(form.admission_session ?? "");
     const yearMatch = sessionText.match(/(20\d{2})/);
     const derivedYear = yearMatch ? Number(yearMatch[1]) : (Number(form.batch_year) || new Date().getFullYear());
@@ -1060,6 +1100,7 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
       batch_year: derivedYear,
       phone: form.phone || null,
       location: form.location || form.city || "—",
+      document_links: docLinks as any,
     };
     const { error } = editing
       ? await supabase.from("students").update(payload).eq("id", editing.id)
@@ -1105,7 +1146,7 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
         <DialogDescription className="font-serif-news text-xs italic text-[#6b3e1a]">Personal details, address and academic history verification.</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
-        <Tabs defaultValue="course" className="w-full">
+        <Tabs value={STEPS[step]} onValueChange={(v) => { const i = STEPS.indexOf(v as any); if (i >= 0) setStep(i); }} className="w-full">
           <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto bg-[#f4ecd8] border border-foreground/30 p-1 gap-1">
             <TabsTrigger value="course" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><BookOpen className="w-3.5 h-3.5 mr-1" /> Course</TabsTrigger>
             <TabsTrigger value="enrollment" className="rounded-none font-bold uppercase text-[9px] data-[state=active]:bg-foreground data-[state=active]:text-background"><ClipboardList className="w-3.5 h-3.5 mr-1" /> Enrol</TabsTrigger>
@@ -1162,7 +1203,15 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
           {/* ENROLLMENT */}
           <TabsContent value="enrollment" className="grid gap-4 sm:grid-cols-2 pt-4">
             <Field label="Enrollment number">
-              <Input className="rounded-none border border-foreground bg-transparent" value={form.enrollment_number ?? ""} onChange={(e) => set("enrollment_number", e.target.value)} maxLength={50} placeholder="e.g. EDU-MBA-2026-0001" />
+              <Input
+                className="rounded-none border border-foreground bg-transparent disabled:opacity-70"
+                value={form.enrollment_number ?? ""}
+                onChange={(e) => set("enrollment_number", e.target.value)}
+                maxLength={50}
+                placeholder={isCenter ? "Assigned by admin" : "e.g. EDU-MBA-2026-0001"}
+                readOnly={isCenter}
+                disabled={isCenter}
+              />
             </Field>
             <Field label="Study mode">
               <Select value={form.study_mode ?? ""} onValueChange={(v) => set("study_mode", v)}>
@@ -1264,33 +1313,55 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
 
           {/* DOCS */}
           <TabsContent value="docs" className="pt-4">
-            <p className="font-serif-news text-xs italic text-[#6b3e1a] mb-4">Tick each document once it has been received and verified.</p>
+            <p className="font-serif-news text-xs italic text-[#6b3e1a] mb-4">Upload each document (PDF or image). A green tick means it is stored.</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                ["doc_photo", "Passport-size photo"],
-                ["doc_signature", "Signature scan"],
-                ["doc_id_proof", "ID proof (Aadhar / PAN)"],
-                ["doc_marksheet_10", "10th marksheet"],
-                ["doc_marksheet_12", "12th / Diploma marksheet"],
-                ["doc_marksheet_degree", "Degree marksheet"],
+                ["photo", "Photo"],
+                ["signature", "Signature"],
+                ["aadhar_front", "Aadhar Front"],
+                ["aadhar_back", "Aadhar Back"],
+                ["marksheet_10", "10th Marksheet"],
+                ["tc_10", "10th TC / LC"],
+                ["marksheet_12", "12th / Diploma Marksheet"],
+                ["tc_12", "12th / Diploma TC / LC / Migration"],
+                ["degree_final", "Degree Final Year Marksheet"],
+                ["degree_convocation", "Degree Convocation"],
+                ["degree_migration", "Degree Migration"],
               ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-3 border-2 border-foreground p-3 cursor-pointer hover:bg-foreground/5 rounded-none">
-                  <Checkbox
-                    checked={Boolean(form[key as keyof TablesInsert<"students">])}
-                    onCheckedChange={(v) => set(key as keyof TablesInsert<"students">, Boolean(v) as never)}
-                    className="border-2 border-foreground rounded-none"
+                <div key={key} className="border-2 border-foreground p-3 rounded-none">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] uppercase font-bold tracking-wider">{label}</span>
+                    {docLinks[key]
+                      ? <a href={docLinks[key]} target="_blank" rel="noreferrer" className="text-emerald-700 text-[10px] font-bold uppercase">✓ View</a>
+                      : <span className="text-[#6b3e1a]/60 text-[10px] uppercase">{uploadingKey === key ? "Uploading…" : "Pending"}</span>}
+                  </div>
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    disabled={uploadingKey === key}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(key, label, f); }}
+                    className="rounded-none border border-foreground bg-transparent text-[10px] p-1 cursor-pointer"
                   />
-                  <span className="text-xs uppercase font-bold tracking-wider">{label}</span>
-                </label>
+                </div>
               ))}
             </div>
           </TabsContent>
         </Tabs>
 
-        <DialogFooter className="pt-4">
-          <Button type="submit" disabled={saving} className="rounded-none bg-foreground text-background border-2 border-foreground py-3 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">
-            {saving ? "Saving Record..." : editing ? "Save Credentials" : "Add Student"}
-          </Button>
+        <DialogFooter className="pt-4 flex sm:justify-between items-center gap-2">
+          <div className="text-[10px] font-sans uppercase tracking-widest text-[#6b3e1a]">Step {step + 1} / {STEPS.length} · {STEPS[step]}</div>
+          <div className="flex gap-2">
+            {step > 0 && (
+              <Button type="button" variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} className="rounded-none border-2 border-foreground py-3 font-sans font-bold uppercase tracking-wider text-xs">← Back</Button>
+            )}
+            {!isLast ? (
+              <Button type="button" onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))} className="rounded-none bg-foreground text-background border-2 border-foreground py-3 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#6b3e1a]">Next →</Button>
+            ) : (
+              <Button type="submit" disabled={saving} className="rounded-none bg-emerald-700 text-white border-2 border-emerald-700 py-3 font-sans font-bold uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#1a1410]">
+                {saving ? "Submitting…" : editing ? "Save Credentials" : "Submit"}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </form>
     </DialogContent>
