@@ -1027,20 +1027,33 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
   });
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
+  const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
+
   async function uploadDoc(key: string, label: string, file: File) {
+    if (file.size > MAX_DOC_BYTES) {
+      return toast.error(`${label} must be under 5 MB (this file is ${(file.size / 1048576).toFixed(1)} MB).`);
+    }
     setUploadingKey(key);
     const ext = file.name.split(".").pop();
     const base = String(form.email || "new").replace(/[^a-z0-9]/gi, "_");
     const path = `${base}/${key}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("student-documents").upload(path, file, { upsert: true });
     if (!error) {
-      const { data } = supabase.storage.from("student-documents").getPublicUrl(path);
-      setDocLinks((d) => ({ ...d, [key]: data.publicUrl }));
+      // Private bucket: store the storage PATH; views generate a short-lived signed URL.
+      setDocLinks((d) => ({ ...d, [key]: path }));
       toast.success(`${label} uploaded`);
     } else {
       toast.error(`${label}: ${error.message}`);
     }
     setUploadingKey(null);
+  }
+
+  // Open a stored document (path -> signed URL). Handles any legacy full URLs.
+  async function openDoc(pathOrUrl: string) {
+    if (/^https?:\/\//.test(pathOrUrl)) return window.open(pathOrUrl, "_blank");
+    const { data, error } = await supabase.storage.from("student-documents").createSignedUrl(pathOrUrl, 3600);
+    if (error || !data) return toast.error(error?.message || "Could not open document");
+    window.open(data.signedUrl, "_blank");
   }
 
   async function loadSessions() {
@@ -1332,7 +1345,7 @@ function StudentDialog({ editing, centerEmail, onSaved }: { editing: Student | n
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[11px] uppercase font-bold tracking-wider">{label}</span>
                     {docLinks[key]
-                      ? <a href={docLinks[key]} target="_blank" rel="noreferrer" className="text-emerald-700 text-[10px] font-bold uppercase">✓ View</a>
+                      ? <button type="button" onClick={() => openDoc(docLinks[key])} className="text-emerald-700 text-[10px] font-bold uppercase hover:underline">✓ View</button>
                       : <span className="text-[#6b3e1a]/60 text-[10px] uppercase">{uploadingKey === key ? "Uploading…" : "Pending"}</span>}
                   </div>
                   <Input

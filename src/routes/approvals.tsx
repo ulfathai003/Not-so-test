@@ -21,6 +21,14 @@ type Student = Tables<"students">;
 const inr = (n: number | null | undefined) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(n ?? 0));
 
+// Open a stored document from the private bucket via a short-lived signed URL.
+async function openDoc(pathOrUrl: string) {
+  if (/^https?:\/\//.test(pathOrUrl)) return window.open(pathOrUrl, "_blank");
+  const { data, error } = await supabase.storage.from("student-documents").createSignedUrl(pathOrUrl, 3600);
+  if (error || !data) return toast.error(error?.message || "Could not open document");
+  window.open(data.signedUrl, "_blank");
+}
+
 function ApprovalsPage() {
   const { role, loading } = useAuth();
   const [pending, setPending] = useState<Student[]>([]);
@@ -176,7 +184,7 @@ function ViewApplicationDialog({ student, onClose }: { student: Student; onClose
             {Object.keys(docLinks).length === 0
               ? <div className="text-xs italic text-[#6b3e1a] py-1">No documents uploaded.</div>
               : Object.entries(docLinks).map(([k, url]) => (
-                  <div key={k} className="py-1"><a href={String(url)} target="_blank" rel="noreferrer" className="underline text-[#6b3e1a] text-xs">{k}</a></div>
+                  <div key={k} className="py-1"><button type="button" onClick={() => openDoc(String(url))} className="underline text-[#6b3e1a] text-xs hover:text-foreground">{k}</button></div>
                 ))}
           </div>
         </div>
